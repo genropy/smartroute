@@ -1,0 +1,4 @@
+# Ignore everything in temp/
+*
+# Except this file
+!.gitignore
