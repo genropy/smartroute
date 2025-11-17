@@ -216,6 +216,53 @@ Get runtime data for plugin on handler.
 value = bound.get_runtime_data("method", "plugin", "config")
 ```
 
+#### `describe() -> Dict[str, Any]`
+
+Get hierarchical description of router with all registered methods, parameters, and children.
+
+<!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
+
+```python
+description = bound.describe()
+```
+
+**Returns:** Dictionary with structure:
+```python
+{
+    "name": "router_name",
+    "prefix": "handle_",  # or ""
+    "plugins": ["logging", "pydantic"],
+    "methods": {
+        "method_name": {
+            "name": "method_name",
+            "doc": "Method docstring",
+            "signature": "(self, arg: str, count: int = 1) -> str",
+            "return_type": "str",
+            "plugins": ["logging"],
+            "metadata_keys": ["pydantic"],
+            "parameters": {
+                "arg": {
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "annotation": "str",
+                    "required": True
+                },
+                "count": {
+                    "kind": "POSITIONAL_OR_KEYWORD",
+                    "annotation": "int",
+                    "default": "1",
+                    "required": False
+                }
+            }
+        }
+    },
+    "children": {
+        "child_name": {
+            # Recursive structure
+        }
+    }
+}
+```
+
 **Plugin access:**
 
 Plugins attached to router are accessible as attributes:

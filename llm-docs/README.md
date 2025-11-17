@@ -123,6 +123,17 @@ api = Router(get_default_handler=lambda: "default")
 handler = api.get("method", use_smartasync=True)
 ```
 
+## Introspection
+
+```python
+# Get hierarchical description of router
+description = api.describe()
+# Returns dict with:
+# - name, prefix, plugins
+# - methods (with signatures, params, return types)
+# - children (recursively)
+```
+
 ## Runtime Control
 
 ```python
