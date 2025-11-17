@@ -4,11 +4,14 @@
   <img src="docs/assets/logo.png" alt="SmartRoute Logo" width="200"/>
 </p>
 
+[![PyPI version](https://badge.fury.io/py/smartroute.svg)](https://badge.fury.io/py/smartroute)
 [![Tests](https://github.com/genropy/smartroute/actions/workflows/test.yml/badge.svg)](https://github.com/genropy/smartroute/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/genropy/smartroute/branch/main/graph/badge.svg?token=71c0b591-018b-41cb-9fd2-dc627d14a519)](https://codecov.io/gh/genropy/smartroute)
+[![Documentation](https://readthedocs.org/projects/smartroute/badge/?version=latest)](https://smartroute.readthedocs.io/en/latest/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI downloads](https://img.shields.io/pypi/dm/smartroute.svg)](https://pypi.org/project/smartroute/)
 
 **SmartRoute** is an instance-scoped routing engine for Python that enables dynamic method dispatch through a plugin-based architecture. It's the successor to SmartSwitch, designed with instance isolation and composability at its core.
 
