@@ -1,11 +1,13 @@
 """Smoke tests for plugins_new with core_new."""
 
 from smartroute.core import RoutedClass, Router, route
-from smartroute.plugins.logging import LoggingPlugin
+
+# Import to trigger plugin registration
+import smartroute.plugins.logging  # noqa: F401
 
 
 class LoggedService(RoutedClass):
-    routes = Router(name="logged").plug(LoggingPlugin())
+    routes = Router(name="logged").plug("logging")
 
     def __init__(self):
         self.calls = 0

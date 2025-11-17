@@ -11,6 +11,10 @@ class SimplePlugin(BasePlugin):
         return call_next
 
 
+# Register test plugin
+Router.register_plugin("simple", SimplePlugin)
+
+
 def test_router_decorator_and_plugin_validation():
     router = Router()
     with pytest.raises(TypeError):
@@ -47,7 +51,7 @@ def test_router_detects_handler_name_collision():
 
 def test_iter_plugins_and_missing_attribute():
     class Service(RoutedClass):
-        api = Router(name="svc").plug(SimplePlugin())
+        api = Router(name="svc").plug("simple")
 
         @route("api")
         def ping(self):

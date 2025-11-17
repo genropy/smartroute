@@ -33,7 +33,7 @@ result = handler("value")  # Call it
 | `BoundRouter` | Runtime instance | `svc.api` returns `BoundRouter` |
 | `get(name)` | Retrieve handler | `svc.api.get("method")` |
 | `add_child(obj)` | Build hierarchy | `parent.api.add_child(child)` |
-| `plug(plugin)` | Add plugin | `Router().plug(LoggingPlugin())` |
+| `plug(name)` | Add plugin by name | `Router().plug("logging")` |
 
 ## Common Patterns
 
@@ -79,10 +79,10 @@ root.api.get("child.method")()  # Dotted path
 
 ### 5. With Plugins
 
-```python
-from smartroute.plugins.logging import LoggingPlugin
+Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
 
-api = Router().plug(LoggingPlugin())
+```python
+api = Router().plug("logging")
 # Plugin hooks every handler call
 ```
 
@@ -94,13 +94,13 @@ self.api.add_child({"users": users_svc, "products": prod_svc})
 
 ## Built-in Plugins
 
-- `LoggingPlugin` - Logs handler calls
-- `PydanticPlugin` - Validates args with type hints
+Built-in plugins are pre-registered and available by name (no imports needed):
+
+- `"logging"` - Logs handler calls
+- `"pydantic"` - Validates args with type hints
 
 ```python
-from smartroute.plugins.pydantic import PydanticPlugin
-
-api = Router().plug(PydanticPlugin())
+api = Router().plug("pydantic")
 
 @route("api")
 def validate(self, text: str, count: int) -> str:

@@ -56,8 +56,12 @@ class CapturePlugin(BasePlugin):
         return wrapper
 
 
+# Register custom plugin
+Router.register_plugin("capture", CapturePlugin)
+
+
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug(CapturePlugin())
+    api = Router(name="plugin").plug("capture")
 
     def __init__(self):
         self.touched = False
@@ -80,8 +84,12 @@ class TogglePlugin(BasePlugin):
         return wrapper
 
 
+# Register custom plugin
+Router.register_plugin("toggle", TogglePlugin)
+
+
 class ToggleService(RoutedClass):
-    api = Router(name="toggle").plug(TogglePlugin())
+    api = Router(name="toggle").plug("toggle")
 
     @route("api")
     def touch(self):
@@ -195,7 +203,7 @@ def test_plugins_are_per_instance_and_accessible():
 
 def test_parent_plugins_inherit_to_children():
     class ParentAPI(RoutedClass):
-        api = Router(name="parent").plug(CapturePlugin())
+        api = Router(name="parent").plug("capture")
 
     parent = ParentAPI()
     child = SubService("child")

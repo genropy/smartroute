@@ -29,16 +29,20 @@ class MyClass(RoutedClass):
 
 **Methods:**
 
-#### `Router.plug(plugin: BasePlugin | str) -> Router`
+#### `Router.plug(plugin: str, **config) -> Router`
 
-Add a plugin to the router. Returns self for chaining.
+Add a plugin to the router by name. Plugins must be pre-registered with `Router.register_plugin()`. Built-in plugins (`"logging"`, `"pydantic"`) are pre-registered. Returns self for chaining.
 
 <!-- test: test_router_edge_cases.py::test_router_decorator_and_plugin_validation -->
 
 ```python
-api = Router().plug(LoggingPlugin())
-# Or by name (if registered)
+# Built-in plugins are pre-registered
 api = Router().plug("logging")
+api = Router().plug("pydantic")
+
+# Custom plugins must be registered first
+Router.register_plugin("custom", CustomPlugin)
+api = Router().plug("custom")
 ```
 
 #### `Router.register_plugin(name: str, plugin_class: Type[BasePlugin]) -> None`
@@ -217,7 +221,7 @@ value = bound.get_runtime_data("method", "plugin", "config")
 Plugins attached to router are accessible as attributes:
 
 ```python
-api = Router().plug(LoggingPlugin())
+api = Router().plug("logging")
 svc = Service()
 svc.api.logger  # Access LoggingPlugin instance
 ```
@@ -380,14 +384,12 @@ def on_decore(self, router, func, entry):
 
 ### LoggingPlugin
 
-Logs handler calls.
+Logs handler calls. Pre-registered as `"logging"`.
 
 <!-- test: test_plugins_new.py::test_logging_plugin_runs_per_instance -->
 
 ```python
-from smartroute.plugins.logging import LoggingPlugin
-
-api = Router().plug(LoggingPlugin())
+api = Router().plug("logging")
 ```
 
 **Access logger:**
@@ -400,14 +402,12 @@ svc.api.logger._logger  # Python logger instance
 
 ### PydanticPlugin
 
-Validates arguments using type hints.
+Validates arguments using type hints. Pre-registered as `"pydantic"`.
 
 <!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
 
 ```python
-from smartroute.plugins.pydantic import PydanticPlugin
-
-api = Router().plug(PydanticPlugin())
+api = Router().plug("pydantic")
 
 @route("api")
 def validate(self, text: str, number: int = 1) -> str:
@@ -502,7 +502,7 @@ Child routers inherit parent plugins automatically:
 
 ```python
 class Parent(RoutedClass):
-    api = Router().plug(LoggingPlugin())
+    api = Router().plug("logging")
 
 parent = Parent()
 child = ChildService()
@@ -547,10 +547,9 @@ root.api.get("leaf.method")()  # Finds through branch.child_leaf
 
 ```python
 from smartroute.core import RoutedClass, Router, route
-from smartroute.plugins.logging import LoggingPlugin
 
 class SubService(RoutedClass):
-    routes = Router(prefix="handle_").plug(LoggingPlugin())
+    routes = Router(prefix="handle_").plug("logging")
 
     def __init__(self, prefix: str):
         self.prefix = prefix

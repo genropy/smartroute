@@ -155,13 +155,13 @@ assert root.api.get("users.list")() == "users:list"
 
 ### Plugins
 
+Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
+
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
 ```python
-from smartroute.plugins.logging import LoggingPlugin
-
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug(LoggingPlugin())
+    api = Router(name="plugin").plug("logging")
 
     @route("api")
     def do_work(self):
@@ -176,10 +176,8 @@ result = svc.api.get("do_work")()  # Logged automatically
 <!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
 
 ```python
-from smartroute.plugins.pydantic import PydanticPlugin
-
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug(PydanticPlugin())
+    api = Router(name="validate").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:

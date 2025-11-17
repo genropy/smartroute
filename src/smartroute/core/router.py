@@ -154,25 +154,45 @@ class Router:
     def available_plugins(cls) -> Dict[str, Type[BasePlugin]]:
         return dict(_PLUGIN_REGISTRY)
 
-    def plug(self, plugin: str | BasePlugin | Type[BasePlugin], **config: Any) -> "Router":
-        """Register a plugin specification to be instantiated per instance."""
-        if isinstance(plugin, str):
-            plugin_class = _PLUGIN_REGISTRY.get(plugin)
-            if plugin_class is None:
-                available = ", ".join(sorted(_PLUGIN_REGISTRY)) or "none"
-                raise ValueError(
-                    f"Unknown plugin '{plugin}'. Register it with Router.register_plugin(). "
-                    f"Available plugins: {available}"
-                )
-            plugin = plugin_class
+    def plug(self, plugin: str, **config: Any) -> "Router":
+        """Register a plugin by name. Plugin must be registered first with Router.register_plugin().
 
-        if isinstance(plugin, type) and issubclass(plugin, BasePlugin):
-            spec = _PluginSpec(plugin, dict(config))
-        elif isinstance(plugin, BasePlugin):
-            plugin.config.update(config)
-            spec = _PluginSpec(type(plugin), dict(plugin.config))
-        else:
-            raise TypeError("plugin must be BasePlugin subclass or instance")
+        IMPORTANT: Only string plugin names are accepted. Plugins must be pre-registered
+        using Router.register_plugin() before they can be used with plug().
+
+        Built-in plugins 'logging' and 'pydantic' are pre-registered and ready to use.
+
+        Args:
+            plugin: Plugin name (string). Must be registered via Router.register_plugin().
+            **config: Optional configuration passed to plugin constructor.
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: If plugin name is not registered.
+            TypeError: If plugin is not a string.
+
+        Example:
+            >>> Router().plug("logging")
+            >>> Router().plug("pydantic")
+        """
+        if not isinstance(plugin, str):
+            raise TypeError(
+                f"Plugin must be a string (plugin name), got {type(plugin).__name__}. "
+                "Register custom plugins with Router.register_plugin() first, "
+                "then reference them by name string."
+            )
+
+        plugin_class = _PLUGIN_REGISTRY.get(plugin)
+        if plugin_class is None:
+            available = ", ".join(sorted(_PLUGIN_REGISTRY)) or "none"
+            raise ValueError(
+                f"Unknown plugin '{plugin}'. Register it with Router.register_plugin(). "
+                f"Available plugins: {available}"
+            )
+
+        spec = _PluginSpec(plugin_class, dict(config))
         self._plugin_specs.append(spec)
         return self
 

@@ -153,7 +153,7 @@ root.api.add_child(registry)
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
 ```python
-from smartroute.core import BasePlugin
+from smartroute.core import BasePlugin, Router
 
 class CapturePlugin(BasePlugin):
     def __init__(self):
@@ -166,8 +166,11 @@ class CapturePlugin(BasePlugin):
             return call_next(*args, **kwargs)
         return wrapper
 
+# Register custom plugin
+Router.register_plugin("capture", CapturePlugin)
+
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug(CapturePlugin())
+    api = Router(name="plugin").plug("capture")
 
     def __init__(self):
         self.touched = False
@@ -203,10 +206,8 @@ other.api.capture.calls  # []  ← New plugin instance
 <!-- test: test_switcher_basic.py::test_parent_plugins_inherit_to_children -->
 
 ```python
-from smartroute.plugins.logging import LoggingPlugin
-
 class ParentAPI(RoutedClass):
-    api = Router(name="parent").plug(LoggingPlugin())
+    api = Router(name="parent").plug("logging")
 
 parent = ParentAPI()
 child = SubService("child")
@@ -322,8 +323,11 @@ class TogglePlugin(BasePlugin):
             return call_next(*args, **kwargs)
         return wrapper
 
+# Register custom plugin
+Router.register_plugin("toggle", TogglePlugin)
+
 class ToggleService(RoutedClass):
-    api = Router(name="toggle").plug(TogglePlugin())
+    api = Router(name="toggle").plug("toggle")
 
     @route("api")
     def touch(self):
@@ -401,10 +405,8 @@ root.api.get("leaf_switch.leaf_ping")()  # "leaf"  ← Found through branch
 <!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
 
 ```python
-from smartroute.plugins.pydantic import PydanticPlugin
-
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug(PydanticPlugin())
+    api = Router(name="validate").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:

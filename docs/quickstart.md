@@ -86,10 +86,10 @@ class SubService(RoutedClass):
 
 sub = SubService("users")
 
-# Prefix stripped: "handle_list" ’ "list"
+# Prefix stripped: "handle_list" ï¿½ "list"
 assert sub.routes.get("list")() == "users:list"
 
-# Alias used: "handle_detail" ’ "detail"
+# Alias used: "handle_detail" ï¿½ "detail"
 assert sub.routes.get("detail")(10) == "users:detail:10"
 ```
 
@@ -121,13 +121,11 @@ assert root.api.get("products.detail")(5) == "products:detail:5"
 
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
-Extend behavior with plugins:
+Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
 
 ```python
-from smartroute.plugins.logging import LoggingPlugin
-
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug(LoggingPlugin())
+    api = Router(name="plugin").plug("logging")
 
     @route("api")
     def do_work(self):
@@ -148,10 +146,8 @@ pip install smartroute[pydantic]
 ```
 
 ```python
-from smartroute.plugins.pydantic import PydanticPlugin
-
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug(PydanticPlugin())
+    api = Router(name="validate").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:
