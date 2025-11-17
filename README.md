@@ -35,7 +35,7 @@ SmartRoute allows you to organize and dispatch method calls dynamically based on
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
     api = Router(name="service")
@@ -90,7 +90,7 @@ pip install smartroute[pydantic]
 <!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class SubService(RoutedClass):
     routes = Router(prefix="handle_")

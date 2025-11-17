@@ -9,7 +9,7 @@ Instance-scoped routing engine for dynamic method dispatch with plugin support.
 ## Core Pattern
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
     api = Router(name="api")  # Router descriptor

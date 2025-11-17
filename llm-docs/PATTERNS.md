@@ -9,7 +9,7 @@
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
     api = Router(name="service")
@@ -153,7 +153,7 @@ root.api.add_child(registry)
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
 ```python
-from smartroute.core import BasePlugin, Router
+from smartroute import BasePlugin, Router
 
 class CapturePlugin(BasePlugin):
     def __init__(self):
@@ -445,7 +445,7 @@ except ValidationError as e:
 **Use when:** Building reusable cross-cutting logic.
 
 ```python
-from smartroute.core import BasePlugin, MethodEntry
+from smartroute import BasePlugin, MethodEntry
 
 class MetricsPlugin(BasePlugin):
     def __init__(self):

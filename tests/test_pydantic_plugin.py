@@ -1,9 +1,9 @@
-"""Tests for the Pydantic plugin with the experimental core."""
+"""Tests for the Pydantic plugin."""
 
 import pytest
 from pydantic import ValidationError
 
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 # Import to trigger plugin registration
 import smartroute.plugins.pydantic  # noqa: F401

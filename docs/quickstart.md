@@ -15,7 +15,7 @@ pip install smartroute
 Create a simple service with routed methods:
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
     api = Router(name="service")

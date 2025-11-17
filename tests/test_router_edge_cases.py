@@ -1,6 +1,7 @@
 import pytest
 
-from smartroute.core import BasePlugin, MethodEntry, RoutedClass, Router, route, routers
+from smartroute import RoutedClass, Router, route, routers
+from smartroute.core import BasePlugin, MethodEntry  # Not public API
 from smartroute.plugins import pydantic as pyd_mod
 from smartroute.plugins.logging import LoggingPlugin
 from smartroute.plugins.pydantic import PydanticPlugin

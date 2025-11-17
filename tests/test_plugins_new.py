@@ -1,6 +1,6 @@
-"""Smoke tests for plugins_new with core_new."""
+"""Tests for the logging plugin."""
 
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 # Import to trigger plugin registration
 import smartroute.plugins.logging  # noqa: F401

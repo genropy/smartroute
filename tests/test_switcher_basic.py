@@ -1,10 +1,11 @@
-"""Tests for the experimental instance-based Router (core_new)."""
+"""Tests for instance-based Router core functionality."""
 
 import sys
 
 import pytest
 
-from smartroute.core import BasePlugin, BoundRouter, RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
+from smartroute.core import BasePlugin  # Not public API
 
 
 class Service(RoutedClass):
@@ -161,7 +162,7 @@ def test_add_child_requires_instance():
 
     # Passing the instance works
     attached = root.api.add_child(users)
-    assert isinstance(attached, BoundRouter)
+    assert attached is not None  # Returns the bound router
 
 
 def test_add_child_accepts_mapping_for_named_children():

@@ -1,4 +1,4 @@
-"""Pytest configuration for core_new experiments."""
+"""Pytest configuration for SmartRoute tests."""
 
 import sys
 from pathlib import Path

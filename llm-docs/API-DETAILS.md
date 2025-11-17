@@ -314,7 +314,7 @@ class Service:
 <!-- test: test_router_edge_cases.py::test_base_plugin_default_hooks -->
 
 ```python
-from smartroute.core import BasePlugin
+from smartroute import BasePlugin
 
 class CustomPlugin(BasePlugin):
     def __init__(self):
@@ -546,7 +546,7 @@ root.api.get("leaf.method")()  # Finds through branch.child_leaf
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
 
 ```python
-from smartroute.core import RoutedClass, Router, route
+from smartroute import RoutedClass, Router, route
 
 class SubService(RoutedClass):
     routes = Router(prefix="handle_").plug("logging")
