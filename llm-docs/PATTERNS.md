@@ -445,7 +445,8 @@ except ValidationError as e:
 **Use when:** Building reusable cross-cutting logic.
 
 ```python
-from smartroute import BasePlugin, MethodEntry
+from smartroute import RoutedClass, Router, route
+from smartroute.core import BasePlugin, MethodEntry  # Not public API
 
 class MetricsPlugin(BasePlugin):
     def __init__(self):

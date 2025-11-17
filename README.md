@@ -191,6 +191,47 @@ assert svc.api.get("concat")("hi") == "hi:1"  # Default works
 # svc.api.get("concat")(123, "oops")  # ValidationError!
 ```
 
+### Custom Plugins
+
+Create your own plugins by subclassing `BasePlugin`:
+
+```python
+from smartroute import RoutedClass, Router, route
+from smartroute.core import BasePlugin, MethodEntry  # Not public API
+
+class MetricsPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__(name="metrics")
+        self.call_counts = {}
+
+    def on_decore(self, router, func, entry: MethodEntry):
+        """Called during route registration"""
+        self.call_counts[entry.name] = 0
+
+    def wrap_handler(self, router, entry: MethodEntry, call_next):
+        """Wrap handler execution"""
+        def wrapper(*args, **kwargs):
+            self.call_counts[entry.name] += 1
+            return call_next(*args, **kwargs)
+        return wrapper
+
+# Register your plugin
+Router.register_plugin("metrics", MetricsPlugin)
+
+# Use it like built-in plugins
+class Service(RoutedClass):
+    api = Router().plug("metrics")
+
+    @route("api")
+    def work(self): return "done"
+
+svc = Service()
+svc.api.get("work")()
+print(svc.api.metrics.call_counts)  # {"work": 1}
+```
+
+See [llm-docs/PATTERNS.md#pattern-12-custom-plugin-development](llm-docs/PATTERNS.md) for more examples.
+
 ## Documentation
 
 - **[Full Documentation](https://smartroute.readthedocs.io/)** – Complete guides, tutorials, and API reference
