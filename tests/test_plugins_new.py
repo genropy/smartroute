@@ -1,9 +1,8 @@
 """Tests for the logging plugin."""
 
-from smartroute import RoutedClass, Router, route
-
 # Import to trigger plugin registration
 import smartroute.plugins.logging  # noqa: F401
+from smartroute import RoutedClass, Router, route
 
 
 class LoggedService(RoutedClass):

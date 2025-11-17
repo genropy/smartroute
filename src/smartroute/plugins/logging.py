@@ -12,7 +12,7 @@ from smartroute.core import BasePlugin, MethodEntry, Router
 
 
 class LoggingPlugin(BasePlugin):
-    """Simplified logging plugin for core_new."""
+    """Simplified logging plugin for SmartRoute."""
 
     def __init__(self, name: Optional[str] = None, logger: Optional[logging.Logger] = None, **cfg):
         super().__init__(name=name or "logger", **cfg)

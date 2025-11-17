@@ -3,10 +3,9 @@
 import pytest
 from pydantic import ValidationError
 
-from smartroute import RoutedClass, Router, route
-
 # Import to trigger plugin registration
 import smartroute.plugins.pydantic  # noqa: F401
+from smartroute import RoutedClass, Router, route
 
 
 class ValidateService(RoutedClass):

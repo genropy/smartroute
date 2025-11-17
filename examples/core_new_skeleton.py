@@ -1,13 +1,10 @@
 """
-Skeleton showing how a class decorator could provision Routers per class.
+Example showing how to use SmartRoute with hierarchical routers and plugins.
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Type
-
-from .core_new import RoutedClass, Router, route, routers
-from .plugins_new.logging import LoggingPlugin
+from smartroute import RoutedClass, Router, route
 
 
 class UsersAPI(RoutedClass):
@@ -42,7 +39,7 @@ class ProductsAPI(RoutedClass):
 
 
 class ReportingAPI(RoutedClass):
-    reports = Router(name="reports").plug(LoggingPlugin())
+    reports = Router(name="reports").plug("logging")
 
     def __init__(self, label: str):
         self.label = label

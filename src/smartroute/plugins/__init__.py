@@ -1,4 +1,4 @@
-"""Plugins compatible with the experimental instance-based core."""
+"""Built-in plugins for SmartRoute."""
 
 from .logging import LoggingPlugin
 from .pydantic import PydanticPlugin
