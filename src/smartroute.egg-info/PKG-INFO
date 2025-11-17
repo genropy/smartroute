@@ -1,0 +1,359 @@
+Metadata-Version: 2.4
+Name: smartroute
+Version: 0.2.0
+Summary: Instance-scoped routing engine for Python with hierarchical handlers and composable plugins
+Author-email: Genropy Team <softwell@softwell.it>
+License: MIT
+Project-URL: Homepage, https://github.com/genropy/smartroute
+Project-URL: Documentation, https://smartroute.readthedocs.io
+Project-URL: Repository, https://github.com/genropy/smartroute
+Project-URL: Bug Tracker, https://github.com/genropy/smartroute/issues
+Keywords: routing,dispatch,plugin-system,instance-bound,hierarchical
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Code Generators
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: smartseeds>=0.2.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=8.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=3.0.0; extra == "docs"
+Requires-Dist: sphinx-autodoc-typehints>=3.0.0; extra == "docs"
+Requires-Dist: myst-parser>=4.0.0; extra == "docs"
+Requires-Dist: sphinxcontrib-mermaid>=1.0.0; extra == "docs"
+Provides-Extra: pydantic
+Requires-Dist: pydantic>=2.0.0; extra == "pydantic"
+Provides-Extra: all
+Requires-Dist: pytest>=7.0.0; extra == "all"
+Requires-Dist: pytest-cov>=4.0.0; extra == "all"
+Requires-Dist: black>=23.0.0; extra == "all"
+Requires-Dist: ruff>=0.1.0; extra == "all"
+Requires-Dist: mypy>=1.0.0; extra == "all"
+Requires-Dist: sphinx>=8.0.0; extra == "all"
+Requires-Dist: sphinx-rtd-theme>=3.0.0; extra == "all"
+Requires-Dist: sphinx-autodoc-typehints>=3.0.0; extra == "all"
+Requires-Dist: myst-parser>=4.0.0; extra == "all"
+Requires-Dist: sphinxcontrib-mermaid>=1.0.0; extra == "all"
+Requires-Dist: pydantic>=2.0.0; extra == "all"
+Dynamic: license-file
+
+# SmartRoute
+
+<p align="center">
+  <img src="docs/assets/logo.png" alt="SmartRoute Logo" width="200"/>
+</p>
+
+[![PyPI version](https://badge.fury.io/py/smartroute.svg)](https://badge.fury.io/py/smartroute)
+[![Tests](https://github.com/genropy/smartroute/actions/workflows/test.yml/badge.svg)](https://github.com/genropy/smartroute/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/genropy/smartroute/branch/main/graph/badge.svg?token=71c0b591-018b-41cb-9fd2-dc627d14a519)](https://codecov.io/gh/genropy/smartroute)
+[![Documentation](https://readthedocs.org/projects/smartroute/badge/?version=latest)](https://smartroute.readthedocs.io/en/latest/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI downloads](https://img.shields.io/pypi/dm/smartroute.svg)](https://pypi.org/project/smartroute/)
+
+**SmartRoute** is an instance-scoped routing engine for Python that enables dynamic method dispatch through a plugin-based architecture. It's the successor to SmartSwitch, designed with instance isolation and composability at its core.
+
+## What is SmartRoute?
+
+SmartRoute allows you to organize and dispatch method calls dynamically based on string identifiers (routes). Each object instance gets its own isolated router with independent plugin stacks, making it ideal for building modular, extensible services where behavior can be customized per-instance without global state.
+
+## Key Features
+
+- **Instance-scoped routers** – Every object gets an isolated `BoundRouter` with its own plugin stack and configuration
+- **Hierarchical organization** – Build router trees with `add_child()` and dotted path traversal (`root.api.get("users.list")`)
+- **Composable plugins** – Hook into decoration and handler execution with `BasePlugin` (logging, validation, metrics)
+- **Plugin inheritance** – Plugins propagate automatically from parent to child routers
+- **Flexible registration** – Use `@route` decorator with aliases, prefixes, and custom names
+- **Runtime configuration** – Enable/disable plugins per-handler, set runtime data dynamically
+- **SmartAsync support** – Optional integration with async execution
+- **High test coverage** – >95% statement coverage with comprehensive edge case tests
+
+## Quick Example
+
+<!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
+
+```python
+from smartroute import RoutedClass, Router, route
+
+class Service(RoutedClass):
+    api = Router(name="service")
+
+    def __init__(self, label: str):
+        self.label = label
+
+    @route("api")
+    def describe(self):
+        return f"service:{self.label}"
+
+# Each instance is isolated
+first = Service("alpha")
+second = Service("beta")
+
+assert first.api.get("describe")() == "service:alpha"
+assert second.api.get("describe")() == "service:beta"
+```
+
+## Installation
+
+```bash
+pip install smartroute
+```
+
+For development:
+
+```bash
+git clone https://github.com/genropy/smartroute.git
+cd smartroute
+pip install -e ".[all]"
+```
+
+To use the Pydantic plugin:
+
+```bash
+pip install smartroute[pydantic]
+```
+
+## Core Concepts
+
+- **`Router`** – Descriptor for defining routers on classes
+- **`@route("name")`** – Decorator to register methods with a router
+- **`RoutedClass`** – Mixin that auto-finalizes routers on the class
+- **`BoundRouter`** – Runtime instance bound to an object with `get()`, `call()`, `add_child()`, etc.
+- **`BasePlugin`** – Base class for creating plugins with `on_decore` and `wrap_handler` hooks
+
+## Examples
+
+### Basic Routing with Aliases
+
+<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
+
+```python
+from smartroute import RoutedClass, Router, route
+
+class SubService(RoutedClass):
+    routes = Router(prefix="handle_")
+
+    def __init__(self, prefix: str):
+        self.prefix = prefix
+
+    @route("routes")
+    def handle_list(self):
+        return f"{self.prefix}:list"
+
+    @route("routes", alias="detail")
+    def handle_detail(self, ident: int):
+        return f"{self.prefix}:detail:{ident}"
+
+sub = SubService("users")
+assert sub.routes.get("list")() == "users:list"
+assert sub.routes.get("detail")(10) == "users:detail:10"
+```
+
+### Hierarchical Routers
+
+<!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
+
+```python
+class RootAPI(RoutedClass):
+    api = Router(name="root")
+
+    def __init__(self):
+        users = SubService("users")
+        products = SubService("products")
+
+        self.api.add_child(users, name="users")
+        self.api.add_child(products, name="products")
+
+root = RootAPI()
+assert root.api.get("users.list")() == "users:list"
+assert root.api.get("products.detail")(5) == "products:detail:5"
+```
+
+### Bulk Child Registration
+
+<!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
+
+```python
+class RootAPI(RoutedClass):
+    api = Router(name="root")
+
+    def __init__(self):
+        self.users = SubService("users")
+        self.products = SubService("products")
+
+        # Register multiple children via dict
+        self.api.add_child({
+            "users": self.users,
+            "products": self.products
+        })
+
+root = RootAPI()
+assert root.api.get("users.list")() == "users:list"
+```
+
+### Plugins
+
+Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
+
+<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
+
+```python
+class PluginService(RoutedClass):
+    api = Router(name="plugin").plug("logging")
+
+    @route("api")
+    def do_work(self):
+        return "ok"
+
+svc = PluginService()
+result = svc.api.get("do_work")()  # Logged automatically
+```
+
+### Pydantic Validation
+
+<!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
+
+```python
+class ValidateService(RoutedClass):
+    api = Router(name="validate").plug("pydantic")
+
+    @route("api")
+    def concat(self, text: str, number: int = 1) -> str:
+        return f"{text}:{number}"
+
+svc = ValidateService()
+assert svc.api.get("concat")("hello", 3) == "hello:3"
+assert svc.api.get("concat")("hi") == "hi:1"  # Default works
+
+# Invalid types raise ValidationError
+# svc.api.get("concat")(123, "oops")  # ValidationError!
+```
+
+### Custom Plugins
+
+Create your own plugins by subclassing `BasePlugin`:
+
+```python
+from smartroute import RoutedClass, Router, route
+from smartroute.core import BasePlugin, MethodEntry  # Not public API
+
+class MetricsPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__(name="metrics")
+        self.call_counts = {}
+
+    def on_decore(self, router, func, entry: MethodEntry):
+        """Called during route registration"""
+        self.call_counts[entry.name] = 0
+
+    def wrap_handler(self, router, entry: MethodEntry, call_next):
+        """Wrap handler execution"""
+        def wrapper(*args, **kwargs):
+            self.call_counts[entry.name] += 1
+            return call_next(*args, **kwargs)
+        return wrapper
+
+# Register your plugin
+Router.register_plugin("metrics", MetricsPlugin)
+
+# Use it like built-in plugins
+class Service(RoutedClass):
+    api = Router().plug("metrics")
+
+    @route("api")
+    def work(self): return "done"
+
+svc = Service()
+svc.api.get("work")()
+print(svc.api.metrics.call_counts)  # {"work": 1}
+```
+
+See [llm-docs/PATTERNS.md#pattern-12-custom-plugin-development](llm-docs/PATTERNS.md) for more examples.
+
+## Documentation
+
+- **[Full Documentation](https://smartroute.readthedocs.io/)** – Complete guides, tutorials, and API reference
+- **[Quick Start](docs/quickstart.md)** – Get started in 5 minutes
+- **[LLM Reference](llm-docs/README.md)** – Token-optimized reference for AI code generation
+- **[API Details](llm-docs/API-DETAILS.md)** – Complete API reference generated from tests
+- **[Usage Patterns](llm-docs/PATTERNS.md)** – Common patterns extracted from test suite
+
+## Testing
+
+SmartRoute targets >95% statement coverage (currently ~98%):
+
+```bash
+PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
+```
+
+All examples in documentation are verified by the test suite.
+
+## Repository Structure
+
+```text
+smartroute/
+├── src/smartroute/
+│   ├── core/               # Core router implementation
+│   │   ├── router.py       # Router and BoundRouter
+│   │   ├── decorators.py   # @route and @routers decorators
+│   │   └── base.py         # BasePlugin and MethodEntry
+│   └── plugins/            # Built-in plugins
+│       ├── logging.py      # LoggingPlugin
+│       └── pydantic.py     # PydanticPlugin
+├── tests/                  # Test suite (>95% coverage)
+│   ├── test_switcher_basic.py        # Core functionality
+│   ├── test_router_edge_cases.py     # Edge cases
+│   ├── test_plugins_new.py           # Plugin system
+│   └── test_pydantic_plugin.py       # Pydantic validation
+├── docs/                   # Human documentation (Sphinx)
+├── llm-docs/              # LLM-optimized documentation
+└── examples/              # Example implementations
+```
+
+## Project Status
+
+SmartRoute is currently in **alpha** (v0.1.0). The core API is stable, but documentation and additional plugins are still being developed.
+
+- **Test Coverage**: >95%
+- **Python Support**: 3.10, 3.11, 3.12
+- **License**: MIT
+
+## Current Limitations
+
+- **Instance methods only** – Routers assume decorated functions are bound methods (no static/class method or free function support)
+- **No SmartAsync plugin** – `get(..., use_smartasync=True)` is optional but there's no dedicated SmartAsync plugin
+- **Minimal plugin system** – Intentionally simple; advanced features (e.g., Pydantic declarative config) must be added manually
+
+## Roadmap
+
+- Complete Sphinx documentation with tutorials and API reference
+- Additional plugins (async, storage, audit trail, metrics)
+- Benchmarks and performance comparison with SmartSwitch
+- Migration guide from SmartSwitch
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Acknowledgments
+
+SmartRoute is the successor to SmartSwitch, designed with lessons learned from production use.
