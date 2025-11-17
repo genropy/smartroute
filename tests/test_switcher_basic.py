@@ -345,3 +345,12 @@ def test_plugin_enable_disable_runtime_data():
 def test_nested_child_discovery():
     root = NestedRoot()
     assert root.api.get("leaf_switch.leaf_ping")() == "leaf"
+
+
+def test_describe_returns_hierarchy():
+    root = NestedRoot()
+    info = root.api.describe()
+    assert "children" in info
+    assert "leaf_switch" in info["children"]
+    leaf_info = info["children"]["leaf_switch"]
+    assert "leaf_ping" in leaf_info["methods"]

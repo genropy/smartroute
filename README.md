@@ -304,3 +304,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 SmartRoute is the successor to SmartSwitch, designed with lessons learned from production use.
+- `BoundRouter.describe()` per ottenere una rappresentazione gerarchica (usata da SmartPublisher).

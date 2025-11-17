@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextvars
+import inspect
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from functools import wraps
@@ -12,7 +13,7 @@ from smartseeds import SmartOptions
 
 from .base import BasePlugin, MethodEntry
 
-__all__ = ["RouteSpec", "Router", "BoundRouter"]
+__all__ = ["RouteSpec", "Router"]
 
 _ACTIVATION_CTX: contextvars.ContextVar[Dict[Any, bool] | None] = contextvars.ContextVar(
     "smartroute_activation", default=None
@@ -466,3 +467,97 @@ class BoundRouter:
     def call(self, selector: str, *args, **kwargs):
         handler = self.get(selector)
         return handler(*args, **kwargs)
+
+    def describe(self) -> Dict[str, Any]:
+        def describe_node(node: "BoundRouter") -> Dict[str, Any]:
+            return {
+                "name": node.name,
+                "prefix": node.prefix,
+                "plugins": [p.name for p in node.iter_plugins()],
+                "methods": {
+                    name: _build_method_description(entry)
+                    for name, entry in node._entries.items()
+                },
+                "children": {
+                    key: describe_node(child)
+                    for key, child in node._children.items()
+                },
+            }
+
+        def _build_method_description(entry: MethodEntry) -> Dict[str, Any]:
+            func = entry.func
+            signature = inspect.signature(func)
+            method_info: Dict[str, Any] = {
+                "name": entry.name,
+                "doc": inspect.getdoc(func) or func.__doc__ or "",
+                "signature": str(signature),
+                "return_type": _format_annotation(signature.return_annotation),
+                "plugins": list(entry.plugins),
+                "metadata_keys": list(entry.metadata.keys()),
+                "parameters": {},
+            }
+            params = method_info["parameters"]
+            for param_name, param in signature.parameters.items():
+                params[param_name] = {
+                    "type": _format_annotation(param.annotation),
+                    "default": None if param.default is inspect._empty else param.default,
+                    "required": param.default is inspect._empty,
+                }
+
+            pydantic_meta = entry.metadata.get("pydantic")
+            if pydantic_meta and pydantic_meta.get("enabled"):
+                model = pydantic_meta.get("model")
+                fields = getattr(model, "model_fields", {}) if model is not None else {}
+                for field_name, field in fields.items():
+                    field_info = params.setdefault(
+                        field_name,
+                        {
+                            "type": _format_annotation(getattr(field, "annotation", inspect._empty)),
+                            "default": None,
+                            "required": True,
+                        },
+                    )
+                    annotation = getattr(field, "annotation", inspect._empty)
+                    field_info["type"] = _format_annotation(annotation)
+                    default = getattr(field, "default", None)
+                    if not _is_pydantic_undefined(default):
+                        field_info["default"] = default
+                    required = getattr(field, "is_required", None)
+                    if callable(required):
+                        field_info["required"] = bool(required())
+                    else:
+                        field_info["required"] = field_info["default"] is None
+                    validation: Dict[str, Any] = {"source": "pydantic"}
+                    metadata = getattr(field, "metadata", None)
+                    if metadata:
+                        validation["metadata"] = list(metadata)
+                    json_extra = getattr(field, "json_schema_extra", None)
+                    if json_extra:
+                        validation["json_schema_extra"] = json_extra
+                    description = getattr(field, "description", None)
+                    if description:
+                        validation["description"] = description
+                    examples = getattr(field, "examples", None)
+                    if examples:
+                        validation["examples"] = examples
+                    if validation:
+                        field_info["validation"] = validation
+
+            return method_info
+
+        return describe_node(self)
+
+
+def _format_annotation(annotation: Any) -> str:
+    if annotation in (inspect._empty, None):
+        return "Any"
+    if isinstance(annotation, str):
+        return annotation
+    if getattr(annotation, "__module__", None) == "builtins":
+        return getattr(annotation, "__name__", str(annotation))
+    return getattr(annotation, "__qualname__", str(annotation))
+
+
+def _is_pydantic_undefined(value: Any) -> bool:
+    cls = getattr(value, "__class__", None)
+    return cls is not None and cls.__name__ == "PydanticUndefinedType"

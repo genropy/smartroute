@@ -12,8 +12,12 @@ class SimplePlugin(BasePlugin):
         return call_next
 
 
-# Register test plugin
-Router.register_plugin("simple", SimplePlugin)
+def ensure_plugin(name: str, plugin_cls: type) -> None:
+    if name not in Router.available_plugins():
+        Router.register_plugin(name, plugin_cls)
+
+
+ensure_plugin("simple", SimplePlugin)
 
 
 def test_router_decorator_and_plugin_validation():
@@ -27,7 +31,7 @@ def test_router_decorator_and_plugin_validation():
     def handle(self):  # pragma: no cover - exercised through decorator
         return "ok"
 
-    Router.register_plugin("simple", SimplePlugin)
+    ensure_plugin("simple", SimplePlugin)
     router.plug("simple")
     with pytest.raises(ValueError):
         router.plug("missing")
@@ -200,3 +204,49 @@ def test_register_plugin_validates():
 
     with pytest.raises(ValueError):
         Router.register_plugin("custom_edge", OtherPlugin)
+
+
+def test_describe_exposes_metadata():
+    class Child(RoutedClass):
+        api = Router(name="child")
+
+        @route("api")
+        def run(self):
+            """Run child handler."""
+            return "ok"
+
+    class Parent(RoutedClass):
+        api = Router(name="parent").plug("simple")
+
+        def __init__(self):
+            self.child = Child()
+            self.api.add_child(self.child, name="child")
+
+    info = Parent().api.describe()
+    assert info["name"] == "parent"
+    assert "child" in info["children"]
+    run_info = info["children"]["child"]["methods"]["run"]
+    assert run_info["doc"] == "Run child handler."
+    assert run_info["parameters"] == {}
+    assert run_info["return_type"] == "Any"
+
+
+def test_describe_includes_pydantic_validation():
+    class Validated(RoutedClass):
+        api = Router(name="validated").plug("pydantic")
+
+        @route("api")
+        def greet(self, name: str = "World") -> str:
+            """Greet someone."""
+            return f"Hello {name}"
+
+    info = Validated().api.describe()
+    greet = info["methods"]["greet"]
+    assert greet["name"] == "greet"
+    assert "Greet someone." in greet["doc"]
+    assert greet["return_type"] == "str"
+    param = greet["parameters"]["name"]
+    assert param["type"] == "str"
+    assert param["default"] == "World"
+    assert param["required"] is False
+    assert isinstance(param.get("validation"), dict)
