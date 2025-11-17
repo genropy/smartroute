@@ -475,13 +475,9 @@ class BoundRouter:
                 "prefix": node.prefix,
                 "plugins": [p.name for p in node.iter_plugins()],
                 "methods": {
-                    name: _build_method_description(entry)
-                    for name, entry in node._entries.items()
+                    name: _build_method_description(entry) for name, entry in node._entries.items()
                 },
-                "children": {
-                    key: describe_node(child)
-                    for key, child in node._children.items()
-                },
+                "children": {key: describe_node(child) for key, child in node._children.items()},
             }
 
         def _build_method_description(entry: MethodEntry) -> Dict[str, Any]:
@@ -512,7 +508,9 @@ class BoundRouter:
                     field_info = params.setdefault(
                         field_name,
                         {
-                            "type": _format_annotation(getattr(field, "annotation", inspect._empty)),
+                            "type": _format_annotation(
+                                getattr(field, "annotation", inspect._empty)
+                            ),
                             "default": None,
                             "required": True,
                         },
