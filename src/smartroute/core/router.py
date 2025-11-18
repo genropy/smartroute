@@ -545,6 +545,26 @@ class BoundRouter:
 
         return describe_node(self)
 
+    def members(self) -> Dict[str, Any]:
+        def capture(node: "BoundRouter") -> Dict[str, Any]:
+            return {
+                "name": node.name,
+                "router": node,
+                "instance": node._instance,
+                "handlers": {
+                    name: {
+                        "callable": entry.func,
+                        "metadata": entry.metadata,
+                    }
+                    for name, entry in node._entries.items()
+                },
+                "children": {
+                    child_name: capture(child) for child_name, child in node._children.items()
+                },
+            }
+
+        return capture(self)
+
 
 def _format_annotation(annotation: Any) -> str:
     if annotation in (inspect._empty, None):

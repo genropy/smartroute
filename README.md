@@ -79,7 +79,7 @@ pip install smartroute[pydantic]
 - **`Router`** – Descriptor for defining routers on classes
 - **`@route("name")`** – Decorator to register methods with a router
 - **`RoutedClass`** – Mixin that auto-finalizes routers on the class
-- **`BoundRouter`** – Runtime instance bound to an object with `get()`, `call()`, `add_child()`, etc.
+- **`BoundRouter`** – Runtime instance bound to un oggetto con `get()`, `call()`, `add_child()`, `describe()` e `members()` (runtime map).
 - **`BasePlugin`** – Base class for creating plugins with `on_decore` and `wrap_handler` hooks
 
 ## Examples
