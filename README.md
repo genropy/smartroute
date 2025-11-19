@@ -20,14 +20,15 @@ SmartRoute allows you to organize and dispatch method calls dynamically based on
 
 ## Key Features
 
-- **Instance-scoped routers** – Every object gets an isolated `BoundRouter` with its own plugin stack and configuration
+- **Instance-scoped routers** – Instantiate routers inside `__init__` with `Router(self, ...)` so every object gets its own configuration
 - **Hierarchical organization** – Build router trees with `add_child()` and dotted path traversal (`root.api.get("users.list")`)
 - **Composable plugins** – Hook into decoration and handler execution with `BasePlugin` (logging, validation, metrics)
 - **Plugin inheritance** – Plugins propagate automatically from parent to child routers
 - **Flexible registration** – Use `@route` decorator with aliases, prefixes, and custom names
-- **Runtime configuration** – Enable/disable plugins per-handler, set runtime data dynamically
+- **Runtime configuration** – Configure plugins at runtime with `routedclass.configure()` using target syntax
+- **Per-handler plugin config** – Enable/disable plugins per-handler with glob patterns and selective targeting
 - **SmartAsync support** – Optional integration with async execution
-- **High test coverage** – >95% statement coverage with comprehensive edge case tests
+- **100% test coverage** – Complete statement coverage with 59 comprehensive tests
 
 ## Quick Example
 
@@ -37,10 +38,9 @@ SmartRoute allows you to organize and dispatch method calls dynamically based on
 from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
-    api = Router(name="service")
-
     def __init__(self, label: str):
         self.label = label
+        self.api = Router(self, name="api")
 
     @route("api")
     def describe(self):
@@ -76,10 +76,9 @@ pip install smartroute[pydantic]
 
 ## Core Concepts
 
-- **`Router`** – Descriptor for defining routers on classes
-- **`@route("name")`** – Decorator to register methods with a router
-- **`RoutedClass`** – Mixin that auto-finalizes routers on the class
-- **`BoundRouter`** – Runtime instance bound to un oggetto con `get()`, `call()`, `add_child()`, `describe()` e `members()` (runtime map).
+- **`Router`** – Runtime router bound directly to an object via `Router(self, name=\"api\")`
+- **`@route(\"name\")`** – Decorator that marks bound methods for the router with the matching name
+- **`RoutedClass`** – Mixin that tracks routers per instance and exposes the `routedclass` proxy
 - **`BasePlugin`** – Base class for creating plugins with `on_decore` and `wrap_handler` hooks
 - **`obj.routedclass`** – Proxy esposto da ogni RoutedClass che offre helper come `get_router(...)` e `configure(...)` per gestire router/plugin senza inquinare il namespace dell’istanza.
 
@@ -93,10 +92,9 @@ pip install smartroute[pydantic]
 from smartroute import RoutedClass, Router, route
 
 class SubService(RoutedClass):
-    routes = Router(prefix="handle_")
-
     def __init__(self, prefix: str):
         self.prefix = prefix
+        self.routes = Router(self, name="routes", prefix="handle_")
 
     @route("routes")
     def handle_list(self):
@@ -117,9 +115,8 @@ assert sub.routes.get("detail")(10) == "users:detail:10"
 
 ```python
 class RootAPI(RoutedClass):
-    api = Router(name="root")
-
     def __init__(self):
+        self.api = Router(self, name="api")
         users = SubService("users")
         products = SubService("products")
 
@@ -131,15 +128,36 @@ assert root.api.get("users.list")() == "users:list"
 assert root.api.get("products.detail")(5) == "products:detail:5"
 ```
 
+### Manual Entry Registration
+
+Routers can register handlers dynamically with `add_entry()` for patterns that don't rely on decorators:
+
+```python
+class DynamicService(RoutedClass):
+    def __init__(self):
+        self.dynamic = Router(self, name="dynamic", auto_discover=False)
+        self.dynamic.add_entry(self.handle_alpha)
+        self.dynamic.add_entry("handle_beta")
+
+    def handle_alpha(self):
+        return "alpha"
+
+    def handle_beta(self):
+        return "beta"
+
+svc = DynamicService()
+assert svc.dynamic.get("handle_alpha")() == "alpha"
+assert svc.dynamic.get("handle_beta")() == "beta"
+```
+
 ### Bulk Child Registration
 
 <!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
 
 ```python
 class RootAPI(RoutedClass):
-    api = Router(name="root")
-
     def __init__(self):
+        self.api = Router(self, name="api")
         self.users = SubService("users")
         self.products = SubService("products")
 
@@ -161,7 +179,8 @@ Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by n
 
 ```python
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug("logging")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
 
     @route("api")
     def do_work(self):
@@ -177,7 +196,8 @@ result = svc.api.get("do_work")()  # Logged automatically
 
 ```python
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug("pydantic")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:
@@ -186,9 +206,6 @@ class ValidateService(RoutedClass):
 svc = ValidateService()
 assert svc.api.get("concat")("hello", 3) == "hello:3"
 assert svc.api.get("concat")("hi") == "hi:1"  # Default works
-
-# Invalid types raise ValidationError
-# svc.api.get("concat")(123, "oops")  # ValidationError!
 ```
 
 ### Custom Plugins
@@ -220,10 +237,12 @@ Router.register_plugin("metrics", MetricsPlugin)
 
 # Use it like built-in plugins
 class Service(RoutedClass):
-    api = Router().plug("metrics")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("metrics")
 
     @route("api")
-    def work(self): return "done"
+    def work(self):
+        return "done"
 
 svc = Service()
 svc.api.get("work")()
@@ -231,6 +250,39 @@ print(svc.api.metrics.call_counts)  # {"work": 1}
 ```
 
 See [llm-docs/PATTERNS.md#pattern-12-custom-plugin-development](llm-docs/PATTERNS.md) for more examples.
+
+### Plugin Configuration
+
+<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
+
+Configure plugins at runtime with target syntax:
+
+```python
+class ConfService(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
+
+    @route("api")
+    def foo(self):
+        return "foo"
+
+    @route("api")
+    def bar(self):
+        return "bar"
+
+svc = ConfService()
+
+# Global configuration - applies to all handlers
+svc.routedclass.configure("api:logging/_all_", level="debug")
+
+# Handler-specific configuration
+svc.routedclass.configure("api:logging/foo", enabled=False)
+
+# Glob pattern configuration
+svc.routedclass.configure("api:logging/b*", level="info")
+```
+
+See [Plugin Configuration Guide](docs/guide/plugin-configuration.md) for complete documentation.
 
 ## Documentation
 
@@ -242,13 +294,13 @@ See [llm-docs/PATTERNS.md#pattern-12-custom-plugin-development](llm-docs/PATTERN
 
 ## Testing
 
-SmartRoute targets >95% statement coverage (currently ~98%):
+SmartRoute achieves 100% statement coverage with 59 comprehensive tests:
 
 ```bash
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
 ```
 
-All examples in documentation are verified by the test suite.
+All examples in documentation are verified by the test suite and linked with test anchors.
 
 ## Repository Structure
 
@@ -256,7 +308,7 @@ All examples in documentation are verified by the test suite.
 smartroute/
 ├── src/smartroute/
 │   ├── core/               # Core router implementation
-│   │   ├── router.py       # Router and BoundRouter
+│   │   ├── router.py       # Router runtime implementation
 │   │   ├── decorators.py   # @route and @routers decorators
 │   │   └── base.py         # BasePlugin and MethodEntry
 │   └── plugins/            # Built-in plugins
@@ -274,9 +326,9 @@ smartroute/
 
 ## Project Status
 
-SmartRoute is currently in **alpha** (v0.1.0). The core API is stable, but documentation and additional plugins are still being developed.
+SmartRoute is currently in **alpha** (v0.4.0). The core API is stable with complete documentation.
 
-- **Test Coverage**: >95%
+- **Test Coverage**: 100% (59 tests, 707 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 
@@ -288,10 +340,10 @@ SmartRoute is currently in **alpha** (v0.1.0). The core API is stable, but docum
 
 ## Roadmap
 
-- Complete Sphinx documentation with tutorials and API reference
+- ✅ Complete Sphinx documentation with tutorials and API reference
 - Additional plugins (async, storage, audit trail, metrics)
-- Benchmarks and performance comparison with SmartSwitch
-- Migration guide from SmartSwitch
+- Benchmarks and performance comparison
+- Example applications and use cases
 
 ## Contributing
 

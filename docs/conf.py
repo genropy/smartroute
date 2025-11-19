@@ -21,6 +21,7 @@ extensions = [
     "sphinx.ext.intersphinx",       # Link to other projects' docs
     "sphinx.ext.todo",              # TODO notes support
     "sphinx.ext.coverage",          # Coverage reporting
+    "sphinx.ext.doctest",           # Execute examples in docs
     "sphinx.ext.githubpages",       # GitHub Pages support
     "sphinx_autodoc_typehints",     # Type hints in docs
     "myst_parser",                  # Markdown support (CRITICAL)

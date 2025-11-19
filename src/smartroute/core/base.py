@@ -22,6 +22,14 @@ class MethodEntry:
 class BasePlugin:
     """Hook interface + configuration helpers for router plugins."""
 
+    __slots__ = (
+        "name",
+        "description",
+        "_global_config",
+        "_handler_configs",
+        "config",
+    )
+
     def __init__(
         self,
         name: Optional[str] = None,

@@ -8,9 +8,9 @@ Panoramica
 
 | Aspetto                     | SmartSwitch (legacy)                                  | SmartRoute (nuovo)                                                       |
 | --------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
-| Architettura               | Switcher per classe, stato condiviso tra le istanze   | Router instance-scoped (BoundRouter per ogni oggetto)                    |
+| Architettura               | Switcher per classe, stato condiviso tra le istanze   | Router istanziato a runtime in `__init__` per ogni oggetto               |
 | Plugin                     | Global registry + ereditarietà opzionale              | Plugin per istanza con registry globale e propagazione automatica        |
-| Child discovery            | `add_child` con scansione oggetti (Switchers)         | `add_child` con BoundRouter, mapping/iterable e recursion controllata    |
+| Child discovery            | `add_child` con scansione oggetti (Switchers)         | `add_child` con Router runtime, mapping/iterable e recursion controllata |
 | Decorator                  | `@switch` + `switchers()`                             | `@route` + `routers()`                                                   |
 | Compat layer               | API storica (SwitchClass/Switcher)                    | Terminologia nuova (Router) e nessuna compatibilità implicita           |
 | Dipendenze                 | Basato su `smartswitch.core`                          | Core completamente autonomo                                              |
@@ -35,7 +35,7 @@ Parità e differenze funzionali
 - **Scope dei plugin**: SmartSwitch supportava ereditarietà esplicita; SmartRoute eredita automaticamente quando si attacca un child router.
 - **Registrazione globale**: SmartSwitch aveva `register_plugin` e referenze per stringa; SmartRoute ora espone un registry interno.
 - **API pubblica**: SmartRoute espone solo `Router`, `route`, `RoutedClass`. Non esistono alias (es. Switcher) perché il rename è definitivo.
-- **Child discovery**: SmartRoute accetta BoundRouter e collection (dict/list) già pronti, ma non tenta di riusare switcher non finalizzati come avveniva in alcune parti legacy.
+- **Child discovery**: SmartRoute accetta Router runtime e collection (dict/list) già pronti, ma non tenta di riusare switcher non finalizzati come avveniva in alcune parti legacy.
 - **Documentazione**: SmartSwitch possiede doc dettagliata (guide, reference); SmartRoute ha README e skeleton, manca la documentazione estesa.
 - **Compatibilità SmartPublisher**: Non ancora verificata; eventuali script/pipeline che si aspettano `Switcher` potrebbero fallire.
 
@@ -84,7 +84,7 @@ Guida alla migrazione
    - Se usavi plugin registrati per stringa, istanziali esplicitamente o aggiungi un piccolo factory locale.
 
 3. **Child management**:
-   - Se stavi passando direttamente `Switcher` come descriptor, ora devi passare l’istanza o un `BoundRouter`.
+   - Se stavi passando direttamente `Switcher` come descriptor, ora devi istanziare il router nell’`__init__` e passare l’istanza del servizio (che contiene il relativo `Router`).
    - Usa mapping/iterable per nominare i children quando necessario.
 
 4. **Runtime options**:

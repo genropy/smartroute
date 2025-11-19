@@ -9,10 +9,9 @@ from smartroute.core import BasePlugin  # Not public API
 
 
 class Service(RoutedClass):
-    api = Router(name="service")
-
     def __init__(self, label: str):
         self.label = label
+        self.api = Router(self, name="api")
 
     @route("api")
     def describe(self):
@@ -20,10 +19,9 @@ class Service(RoutedClass):
 
 
 class SubService(RoutedClass):
-    routes = Router(prefix="handle_")
-
     def __init__(self, prefix: str):
         self.prefix = prefix
+        self.routes = Router(self, name="routes", prefix="handle_")
 
     @route("routes")
     def handle_list(self):
@@ -35,10 +33,9 @@ class SubService(RoutedClass):
 
 
 class RootAPI(RoutedClass):
-    api = Router(name="root")
-
     def __init__(self):
         self.services: list[Service] = []
+        self.api = Router(self, name="api")
 
 
 class CapturePlugin(BasePlugin):
@@ -62,10 +59,9 @@ Router.register_plugin("capture", CapturePlugin)
 
 
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug("capture")
-
     def __init__(self):
         self.touched = False
+        self.api = Router(self, name="api").plug("capture")
 
     @route("api")
     def do_work(self):
@@ -90,7 +86,8 @@ Router.register_plugin("toggle", TogglePlugin)
 
 
 class ToggleService(RoutedClass):
-    api = Router(name="toggle").plug("toggle")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("toggle")
 
     @route("api")
     def touch(self):
@@ -98,7 +95,8 @@ class ToggleService(RoutedClass):
 
 
 class NestedLeaf(RoutedClass):
-    leaf_switch = Router(name="leaf")
+    def __init__(self):
+        self.leaf_switch = Router(self, name="leaf_switch")
 
     @route("leaf_switch")
     def leaf_ping(self):
@@ -111,11 +109,23 @@ class NestedBranch:
 
 
 class NestedRoot(RoutedClass):
-    api = Router(name="root")
-
     def __init__(self):
+        self.api = Router(self, name="api")
         self.branch = NestedBranch()
         self.api.add_child(self.branch)
+
+
+class DynamicRouterService(RoutedClass):
+    def __init__(self):
+        self.dynamic = Router(self, name="dynamic", auto_discover=False)
+        self.dynamic.add_entry(self.dynamic_alpha)
+        self.dynamic.add_entry("dynamic_beta")
+
+    def dynamic_alpha(self):
+        return "alpha"
+
+    def dynamic_beta(self):
+        return "beta"
 
 
 def test_instance_bound_methods_are_isolated():
@@ -152,13 +162,9 @@ def test_add_child_requires_instance():
     root = RootAPI()
     users = SubService("users")
 
-    # Passing the descriptor should fail
-    try:
-        root.api.add_child(SubService.routes)
-    except TypeError as exc:
-        assert "instance" in str(exc)
-    else:
-        raise AssertionError("add_child should reject Router descriptors")
+    # Passing a class instead of an instance should fail
+    with pytest.raises(TypeError):
+        root.api.add_child(SubService)
 
     # Passing the instance works
     attached = root.api.add_child(users)
@@ -202,9 +208,19 @@ def test_plugins_are_per_instance_and_accessible():
     assert other.api.capture.calls == []
 
 
+def test_dynamic_router_add_entry_runtime():
+    svc = DynamicRouterService()
+    assert svc.dynamic.get("dynamic_alpha")() == "alpha"
+    assert svc.dynamic.get("dynamic_beta")() == "beta"
+    # Adding via string
+    svc.dynamic.add_entry("dynamic_alpha", alias="alpha_alias")
+    assert svc.dynamic.get("alpha_alias")() == "alpha"
+
+
 def test_parent_plugins_inherit_to_children():
     class ParentAPI(RoutedClass):
-        api = Router(name="parent").plug("capture")
+        def __init__(self):
+            self.api = Router(self, name="api").plug("capture")
 
     parent = ParentAPI()
     child = SubService("child")
@@ -249,7 +265,8 @@ def test_get_with_smartasync(monkeypatch):
 
 def test_get_uses_init_default_handler():
     class DefaultService(RoutedClass):
-        api = Router(get_default_handler=lambda: "init-default")
+        def __init__(self):
+            self.api = Router(self, name="api", get_default_handler=lambda: "init-default")
 
     svc = DefaultService()
     handler = svc.api.get("missing")
@@ -258,7 +275,8 @@ def test_get_uses_init_default_handler():
 
 def test_get_runtime_override_init_default_handler():
     class DefaultService(RoutedClass):
-        api = Router(get_default_handler=lambda: "init-default")
+        def __init__(self):
+            self.api = Router(self, name="api", get_default_handler=lambda: "init-default")
 
     svc = DefaultService()
     handler = svc.api.get("missing", default_handler=lambda: "runtime")
@@ -286,7 +304,8 @@ def test_get_uses_init_smartasync(monkeypatch):
     monkeypatch.setitem(sys.modules, "smartasync", fake_module)
 
     class AsyncService(RoutedClass):
-        api = Router(get_use_smartasync=True)
+        def __init__(self):
+            self.api = Router(self, name="api", get_use_smartasync=True)
 
         @route("api")
         def do_work(self):
@@ -313,7 +332,8 @@ def test_get_can_disable_init_smartasync(monkeypatch):
     monkeypatch.setitem(sys.modules, "smartasync", fake_module)
 
     class AsyncService(RoutedClass):
-        api = Router(get_use_smartasync=True)
+        def __init__(self):
+            self.api = Router(self, name="api", get_use_smartasync=True)
 
         @route("api")
         def do_work(self):

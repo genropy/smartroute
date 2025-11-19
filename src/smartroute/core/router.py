@@ -1,4 +1,4 @@
-"""Router descriptors and bound router instances."""
+"""Runtime Router implementation without class descriptors."""
 
 from __future__ import annotations
 
@@ -13,7 +13,10 @@ from smartseeds import SmartOptions
 
 from .base import BasePlugin, MethodEntry
 
-__all__ = ["RouteSpec", "Router"]
+__all__ = ["Router", "TARGET_ATTR", "ROUTER_REGISTRY_ATTR"]
+
+TARGET_ATTR = "__smartroute_targets__"
+ROUTER_REGISTRY_ATTR = "__smartroute_router_registry__"
 
 _ACTIVATION_CTX: contextvars.ContextVar[Dict[Any, bool] | None] = contextvars.ContextVar(
     "smartroute_activation", default=None
@@ -21,7 +24,6 @@ _ACTIVATION_CTX: contextvars.ContextVar[Dict[Any, bool] | None] = contextvars.Co
 _RUNTIME_CTX: contextvars.ContextVar[Dict[Any, Dict[str, Any]] | None] = contextvars.ContextVar(
     "smartroute_runtime", default=None
 )
-_BOUND_ATTR = "__smartroute_bound_routers__"
 _PLUGIN_REGISTRY: Dict[str, Type[BasePlugin]] = {}
 
 
@@ -42,14 +44,6 @@ def _get_runtime_map() -> Dict[Any, Dict[str, Any]]:
 
 
 @dataclass
-class RouteSpec:
-    """Metadata collected during decoration time."""
-
-    func: Callable
-    alias: Optional[str]
-
-
-@dataclass
 class _PluginSpec:
     factory: Type[BasePlugin]
     kwargs: Dict[str, Any]
@@ -66,84 +60,64 @@ class _PluginSpec:
 
 
 class Router:
-    """
-    Descriptor-style router used as decorator on instance methods.
+    """Router bound directly to an object instance."""
 
-    Example::
-
-        class UsersAPI:
-            routes = Router(prefix="handle_")
-
-            @routes
-            def handle_list(self): ...
-    """
+    __slots__ = (
+        "instance",
+        "name",
+        "prefix",
+        "_entries",
+        "_handlers",
+        "_children",
+        "_plugin_specs",
+        "_plugins",
+        "_plugins_by_name",
+        "_get_defaults",
+        "_inherited_from",
+    )
 
     def __init__(
         self,
+        owner: Any,
         name: Optional[str] = None,
         prefix: Optional[str] = None,
         *,
         get_default_handler: Optional[Callable] = None,
         get_use_smartasync: Optional[bool] = None,
         get_kwargs: Optional[Dict[str, Any]] = None,
+        auto_discover: bool = True,
+        auto_selector: str = "*",
     ):
+        if owner is None:
+            raise ValueError("Router requires a parent instance")
+        self.instance = owner
         self.name = name
         self.prefix = prefix or ""
-        self._specs: list[RouteSpec] = []
-        self._attr_name: Optional[str] = None
+        self._entries: Dict[str, MethodEntry] = {}
+        self._handlers: Dict[str, Callable] = {}
+        self._children: Dict[str, Router] = {}
         self._plugin_specs: List[_PluginSpec] = []
+        self._plugins: List[BasePlugin] = []
+        self._plugins_by_name: Dict[str, BasePlugin] = {}
+        self._inherited_from: set[int] = set()
         defaults: Dict[str, Any] = dict(get_kwargs or {})
         if get_default_handler is not None:
             defaults.setdefault("default_handler", get_default_handler)
         if get_use_smartasync is not None:
             defaults.setdefault("use_smartasync", get_use_smartasync)
         self._get_defaults: Dict[str, Any] = defaults
+        self._register_with_owner()
+        if auto_discover:
+            self.add_entry(auto_selector)
 
-    # -----------------------------------------------------
-    # Descriptor protocol
-    # -----------------------------------------------------
-    def __set_name__(self, owner: type, name: str) -> None:
-        if self.name is None:
-            self.name = name
-        self._attr_name = name
+    def _register_with_owner(self) -> None:
+        hook = getattr(self.instance, "_register_router", None)
+        if callable(hook):
+            hook(self)
 
-    def __get__(self, instance: Any, owner: type | None = None):
-        if instance is None:
-            return self
-        registry = self._get_instance_registry(instance)
-        bound = registry.get(self)
-        if bound is None:
-            bound = BoundRouter(self, instance)
-            registry[self] = bound
-        return bound
-
-    @staticmethod
-    def _get_instance_registry(instance: Any) -> Dict["Router", "BoundRouter"]:
-        registry = getattr(instance, _BOUND_ATTR, None)
-        if registry is None:
-            registry = {}
-            setattr(instance, _BOUND_ATTR, registry)
-        return registry
-
-    # -----------------------------------------------------
-    # Decorator interface
-    # -----------------------------------------------------
-    def __call__(self, arg: Any = None):
-        if callable(arg) and not isinstance(arg, str):
-            return self._register(arg, alias=None)
-        if isinstance(arg, str):
-            alias = arg
-
-            def decorator(func: Callable) -> Callable:
-                return self._register(func, alias=alias)
-
-            return decorator
-        raise TypeError("@Router decorator expects a function or alias string")
-
-    def _register(self, func: Callable, alias: Optional[str]) -> Callable:
-        self._specs.append(RouteSpec(func=func, alias=alias))
-        return func
-
+    # ------------------------------------------------------------------
+    # Plugin registration
+    # ------------------------------------------------------------------
     @classmethod
     def register_plugin(cls, name: str, plugin_class: Type[BasePlugin]) -> None:
         if not isinstance(plugin_class, type) or not issubclass(plugin_class, BasePlugin):
@@ -160,75 +134,163 @@ class Router:
         return dict(_PLUGIN_REGISTRY)
 
     def plug(self, plugin: str, **config: Any) -> "Router":
-        """Register a plugin by name. Plugin must be registered first with Router.register_plugin().
-
-        IMPORTANT: Only string plugin names are accepted. Plugins must be pre-registered
-        using Router.register_plugin() before they can be used with plug().
-
-        Built-in plugins 'logging' and 'pydantic' are pre-registered and ready to use.
-
-        Args:
-            plugin: Plugin name (string). Must be registered via Router.register_plugin().
-            **config: Optional configuration passed to plugin constructor.
-
-        Returns:
-            Self for chaining.
-
-        Raises:
-            ValueError: If plugin name is not registered.
-            TypeError: If plugin is not a string.
-
-        Example:
-            >>> Router().plug("logging")
-            >>> Router().plug("pydantic")
-        """
         if not isinstance(plugin, str):
             raise TypeError(
-                f"Plugin must be a string (plugin name), got {type(plugin).__name__}. "
-                "Register custom plugins with Router.register_plugin() first, "
-                "then reference them by name string."
+                f"Plugin must be referenced by name string, got {type(plugin).__name__}"
             )
-
         plugin_class = _PLUGIN_REGISTRY.get(plugin)
         if plugin_class is None:
             available = ", ".join(sorted(_PLUGIN_REGISTRY)) or "none"
             raise ValueError(
-                f"Unknown plugin '{plugin}'. Register it with Router.register_plugin(). "
-                f"Available plugins: {available}"
+                f"Unknown plugin '{plugin}'. Register it first. Available plugins: {available}"
             )
-
-        kwargs = dict(config)
-        spec = _PluginSpec(plugin_class, kwargs, alias=plugin)
+        spec = _PluginSpec(plugin_class, dict(config), alias=plugin)
         self._plugin_specs.append(spec)
+        instance = spec.instantiate()
+        self._plugins.append(instance)
+        self._plugins_by_name[instance.name] = instance
+        self._apply_plugin_to_entries(instance)
+        self._rebuild_handlers()
         return self
 
+    # ------------------------------------------------------------------
+    # Entry registration
+    # ------------------------------------------------------------------
+    def add_entry(
+        self,
+        target: Any,
+        *,
+        alias: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        replace: bool = False,
+        **options: Any,
+    ) -> "Router":
+        """Register handlers by name, callable, or wildcard."""
+        if isinstance(target, (list, tuple, set)):
+            for entry in target:
+                self.add_entry(
+                    entry,
+                    alias=alias,
+                    metadata=dict(metadata or {}),
+                    replace=replace,
+                    **options,
+                )
+            return self
 
-class BoundRouter:
-    """Router bound to a specific object instance."""
+        if isinstance(target, str):
+            target = target.strip()
+            if not target:
+                return self
+            if target in {"*", "_all_", "__all__"}:
+                self._register_marked(
+                    alias=alias, metadata=metadata, replace=replace, extra=options
+                )
+                return self
+            if "," in target:
+                for chunk in target.split(","):
+                    chunk = chunk.strip()
+                    if chunk:
+                        self.add_entry(
+                            chunk,
+                            alias=alias,
+                            metadata=dict(metadata or {}),
+                            replace=replace,
+                            **options,
+                        )
+                return self
+            bound = getattr(self.instance, target)
+        elif callable(target):
+            bound = (
+                target
+                if inspect.ismethod(target)
+                else target.__get__(self.instance, type(self.instance))
+            )
+        else:
+            raise TypeError(f"Unsupported add_entry target: {target!r}")
 
-    def __init__(self, blueprint: Router, instance: Any):
-        self._blueprint = blueprint
-        self._instance = instance
-        self.name = blueprint.name
-        self.prefix = blueprint.prefix
-        self._get_defaults: Dict[str, Any] = dict(blueprint._get_defaults)
-        self._handlers: Dict[str, Callable] = {}
-        self._children: Dict[str, BoundRouter] = {}
-        self._plugin_specs = list(blueprint._plugin_specs)
-        self._plugins: List[BasePlugin] = [spec.instantiate() for spec in self._plugin_specs]
-        self._plugins_by_name: Dict[str, BasePlugin] = {p.name: p for p in self._plugins}
-        self._entries: Dict[str, MethodEntry] = {}
-        self._inherited_from: set[int] = set()
-        self._build_entries()
+        entry_meta = dict(metadata or {})
+        entry_meta.update(options)
+        self._register_callable(bound, alias=alias, metadata=entry_meta, replace=replace)
+        return self
+
+    def _register_callable(
+        self,
+        bound: Callable,
+        *,
+        alias: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        replace: bool = False,
+    ) -> None:
+        logical_name = self._resolve_name(bound.__name__, alias=alias)
+        if logical_name in self._entries and not replace:
+            raise ValueError(f"Handler name collision: {logical_name}")
+        entry = MethodEntry(
+            name=logical_name,
+            func=bound,
+            router=self,
+            plugins=[p.name for p in self._plugins],
+            metadata=dict(metadata or {}),
+        )
+        self._entries[logical_name] = entry
         for plugin in self._plugins:
-            self._apply_plugin(plugin)
+            plugin.on_decore(self, entry.func, entry)
         self._rebuild_handlers()
 
-    # -----------------------------------------------------
-    # Plugin activation & runtime data helpers
-    # -----------------------------------------------------
+    def _register_marked(
+        self,
+        *,
+        alias: Optional[str],
+        metadata: Optional[Dict[str, Any]],
+        replace: bool,
+        extra: Dict[str, Any],
+    ) -> None:
+        for func, marker in self._iter_marked_methods():
+            marker_alias = marker.pop("alias", None)
+            entry_meta = dict(metadata or {})
+            entry_meta.update(marker)
+            entry_meta.update(extra)
+            bound = func.__get__(self.instance, type(self.instance))
+            self._register_callable(
+                bound,
+                alias=alias or marker_alias,
+                metadata=entry_meta,
+                replace=replace,
+            )
+
+    def _iter_marked_methods(self) -> Iterator[Tuple[Callable, Dict[str, Any]]]:
+        cls = type(self.instance)
+        seen: set[int] = set()
+        for base in reversed(cls.__mro__):
+            base_dict = vars(base)
+            for attr_name, value in base_dict.items():
+                if not inspect.isfunction(value):
+                    continue
+                func_id = id(value)
+                if func_id in seen:
+                    continue
+                seen.add(func_id)
+                markers = getattr(value, TARGET_ATTR, None)
+                if not markers:
+                    continue
+                for marker in markers:
+                    if marker.get("name") != self.name:
+                        continue
+                    payload = dict(marker)
+                    payload.pop("name", None)
+                    yield value, payload
+
+    def _resolve_name(self, func_name: str, *, alias: Optional[str]) -> str:
+        if alias:
+            return alias
+        if self.prefix and func_name.startswith(self.prefix):
+            return func_name[len(self.prefix) :]
+        return func_name
+
+    # ------------------------------------------------------------------
+    # Plugin runtime helpers
+    # ------------------------------------------------------------------
     def _activation_key(self, method_name: str, plugin_name: str) -> Tuple[int, str, str]:
-        return (id(self._instance), method_name, plugin_name)
+        return (id(self.instance), method_name, plugin_name)
 
     def set_plugin_enabled(self, method_name: str, plugin_name: str, enabled: bool = True) -> None:
         mapping = _get_activation_map()
@@ -242,7 +304,7 @@ class BoundRouter:
         return bool(value)
 
     def _runtime_key(self, method_name: str, plugin_name: str) -> Tuple[int, str, str]:
-        return (id(self._instance), method_name, plugin_name)
+        return (id(self.instance), method_name, plugin_name)
 
     def set_runtime_data(self, method_name: str, plugin_name: str, key: str, value: Any) -> None:
         mapping = _get_runtime_map()
@@ -256,29 +318,9 @@ class BoundRouter:
         slot = mapping.get(self._runtime_key(method_name, plugin_name), {})
         return slot.get(key, default)
 
-    # -----------------------------------------------------
-    # Handler registration / rebuild
-    # -----------------------------------------------------
-    def _build_entries(self) -> None:
-        entries: Dict[str, MethodEntry] = {}
-        for spec in self._blueprint._specs:
-            logical_name = self._resolve_name(spec)
-            if logical_name in entries:
-                raise ValueError(f"Handler name collision: {logical_name}")
-            bound_method = spec.func.__get__(self._instance, type(self._instance))
-            entry = MethodEntry(
-                name=logical_name,
-                func=bound_method,
-                router=self,
-                plugins=[p.name for p in self._plugins],
-            )
-            entries[logical_name] = entry
-        self._entries = entries
-
-    def _apply_plugin(self, plugin: BasePlugin) -> None:
-        for entry in self._entries.values():
-            plugin.on_decore(self, entry.func, entry)
-
+    # ------------------------------------------------------------------
+    # Handler execution
+    # ------------------------------------------------------------------
     def _rebuild_handlers(self) -> None:
         handlers: Dict[str, Callable] = {}
         for logical_name, entry in self._entries.items():
@@ -301,17 +343,15 @@ class BoundRouter:
 
         return layer
 
-    def _resolve_name(self, spec: RouteSpec) -> str:
-        if spec.alias:
-            return spec.alias
-        func_name = spec.func.__name__
-        if self.prefix and func_name.startswith(self.prefix):
-            return func_name[len(self.prefix) :]
-        return func_name
+    def _apply_plugin_to_entries(self, plugin: BasePlugin) -> None:
+        for entry in self._entries.values():
+            if plugin.name not in entry.plugins:
+                entry.plugins.append(plugin.name)
+            plugin.on_decore(self, entry.func, entry)
 
-    # -----------------------------------------------------
+    # ------------------------------------------------------------------
     # Public API
-    # -----------------------------------------------------
+    # ------------------------------------------------------------------
     def get(self, selector: str, **options: Any) -> Callable:
         opts = SmartOptions(options, defaults=self._get_defaults)
         default = getattr(opts, "default_handler", None)
@@ -327,7 +367,6 @@ class BoundRouter:
             )
 
         if use_smartasync:
-            # Local import to avoid hard dependency if smartasync not installed
             from smartasync import smartasync  # type: ignore
 
             handler = smartasync(handler)
@@ -336,8 +375,11 @@ class BoundRouter:
 
     __getitem__ = get
 
+    def call(self, selector: str, *args, **kwargs):
+        handler = self.get(selector)
+        return handler(*args, **kwargs)
+
     def entries(self) -> Tuple[str, ...]:
-        """Return tuple of local handler names."""
         return tuple(self._handlers.keys())
 
     def iter_plugins(self) -> List[BasePlugin]:
@@ -349,7 +391,31 @@ class BoundRouter:
             raise AttributeError(f"No plugin named '{name}' attached to router '{self.name}'")
         return plugin
 
-    def _inherit_plugins_from(self, parent: "BoundRouter") -> None:
+    # ------------------------------------------------------------------
+    # Children management
+    # ------------------------------------------------------------------
+    def add_child(self, child: Any, name: Optional[str] = None) -> "Router":
+        candidates = list(self._iter_child_routers(child))
+        if not candidates:
+            raise TypeError(f"Object {child!r} does not expose Router instances")
+        attached: Optional[Router] = None
+        for attr_name, router in candidates:
+            key = name or attr_name or router.name or "child"
+            if key in self._children and self._children[key] is not router:
+                raise ValueError(f"Child name collision: {key}")
+            self._children[key] = router
+            router._inherit_plugins_from(self)
+            attached = router
+        assert attached is not None
+        return attached
+
+    def get_child(self, name: str) -> "Router":
+        try:
+            return self._children[name]
+        except KeyError:
+            raise KeyError(f"No child route named {name!r}")
+
+    def _inherit_plugins_from(self, parent: "Router") -> None:
         parent_id = id(parent)
         if parent_id in self._inherited_from:
             return
@@ -362,41 +428,15 @@ class BoundRouter:
         self._plugins = new_plugins + self._plugins
         for plugin in new_plugins:
             self._plugins_by_name.setdefault(plugin.name, plugin)
-            self._apply_plugin(plugin)
+            self._apply_plugin_to_entries(plugin)
         self._rebuild_handlers()
-
-    # -----------------------------------------------------
-    # Children management
-    # -----------------------------------------------------
-    def add_child(self, child: Any, name: Optional[str] = None) -> BoundRouter:
-        candidates = list(self._iter_child_routers(child))
-        if not candidates:
-            raise TypeError(f"Object {child!r} does not expose Router descriptors")
-        attached: BoundRouter | None = None
-        for attr_name, bound_router in candidates:
-            key = name or attr_name or bound_router.name
-            if key in self._children and self._children[key] is not bound_router:
-                raise ValueError(f"Child name collision: {key}")
-            self._children[key] = bound_router
-            bound_router._inherit_plugins_from(self)
-            attached = bound_router
-        assert attached is not None
-        return attached
-
-    def get_child(self, name: str) -> BoundRouter:
-        try:
-            return self._children[name]
-        except KeyError:
-            raise KeyError(f"No child route named {name!r}")
 
     def _iter_child_routers(
         self, source: Any, seen: Optional[set[int]] = None, override_name: Optional[str] = None
-    ) -> Iterator[Tuple[str, BoundRouter]]:
-        if isinstance(source, BoundRouter):
-            yield override_name or source.name or "child", source
-            return
+    ) -> Iterator[Tuple[str, "Router"]]:
         if isinstance(source, Router):
-            raise TypeError("Pass an object instance, not the Router descriptor")
+            yield override_name or source.name or "router", source
+            return
         if seen is None:
             seen = set()
         obj_id = id(source)
@@ -406,8 +446,8 @@ class BoundRouter:
 
         if isinstance(source, Mapping):
             for key, value in source.items():
-                key_hint = key if isinstance(key, str) else None
-                yield from self._iter_child_routers(value, seen, key_hint)
+                hint = key if isinstance(key, str) else None
+                yield from self._iter_child_routers(value, seen, hint)
             return
 
         if isinstance(source, Iterable) and not isinstance(source, (str, bytes, bytearray)):
@@ -420,61 +460,64 @@ class BoundRouter:
                 yield from self._iter_child_routers(target, seen, name_hint)
             return
 
-        names_and_bounds: List[Tuple[str, BoundRouter]] = []
-        cls = type(source)
-        for attr_name, value in vars(cls).items():
+        router_items: List[Tuple[str, Router]] = []
+        for attr_name, value in self._iter_instance_attributes(source):
+            if value is None or value is source:
+                continue
             if isinstance(value, Router):
-                bound = value.__get__(source, cls)
-                names_and_bounds.append((attr_name, bound))
+                router_items.append((attr_name, value))
+                continue
+            yield from self._iter_child_routers(value, seen, None)
 
-        inst_dict = getattr(source, "__dict__", None)
-        if inst_dict:
-            for attr_name, value in inst_dict.items():
-                if value is None or value is source:
-                    continue
-                if attr_name == _BOUND_ATTR:
-                    continue
-                if isinstance(value, BoundRouter):
-                    names_and_bounds.append((attr_name, value))
-                    continue
-                yield from self._iter_child_routers(value, seen, None)
-
-        if not names_and_bounds:
+        if not router_items:
             return
 
-        if override_name and len(names_and_bounds) == 1:
-            yield (override_name, names_and_bounds[0][1])
+        if override_name and len(router_items) == 1:
+            yield (override_name, router_items[0][1])
             return
 
         yielded: set[str] = set()
-        for attr_name, bound in names_and_bounds:
-            key = attr_name or bound.name or "child"
+        for attr_name, router in router_items:
+            key = override_name or attr_name or router.name or "child"
             if key in yielded:
                 continue
             yielded.add(key)
-            yield (key, bound)
+            yield (key, router)
 
-    # -----------------------------------------------------
-    # Path resolution
-    # -----------------------------------------------------
-    def _resolve_path(self, selector: str) -> Tuple["BoundRouter", str]:
+    @staticmethod
+    def _iter_instance_attributes(obj: Any) -> Iterator[Tuple[str, Any]]:
+        inst_dict = getattr(obj, "__dict__", None)
+        if inst_dict:
+            for key, value in inst_dict.items():
+                if key == ROUTER_REGISTRY_ATTR:
+                    continue
+                yield key, value
+        slots = getattr(type(obj), "__slots__", ())
+        if isinstance(slots, str):
+            slots = (slots,)
+        for slot in slots:
+            if slot == ROUTER_REGISTRY_ATTR:
+                continue
+            if hasattr(obj, slot):
+                yield slot, getattr(obj, slot)
+
+    # ------------------------------------------------------------------
+    # Routing helpers
+    # ------------------------------------------------------------------
+    def _resolve_path(self, selector: str) -> Tuple["Router", str]:
         if "." not in selector:
             return self, selector
-        node: BoundRouter = self
+        node: Router = self
         parts = selector.split(".")
         for segment in parts[:-1]:
             node = node.get_child(segment)
         return node, parts[-1]
 
-    # -----------------------------------------------------
-    # Hierarchical callable accessor
-    # -----------------------------------------------------
-    def call(self, selector: str, *args, **kwargs):
-        handler = self.get(selector)
-        return handler(*args, **kwargs)
-
+    # ------------------------------------------------------------------
+    # Introspection helpers
+    # ------------------------------------------------------------------
     def describe(self) -> Dict[str, Any]:
-        def describe_node(node: "BoundRouter") -> Dict[str, Any]:
+        def describe_node(node: "Router") -> Dict[str, Any]:
             return {
                 "name": node.name,
                 "prefix": node.prefix,
@@ -551,11 +594,11 @@ class BoundRouter:
         return describe_node(self)
 
     def members(self) -> Dict[str, Any]:
-        def capture(node: "BoundRouter") -> Dict[str, Any]:
+        def capture(node: "Router") -> Dict[str, Any]:
             return {
                 "name": node.name,
                 "router": node,
-                "instance": node._instance,
+                "instance": node.instance,
                 "handlers": {
                     name: {
                         "callable": entry.func,

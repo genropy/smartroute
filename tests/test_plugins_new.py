@@ -6,10 +6,9 @@ from smartroute import RoutedClass, Router, route
 
 
 class LoggedService(RoutedClass):
-    routes = Router(name="logged").plug("logging")
-
     def __init__(self):
         self.calls = 0
+        self.routes = Router(self, name="routes").plug("logging")
 
     @route("routes")
     def hello(self):

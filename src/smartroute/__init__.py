@@ -1,5 +1,7 @@
 """SmartRoute package."""
 
+__version__ = "0.4.0"
+
 from .core import RoutedClass, Router, route, routers
 
 # Import plugins to trigger auto-registration

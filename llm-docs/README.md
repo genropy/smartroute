@@ -4,7 +4,7 @@
 
 ## What Is It?
 
-Instance-scoped routing engine for dynamic method dispatch with plugin support.
+Instance-scoped routing engine for dynamic method dispatch with plugin support. Each instance gets its own isolated router.
 
 ## Core Pattern
 
@@ -12,14 +12,16 @@ Instance-scoped routing engine for dynamic method dispatch with plugin support.
 from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
-    api = Router(name="api")  # Router descriptor
+    def __init__(self, label: str):
+        self.label = label
+        self.api = Router(self, name="api")  # Runtime instantiation
 
     @route("api")  # Register method
     def method_name(self, arg: str) -> str:
         return f"result:{arg}"
 
 # Usage
-svc = Service()
+svc = Service("example")
 handler = svc.api.get("method_name")  # Get handler
 result = handler("value")  # Call it
 ```
@@ -28,12 +30,13 @@ result = handler("value")  # Call it
 
 | Concept | Purpose | Usage |
 |---------|---------|-------|
-| `Router` | Descriptor for routing | `api = Router(name="api")` |
+| `Router(self, name="api")` | Instance-scoped router | Create in `__init__` |
 | `@route("name")` | Register method | Decorator on instance methods |
-| `BoundRouter` | Runtime instance | `svc.api` returns `BoundRouter` |
 | `get(name)` | Retrieve handler | `svc.api.get("method")` |
-| `add_child(obj)` | Build hierarchy | `parent.api.add_child(child)` |
-| `plug(name)` | Add plugin by name | `Router().plug("logging")` |
+| `call(name, *args)` | Direct invocation | `svc.api.call("method", arg)` |
+| `add_child(obj, name="...")` | Build hierarchy | `parent.api.add_child(child, name="child")` |
+| `plug(name)` | Add plugin | `.plug("logging")` |
+| `routedclass.configure()` | Configure plugins | Runtime configuration |
 
 ## Common Patterns
 
@@ -41,37 +44,46 @@ result = handler("value")  # Call it
 
 ```python
 class Service(RoutedClass):
-    api = Router()
+    def __init__(self):
+        self.api = Router(self, name="api")
 
     @route("api")
-    def action(self): return "ok"
+    def action(self):
+        return "ok"
 ```
 
 ### 2. With Alias
 
 ```python
-@route("api", alias="short_name")
-def long_method_name(self): pass
+class Service(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+
+    @route("api", alias="short_name")
+    def long_method_name(self):
+        pass
 ```
 
 ### 3. With Prefix
 
 ```python
-api = Router(prefix="handle_")
+class Service(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api", prefix="handle_")
 
-@route("api")  # Strips "handle_" prefix
-def handle_list(self): pass  # Registered as "list"
+    @route("api")  # Strips "handle_" prefix
+    def handle_list(self):
+        pass  # Registered as "list"
 ```
 
 ### 4. Hierarchical
 
 ```python
 class Root(RoutedClass):
-    api = Router()
-
     def __init__(self):
-        self.child = ChildService()
-        self.api.add_child(self.child, name="child")
+        self.api = Router(self, name="api")
+        child = ChildService()
+        self.api.add_child(child, name="child")
 
 root = Root()
 root.api.get("child.method")()  # Dotted path
@@ -79,81 +91,124 @@ root.api.get("child.method")()  # Dotted path
 
 ### 5. With Plugins
 
-Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
+Built-in plugins (`logging`, `pydantic`) are pre-registered:
 
 ```python
-api = Router().plug("logging")
-# Plugin hooks every handler call
+class Service(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
+
+    @route("api")
+    def action(self):
+        return "ok"
 ```
 
 ### 6. Multiple Children (Dict)
 
 ```python
-self.api.add_child({"users": users_svc, "products": prod_svc})
+class Root(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+        users = UsersService()
+        products = ProductsService()
+        self.api.add_child({"users": users, "products": products})
 ```
 
 ## Built-in Plugins
 
-Built-in plugins are pre-registered and available by name (no imports needed):
+Pre-registered and available by name:
 
 - `"logging"` - Logs handler calls
-- `"pydantic"` - Validates args with type hints
+- `"pydantic"` - Validates args with type hints (requires `pip install smartroute[pydantic]`)
 
 ```python
-api = Router().plug("pydantic")
+class Service(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("pydantic")
 
-@route("api")
-def validate(self, text: str, count: int) -> str:
-    return f"{text}*{count}"
+    @route("api")
+    def validate(self, text: str, count: int) -> str:
+        return f"{text}*{count}"
+```
+
+## Plugin Configuration
+
+Configure plugins at runtime with target syntax:
+
+```python
+svc = Service()
+
+# Global configuration - applies to all handlers
+svc.routedclass.configure("api:logging/_all_", level="debug")
+
+# Handler-specific configuration
+svc.routedclass.configure("api:logging/foo", enabled=False)
+
+# Glob pattern configuration
+svc.routedclass.configure("api:logging/admin_*", level="error")
+
+# Batch configuration
+svc.routedclass.configure([
+    {"target": "api:logging/_all_", "level": "info"},
+    {"target": "api:pydantic/critical_*", "strict": True}
+])
 ```
 
 ## Default Handlers
 
 ```python
-# Per-call default
-handler = api.get("missing", default_handler=lambda: "default")
+class Service(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
 
-# Router-level default
-api = Router(get_default_handler=lambda: "default")
+    @route("api")
+    def known(self):
+        return "ok"
+
+svc = Service()
+
+# Per-call default
+def fallback():
+    return "default"
+
+handler = svc.api.get("missing", default=fallback)
+result = handler()  # Returns "default"
 ```
 
 ## SmartAsync Support
 
 ```python
-handler = api.get("method", use_smartasync=True)
+handler = svc.api.get("method", use_smartasync=True)
 ```
 
 ## Introspection
 
 ```python
-# Get hierarchical description of router
-description = api.describe()
+# Get hierarchical description
+description = svc.api.describe()
 # Returns dict with:
-# - name, prefix, plugins
-# - methods (with signatures, params, return types)
-# - children (recursively)
-```
+# - name, plugins, handlers, children
 
-## Runtime Control
+# List handler names
+members = svc.api.members()
+# Returns list of handler names
 
-```python
-# Disable plugin for handler
-api.set_plugin_enabled("method_name", "plugin_name", False)
-
-# Runtime data
-api.set_runtime_data("method", "plugin", "key", value)
-data = api.get_runtime_data("method", "plugin", "key")
+# Query configuration tree
+info = svc.routedclass.configure("?")
+# Returns full router/plugin structure
 ```
 
 ## Important Notes
 
-- Each instance has **isolated** BoundRouter
-- Plugins are **per-instance**, not global
-- Child routers **inherit** parent plugins automatically
-- Only **instance methods** supported (no static/class methods)
-- Route names must be **unique** within a router
+- **Runtime instantiation**: `Router(self, name="api")` in `__init__`
+- **Instance isolation**: Each object has independent router state
+- **Per-instance plugins**: Plugins are not global
+- **Automatic inheritance**: Child routers inherit parent plugins
+- **Instance methods only**: No static/class methods
+- **Unique names**: Route names must be unique within router
 
 ## Full API
 
-See [API-DETAILS.md](API-DETAILS.md) for complete reference.
-See [PATTERNS.md](PATTERNS.md) for advanced patterns.
+- [API-DETAILS.md](API-DETAILS.md) - Complete API reference
+- [PATTERNS.md](PATTERNS.md) - Advanced patterns
+- [docs/](../docs/) - Human-readable documentation

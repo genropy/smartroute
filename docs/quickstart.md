@@ -12,69 +12,45 @@ pip install smartroute
 
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
-Create a simple service with routed methods:
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138)
+
+Create a service with instance-scoped routing:
 
 ```python
 from smartroute import RoutedClass, Router, route
 
 class Service(RoutedClass):
-    api = Router(name="service")
-
     def __init__(self, label: str):
         self.label = label
+        self.api = Router(self, name="api")
 
     @route("api")
     def describe(self):
         return f"service:{self.label}"
 
-    @route("api")
-    def process(self, data: str):
-        return f"{self.label}:{data}"
-```
-
-## Using the Router
-
-```python
-# Create instance
-svc = Service("myservice")
-
-# Get handler by name
-handler = svc.api.get("describe")
-
-# Call handler
-result = handler()  # "service:myservice"
-
-# Direct call
-result = svc.api.get("process")("data")  # "myservice:data"
-```
-
-## Instance Isolation
-
-Each instance has its own isolated router:
-
-```python
+# Each instance is isolated
 first = Service("alpha")
 second = Service("beta")
 
 assert first.api.get("describe")() == "service:alpha"
 assert second.api.get("describe")() == "service:beta"
-
-# Different bound methods
-assert first.api.get("describe") != second.api.get("describe")
 ```
+
+**Key concept**: Routers are instantiated in `__init__` with `Router(self, ...)` - each instance gets its own isolated router.
 
 ## Adding Aliases
 
 <!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
 
-Use aliases for shorter or more descriptive names:
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146)
+
+Use prefixes and aliases for cleaner method names:
 
 ```python
 class SubService(RoutedClass):
-    routes = Router(prefix="handle_")
-
     def __init__(self, prefix: str):
         self.prefix = prefix
+        self.routes = Router(self, name="routes", prefix="handle_")
 
     @route("routes")
     def handle_list(self):
@@ -97,13 +73,14 @@ assert sub.routes.get("detail")(10) == "users:detail:10"
 
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
 
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158)
+
 Create nested router structures:
 
 ```python
 class RootAPI(RoutedClass):
-    api = Router(name="root")
-
     def __init__(self):
+        self.api = Router(self, name="api")
         users = SubService("users")
         products = SubService("products")
 
@@ -121,11 +98,14 @@ assert root.api.get("products.detail")(5) == "products:detail:5"
 
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
-Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208)
+
+Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`) are pre-registered:
 
 ```python
 class PluginService(RoutedClass):
-    api = Router(name="plugin").plug("logging")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
 
     @route("api")
     def do_work(self):
@@ -139,6 +119,8 @@ result = svc.api.get("do_work")()  # Automatically logged
 
 <!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
 
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_pydantic_plugin.py#L22-L27)
+
 Use Pydantic for automatic validation:
 
 ```bash
@@ -147,7 +129,8 @@ pip install smartroute[pydantic]
 
 ```python
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug("pydantic")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:

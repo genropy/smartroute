@@ -1,91 +1,267 @@
-# Plugin Configuration API
+# Plugin Configuration
 
-SmartRoute plugins can now be configured at runtime through a single, uniform entry point.
-This document introduces the `routedclass.configure()` helper, the target syntax,
-and examples for batch updates.
+Configure plugins at runtime through a unified API with support for global settings, per-handler overrides, and batch updates.
+
+## Overview
+
+SmartRoute provides `routedclass.configure()` for runtime plugin configuration with:
+
+- **Target syntax**: `<router>:<plugin>/<selector>` format
+- **Global configuration**: Apply to all handlers with `_all_`
+- **Handler-specific overrides**: Target individual handlers
+- **Glob patterns**: Match multiple handlers with wildcards
+- **Batch updates**: Configure multiple targets in one call
+- **Introspection**: Query configuration with `"?"`
 
 ## Target Syntax
 
-A configuration target has the form:
+<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
 
-```
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+
+A configuration target has three parts:
+
+```text
 <router_name>:<plugin_name>/<selector>
 ```
 
-Examples:
+**Examples**:
 
-- `api:logging/_all_` → apply to every handler within the `logging` plugin attached to router `api`.
-- `reports:pydantic/orders.detail` → apply only to the `orders.detail` handler.
-- `admin:deny/users.*,orders.*` → apply to any handler whose dotted path matches the glob(s).
+- `api:logging/_all_` - Apply to all handlers in the logging plugin
+- `api:logging/foo` - Apply only to the `foo` handler
+- `api:logging/b*` - Apply to handlers matching glob pattern `b*`
 
-Selectors support:
+**Selectors**:
 
-- `_all_` (case-insensitive) for global settings.
-- Comma-separated list of handler paths (`foo.bar,baz.qux`).
-- Simple glob patterns (`admin_*`, `*/detail`). Globs are resolved with `fnmatch`.
+- `_all_` (case-insensitive) - Global plugin settings
+- Handler name - Specific handler (e.g., `foo`, `bar`)
+- Glob pattern - Multiple handlers (e.g., `admin_*`, `*/detail`)
 
-## API: `routedclass.configure()`
+Glob patterns use `fnmatch` for matching.
+
+## Basic Configuration
+
+<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
+
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+
+Configure plugins using keyword arguments:
 
 ```python
-class AdminAPI(RoutedClass):
-    api = Router(name="api").plug("logging")
+from smartroute import RoutedClass, Router, route
 
-svc = AdminAPI()
+class ConfService(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
 
-# Enable two logging hooks globally
-svc.routedclass.configure("api:logging/_all_", flags="before,after")
+    @route("api")
+    def foo(self):
+        return "foo"
 
-# Restrict logging to detail handlers only
-svc.routedclass.configure("api:logging/orders.detail,users.detail", enabled=True, level="debug")
+    @route("api")
+    def bar(self):
+        return "bar"
 
-# Disable logging for any handler that matches admin_*
-svc.routedclass.configure("api:logging/admin_*", enabled=False)
+svc = ConfService()
+
+# Global configuration - applies to all handlers
+svc.routedclass.configure("api:logging/_all_", threshold=10)
+assert svc.api.logging.get_config()["threshold"] == 10
+
+# Handler-specific configuration
+svc.routedclass.configure("api:logging/foo", enabled=False)
+assert svc.api.logging.get_config("foo")["enabled"] is False
+
+# Glob pattern configuration
+svc.routedclass.configure("api:logging/b*", mode="strict")
+assert svc.api.logging.get_config("bar")["mode"] == "strict"
 ```
 
-Rules:
+**Configuration keys** depend on the plugin. Common keys:
 
-1. `name:path` identifies the router to inspect (uses `get_router()` internally).
-2. `plugin_name` must refer to an attached plugin. Built-ins `logging` and `pydantic` are pre-registered.
-3. Keyword arguments (`flags`, `level`, `enabled`, etc.) map to plugin configuration keys.
-4. When the selector is `_all_`, SmartRoute updates the global plugin config; otherwise, it applies overrides per handler.
+- `enabled` - Enable/disable plugin for handler(s)
+- `flags` - Plugin-specific flags
+- `threshold`, `mode`, `level` - Plugin-specific settings
 
-## Batch Updates (JSON-Friendly)
+## Batch Updates
 
-`routedclass.configure` accepts either a single target or a list:
+<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
+
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L309-L315)
+
+Configure multiple targets with a list of dictionaries:
 
 ```python
+# JSON-friendly batch configuration
 payload = [
-    {"target": "api:logging/_all_", "flags": "before,after"},
-    {"target": "api:logging/admin_*", "enabled": False},
-    {"target": "reports:pydantic/orders.detail", "strict": True},
+    {"target": "api:logging/_all_", "flags": "trace"},
+    {"target": "api:logging/foo", "limit": 5},
 ]
 
-for entry in payload:
-    svc.routedclass.configure(entry["target"], **{k: v for k, v in entry.items() if k != "target"})
+result = svc.routedclass.configure(payload)
+assert len(result) == 2
+assert svc.api.logging.get_config("foo")["limit"] == 5
 ```
 
-This pattern allows orchestration layers (CLI, HTTP APIs) to forward arbitrary batches in a single request.
+**Each dictionary must have**:
 
-## Exposing via Router
+- `target` key - Configuration target string
+- Additional keys - Configuration options
 
-You can expose the configuration helper through a dedicated router if needed:
+**Returns**: List of configuration results (one per target)
+
+**Use cases**:
+
+- External configuration files (JSON, YAML)
+- HTTP API endpoints
+- CLI configuration commands
+- Orchestration layers
+
+## Introspection
+
+<!-- test: test_router_edge_cases.py::test_routed_configure_question_lists_tree -->
+
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L318-L343)
+
+Query the router and plugin structure with `"?"`:
+
+```python
+class Leaf(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
+
+    @route("api")
+    def ping(self):
+        return "leaf"
+
+class Root(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
+        self.leaf = Leaf()
+        self.api.add_child(self.leaf, name="leaf")
+
+    @route("api")
+    def root_ping(self):
+        return "root"
+
+svc = Root()
+
+# Get full configuration tree
+info = svc.routedclass.configure("?")
+assert "api" in info
+assert info["api"]["plugins"]
+assert "leaf" in info["api"]["children"]
+```
+
+**Returns nested dictionary with**:
+
+- Router names
+- Attached plugins and their configurations
+- Child routers
+- Registered handlers
+
+## Exposing Configuration API
+
+<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
+
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+
+Create a dedicated configuration endpoint:
 
 ```python
 class ConfigAPI(RoutedClass):
-    api = Router(name="api").plug("logging")
-    admin = Router(name="admin")
+    def __init__(self):
+        self.api = Router(self, name="api").plug("logging")
+        self.admin = Router(self, name="admin")
 
     @route("admin")
-    def configure_plugin_route(self, target: str, payload: dict):
-        self.routedclass.configure(target, **payload)
-        return {"status": "ok"}
+    def configure_plugin(self, target: str, **options):
+        """Configure plugins via API endpoint."""
+        result = self.routedclass.configure(target, **options)
+        return {"status": "ok", "result": result}
+
+config = ConfigAPI()
+
+# Call via router
+result = config.admin.get("configure_plugin")("api:logging/_all_", enabled=True)
+assert result["status"] == "ok"
 ```
 
-Orchestrators can call `config_api.admin.get("configure_plugin_route")` and pass JSON payloads with the target/payload structure described above.
+**Benefits**:
 
-## Notes
+- External configuration without code changes
+- Runtime adjustments
+- API-driven configuration management
+- Dynamic plugin tuning
 
-- `flags="enabled,trace,time:off"` follows the legacy SmartSwitch semantics (comma-separated booleans with optional `:off`).
-- Plugin authors can inspect final values via `plugin.get_config()` or `plugin.get_config("handler")`.
-- If a selector matches no handlers, SmartRoute raises `KeyError` so clients know the request failed.
-- Passing `"?"` as the target returns the full router→plugin tree (including current configuration) instead of applying changes.
+## Error Handling
+
+**Invalid targets raise exceptions**:
+
+- `ValueError` - Malformed target syntax
+- `AttributeError` - Router or plugin not found
+- `KeyError` - Selector matches no handlers
+
+**Validation**:
+
+```python
+# Router name cannot be empty
+try:
+    svc.routedclass.configure(":logging/_all_", enabled=True)
+except ValueError:
+    pass  # Expected
+
+# Plugin must exist
+try:
+    svc.routedclass.configure("api:nonexistent/_all_", enabled=True)
+except AttributeError:
+    pass  # Expected
+
+# Selector must match at least one handler
+try:
+    svc.routedclass.configure("api:logging/nonexistent", enabled=True)
+except KeyError:
+    pass  # Expected
+```
+
+## Best Practices
+
+**Global defaults, specific overrides**:
+
+```python
+# Set defaults for all handlers
+svc.routedclass.configure("api:logging/_all_", enabled=True, level="info")
+
+# Override for specific handlers
+svc.routedclass.configure("api:logging/debug_*", level="debug")
+svc.routedclass.configure("api:logging/admin_*", enabled=False)
+```
+
+**Configuration from files**:
+
+```python
+import json
+
+# Load from JSON configuration
+with open("plugin_config.json") as f:
+    config = json.load(f)
+
+# Apply batch configuration
+svc.routedclass.configure(config["plugins"])
+```
+
+**Gradual rollout**:
+
+```python
+# Enable new feature for test handlers only
+svc.routedclass.configure("api:new_feature/test_*", enabled=True)
+
+# Expand to all after validation
+svc.routedclass.configure("api:new_feature/_all_", enabled=True)
+```
+
+## Next Steps
+
+- **[Plugin Development](plugins.md)** - Create custom plugins
+- **[Built-in Plugins](../api/plugins.md)** - LoggingPlugin and PydanticPlugin reference
+- **[API Reference](../api/reference.md)** - Complete API documentation

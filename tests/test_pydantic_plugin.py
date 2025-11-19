@@ -9,10 +9,9 @@ from smartroute import RoutedClass, Router, route
 
 
 class ValidateService(RoutedClass):
-    api = Router(name="validate").plug("pydantic")
-
     def __init__(self):
         self.calls = 0
+        self.api = Router(self, name="api").plug("pydantic")
 
     @route("api")
     def concat(self, text: str, number: int = 1) -> str:

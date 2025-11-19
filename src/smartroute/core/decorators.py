@@ -1,84 +1,67 @@
-"""Decorators and mixins for router registration."""
+"""Decorators and RoutedClass helpers for runtime routers."""
 
 from __future__ import annotations
 
 from fnmatch import fnmatchcase
 from typing import Any, Callable, Dict, Optional, Type
 
-from .router import Router
+from .router import ROUTER_REGISTRY_ATTR, TARGET_ATTR, Router
 
 __all__ = ["route", "routers", "RoutedClass"]
 
-_TARGET_ATTR = "__smartroute_targets__"
-_FINALIZED_ATTR = "__smartroute_finalized__"
+_PROXY_ATTR = "__routed_proxy__"
 
 
-def route(name: str, *, alias: Optional[str] = None) -> Callable[[Callable], Callable]:
-    """
-    Generic decorator that marks a method for registration with the given router name.
-    """
+def route(name: str, *, alias: Optional[str] = None, **kwargs: Any) -> Callable:
+    """Mark a bound method for inclusion in the given router."""
 
     def decorator(func: Callable) -> Callable:
-        markers = list(getattr(func, _TARGET_ATTR, []))
-        markers.append({"name": name, "alias": alias})
-        setattr(func, _TARGET_ATTR, markers)
+        markers = list(getattr(func, TARGET_ATTR, []))
+        payload = {"name": name}
+        if alias is not None:
+            payload["alias"] = alias
+        for key, value in kwargs.items():
+            payload[key] = value
+        markers.append(payload)
+        setattr(func, TARGET_ATTR, markers)
         return func
 
     return decorator
 
 
-def routers(*names: str, **named: Router) -> Callable[[Type], Type]:
-    """
-    Class decorator that instantiates routers and registers marked methods.
-    """
+def routers(*_names: str, **_named: Router) -> Callable[[Type], Type]:
+    """Legacy placeholder for class-level router declaration."""
 
     def decorator(cls: Type) -> Type:
-        if getattr(cls, _FINALIZED_ATTR, False):
-            return cls
-        router_map: Dict[str, Router] = dict(named)
-        # Include routers already defined as class attributes
-        for attr_name, value in vars(cls).items():
-            if isinstance(value, Router):
-                router_map.setdefault(attr_name, value)
-        # Auto instantiate positional routers with default configuration
-        for positional in names:
-            router_map.setdefault(positional, Router(name=positional))
-
-        # Discover all markers and ensure routers exist
-        for attr_name, value in vars(cls).items():
-            markers = getattr(value, _TARGET_ATTR, None)
-            if not markers:
-                continue
-            for marker in markers:
-                router_name = marker["name"]
-                alias = marker.get("alias")
-                router = router_map.setdefault(router_name, Router(name=router_name))
-                router._register(value, alias)
-
-        # Attach all routers as descriptors
-        for attr_name, router in router_map.items():
-            setattr(cls, attr_name, router)
-        setattr(cls, _FINALIZED_ATTR, True)
         return cls
 
     return decorator
 
 
 class RoutedClass:
-    """Mixin that automatically finalizes routers defined on subclasses."""
+    """Mixin providing helper proxies for runtime routers."""
 
-    __slots__ = ()
+    __slots__ = (_PROXY_ATTR, ROUTER_REGISTRY_ATTR)
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        routers()(cls)
+    def _register_router(self, router: Router) -> None:
+        registry = getattr(self, ROUTER_REGISTRY_ATTR, None)
+        if registry is None:
+            registry = {}
+            setattr(self, ROUTER_REGISTRY_ATTR, registry)
+        if router.name:
+            registry[router.name] = router
+
+    def _iter_registered_routers(self):
+        registry = getattr(self, ROUTER_REGISTRY_ATTR, None) or {}
+        for name, router in registry.items():
+            yield name, router
 
     @property
     def routedclass(self) -> "_RoutedProxy":
-        proxy = getattr(self, "__routed_proxy__", None)
+        proxy = getattr(self, _PROXY_ATTR, None)
         if proxy is None:
             proxy = _RoutedProxy(self)
-            setattr(self, "__routed_proxy__", proxy)
+            setattr(self, _PROXY_ATTR, proxy)
         return proxy
 
 
@@ -89,13 +72,23 @@ class _RoutedProxy:
     def get_router(self, name: str, path: Optional[str] = None):
         owner = self._owner
         base_name, extra_path = self._split_router_spec(name, path)
-        router = getattr(owner.__class__, base_name, None)
-        if router is None or not isinstance(router, Router):
+        router = self._lookup_router(owner, base_name)
+        if router is None:
             raise AttributeError(f"No Router named '{base_name}' on {type(owner).__name__}")
-        bound = router.__get__(owner, type(owner))
         if not extra_path:
-            return bound
-        return self._navigate_router(bound, extra_path)
+            return router
+        return self._navigate_router(router, extra_path)
+
+    def _lookup_router(self, owner: RoutedClass, name: str) -> Optional[Router]:
+        registry = getattr(owner, ROUTER_REGISTRY_ATTR, None) or {}
+        router = registry.get(name)
+        if router:
+            return router
+        candidate = getattr(owner, name, None)
+        if isinstance(candidate, Router):
+            registry[name] = candidate
+            return candidate
+        return None
 
     # Helpers -------------------------------------------------
     def _split_router_spec(self, name: str, path: Optional[str]) -> tuple[str, Optional[str]]:
@@ -148,10 +141,9 @@ class _RoutedProxy:
     def _describe_all(self) -> Dict[str, Any]:
         owner = self._owner
         result: Dict[str, Any] = {}
-        for attr_name, value in vars(type(owner)).items():
-            if isinstance(value, Router):
-                bound = value.__get__(owner, type(owner))
-                result[attr_name] = self._describe_router(bound)
+        registry = getattr(owner, ROUTER_REGISTRY_ATTR, None) or {}
+        for attr_name, router in registry.items():
+            result[attr_name] = self._describe_router(router)
         return result
 
     def _describe_router(self, router) -> Dict[str, Any]:

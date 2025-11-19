@@ -1,6 +1,6 @@
 import pytest
 
-from smartroute import RoutedClass, Router, route, routers
+from smartroute import RoutedClass, Router, route
 from smartroute.core import BasePlugin, MethodEntry  # Not public API
 from smartroute.plugins import pydantic as pyd_mod
 from smartroute.plugins.logging import LoggingPlugin
@@ -44,26 +44,27 @@ def ensure_plugin(name: str, plugin_cls: type) -> None:
 ensure_plugin("simple", SimplePlugin)
 
 
-def test_router_decorator_and_plugin_validation():
-    router = Router()
-    with pytest.raises(TypeError):
-        router(123)
+def test_router_auto_registers_marked_methods_and_validates_plugins():
+    class Demo(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
 
-    decorator = router("alias")
+        @route("api", alias="alias")
+        def handle(self):
+            return "ok"
 
-    @decorator
-    def handle(self):  # pragma: no cover - exercised through decorator
-        return "ok"
-
+    svc = Demo()
+    assert svc.api.get("alias")() == "ok"
     ensure_plugin("simple", SimplePlugin)
-    router.plug("simple")
+    svc.api.plug("simple")
     with pytest.raises(ValueError):
-        router.plug("missing")
+        svc.api.plug("missing")
 
 
 def test_router_detects_handler_name_collision():
     class DuplicateService(RoutedClass):
-        api = Router()
+        def __init__(self):
+            self.api = Router(self, name="api")
 
         @route("api", alias="dup")
         def first(self):
@@ -73,14 +74,14 @@ def test_router_detects_handler_name_collision():
         def second(self):
             return "two"
 
-    svc = DuplicateService()
     with pytest.raises(ValueError):
-        _ = svc.api
+        DuplicateService()
 
 
 def test_iter_plugins_and_missing_attribute():
     class Service(RoutedClass):
-        api = Router(name="svc").plug("simple")
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
 
         @route("api")
         def ping(self):
@@ -95,7 +96,8 @@ def test_iter_plugins_and_missing_attribute():
 
 def test_router_add_child_error_paths():
     class Node(RoutedClass):
-        api = Router()
+        def __init__(self):
+            self.api = Router(self, name="api")
 
         @route("api")
         def ping(self):
@@ -118,20 +120,6 @@ def test_router_add_child_error_paths():
     bound_child = first.api
     attached = fresh.api.add_child(bound_child, name="leaf_bound")
     assert attached is bound_child
-
-
-def test_routers_decorator_idempotent():
-    class Demo:
-        routes = Router()
-
-        @route("routes")
-        def hello(self):
-            return "hi"
-
-    routers()(Demo)
-    assert len(Demo.routes._specs) == 1  # type: ignore[attr-defined]
-    routers()(Demo)
-    assert len(Demo.routes._specs) == 1  # type: ignore[attr-defined]
 
 
 def test_base_plugin_default_hooks():
@@ -232,7 +220,8 @@ def test_register_plugin_validates():
 
 def test_describe_exposes_metadata():
     class Child(RoutedClass):
-        api = Router(name="child")
+        def __init__(self):
+            self.api = Router(self, name="api")
 
         @route("api")
         def run(self):
@@ -240,14 +229,13 @@ def test_describe_exposes_metadata():
             return "ok"
 
     class Parent(RoutedClass):
-        api = Router(name="parent").plug("simple")
-
         def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
             self.child = Child()
             self.api.add_child(self.child, name="child")
 
     info = Parent().api.describe()
-    assert info["name"] == "parent"
+    assert info["name"] == "api"
     assert "child" in info["children"]
     run_info = info["children"]["child"]["methods"]["run"]
     assert run_info["doc"] == "Run child handler."
@@ -257,7 +245,8 @@ def test_describe_exposes_metadata():
 
 def test_describe_includes_pydantic_validation():
     class Validated(RoutedClass):
-        api = Router(name="validated").plug("pydantic")
+        def __init__(self):
+            self.api = Router(self, name="api").plug("pydantic")
 
         @route("api")
         def greet(self, name: str = "World") -> str:
@@ -278,25 +267,26 @@ def test_describe_includes_pydantic_validation():
 
 def test_routed_proxy_get_router_handles_dotted_path():
     class Child(RoutedClass):
-        api = Router(name="child")
+        def __init__(self):
+            self.api = Router(self, name="api")
 
     class Parent(RoutedClass):
-        api = Router(name="parent")
-
         def __init__(self):
+            self.api = Router(self, name="api")
             self.child = Child()
             self.api.add_child(self.child, name="child")
 
     svc = Parent()
     router = svc.routedclass.get_router("api.child")
-    assert router.name == "child"
+    assert router.name == "api"
 
 
 def test_routed_configure_updates_plugins_global_and_local():
     ensure_plugin("simple", SimplePlugin)
 
     class ConfService(RoutedClass):
-        api = Router(name="api").plug("simple")
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
 
         @route("api")
         def foo(self):
@@ -329,16 +319,16 @@ def test_routed_configure_question_lists_tree():
     ensure_plugin("simple", SimplePlugin)
 
     class Leaf(RoutedClass):
-        api = Router(name="leaf").plug("simple")
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
 
         @route("api")
         def ping(self):
             return "leaf"
 
     class Root(RoutedClass):
-        api = Router(name="root").plug("simple")
-
         def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
             self.leaf = Leaf()
             self.api.add_child(self.leaf, name="leaf")
 
