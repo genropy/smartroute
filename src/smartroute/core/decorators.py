@@ -163,8 +163,7 @@ class _RoutedProxy:
                     "description": getattr(plugin, "description", ""),
                     "config": plugin.get_config(),
                     "overrides": {
-                        handler: plugin.get_config(handler)
-                        for handler in router._entries.keys()
+                        handler: plugin.get_config(handler) for handler in router._entries.keys()
                     },
                 }
                 for plugin in router.iter_plugins()
