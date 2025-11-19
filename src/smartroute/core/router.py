@@ -53,12 +53,16 @@ class RouteSpec:
 class _PluginSpec:
     factory: Type[BasePlugin]
     kwargs: Dict[str, Any]
+    alias: Optional[str] = None
 
     def instantiate(self) -> BasePlugin:
-        return self.factory(**self.kwargs)
+        plugin = self.factory(**self.kwargs)
+        if self.alias:
+            plugin.name = self.alias
+        return plugin
 
     def clone(self) -> "_PluginSpec":
-        return _PluginSpec(self.factory, dict(self.kwargs))
+        return _PluginSpec(self.factory, dict(self.kwargs), self.alias)
 
 
 class Router:
@@ -193,7 +197,8 @@ class Router:
                 f"Available plugins: {available}"
             )
 
-        spec = _PluginSpec(plugin_class, dict(config))
+        kwargs = dict(config)
+        spec = _PluginSpec(plugin_class, kwargs, alias=plugin)
         self._plugin_specs.append(spec)
         return self
 

@@ -12,6 +12,30 @@ class SimplePlugin(BasePlugin):
         return call_next
 
 
+def test_plugin_config_proxy_updates_global_and_method_config():
+    plugin = SimplePlugin()
+    plugin.configure.flags = "enabled,,beta"
+    assert plugin.get_config()["enabled"] is True
+    plugin.configure.threshold = 5
+    assert plugin.get_config()["threshold"] == 5
+    assert plugin.configure.threshold == 5
+
+    method_proxy = plugin.configure["foo"]
+    method_proxy.flags = "enabled:off"
+    assert plugin.get_config("foo")["enabled"] is False
+    method_proxy.mode = "strict"
+    assert plugin.get_config("foo")["mode"] == "strict"
+
+
+def test_plugin_constructor_flags_and_method_config():
+    plugin = SimplePlugin(flags="beta:on,alpha:off", method_config={"foo": {"enabled": False}})
+    assert plugin.get_config()["beta"] is True
+    assert plugin.get_config()["alpha"] is False
+    assert plugin.get_config("foo")["enabled"] is False
+    with pytest.raises(AttributeError):
+        _ = plugin.configure.nonexistent
+
+
 def ensure_plugin(name: str, plugin_cls: type) -> None:
     if name not in Router.available_plugins():
         Router.register_plugin(name, plugin_cls)
@@ -250,3 +274,80 @@ def test_describe_includes_pydantic_validation():
     assert param["default"] == "World"
     assert param["required"] is False
     assert isinstance(param.get("validation"), dict)
+
+
+def test_routed_proxy_get_router_handles_dotted_path():
+    class Child(RoutedClass):
+        api = Router(name="child")
+
+    class Parent(RoutedClass):
+        api = Router(name="parent")
+
+        def __init__(self):
+            self.child = Child()
+            self.api.add_child(self.child, name="child")
+
+    svc = Parent()
+    router = svc.routedclass.get_router("api.child")
+    assert router.name == "child"
+
+
+def test_routed_configure_updates_plugins_global_and_local():
+    ensure_plugin("simple", SimplePlugin)
+
+    class ConfService(RoutedClass):
+        api = Router(name="api").plug("simple")
+
+        @route("api")
+        def foo(self):
+            return "foo"
+
+        @route("api")
+        def bar(self):
+            return "bar"
+
+    svc = ConfService()
+    svc.routedclass.configure("api:simple/_all_", threshold=10)
+    assert svc.api.simple.get_config()["threshold"] == 10
+
+    svc.routedclass.configure("api:simple/foo", enabled=False)
+    assert svc.api.simple.get_config("foo")["enabled"] is False
+
+    svc.routedclass.configure("api:simple/b*", mode="strict")
+    assert svc.api.simple.get_config("bar")["mode"] == "strict"
+
+    payload = [
+        {"target": "api:simple/_all_", "flags": "trace"},
+        {"target": "api:simple/foo", "limit": 5},
+    ]
+    result = svc.routedclass.configure(payload)
+    assert len(result) == 2
+    assert svc.api.simple.get_config("foo")["limit"] == 5
+
+
+def test_routed_configure_question_lists_tree():
+    ensure_plugin("simple", SimplePlugin)
+
+    class Leaf(RoutedClass):
+        api = Router(name="leaf").plug("simple")
+
+        @route("api")
+        def ping(self):
+            return "leaf"
+
+    class Root(RoutedClass):
+        api = Router(name="root").plug("simple")
+
+        def __init__(self):
+            self.leaf = Leaf()
+            self.api.add_child(self.leaf, name="leaf")
+
+        @route("api")
+        def root_ping(self):
+            return "root"
+
+    svc = Root()
+    info = svc.routedclass.configure("?")
+    assert "api" in info
+    assert info["api"]["plugins"]
+    assert "leaf" in info["api"]["children"]

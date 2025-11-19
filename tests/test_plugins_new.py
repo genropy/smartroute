@@ -34,7 +34,7 @@ def test_logging_plugin_runs_per_instance(monkeypatch):
             records.append(message)
 
     svc = LoggedService()
-    svc.routes.logger._logger = DummyLogger()  # type: ignore[attr-defined]
+    svc.routes.logging._logger = DummyLogger()  # type: ignore[attr-defined]
 
     assert svc.routes.get("hello")() == "ok"
     assert svc.calls == 1

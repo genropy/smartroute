@@ -270,7 +270,7 @@ Plugins attached to router are accessible as attributes:
 ```python
 api = Router().plug("logging")
 svc = Service()
-svc.api.logger  # Access LoggingPlugin instance
+svc.api.logging  # Access LoggingPlugin instance
 ```
 
 ---
@@ -442,7 +442,7 @@ api = Router().plug("logging")
 **Access logger:**
 
 ```python
-svc.api.logger._logger  # Python logger instance
+svc.api.logging._logger  # Python logger instance
 ```
 
 ---
@@ -556,7 +556,7 @@ child = ChildService()
 parent.api.add_child(child, name="child")
 
 # Child router now has LoggingPlugin
-child.routes.logger  # Inherited plugin
+child.routes.logging  # Inherited plugin
 ```
 
 ---

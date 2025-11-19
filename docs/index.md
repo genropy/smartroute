@@ -76,6 +76,7 @@ quickstart
 
 guide/basic-usage
 guide/plugins
+guide/plugin-configuration
 guide/hierarchies
 guide/best-practices
 ```
