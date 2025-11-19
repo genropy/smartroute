@@ -43,7 +43,7 @@ result = handler()  # "service:myservice"
 
 **Use when:** Following naming conventions (e.g., `handle_*`) but want clean route names.
 
-<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
+<!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
 ```python
 class SubService(RoutedClass):
@@ -55,13 +55,13 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 
 # Usage
 sub = SubService("users")
-sub.routes.entries()  # {"list", "detail"}  ← prefix stripped, alias used
+sub.routes.entries()  # {"list", "detail"}  ← prefix stripped, custom name used
 sub.routes.get("list")()  # "users:list"
 sub.routes.get("detail")(10)  # "users:detail:10"
 ```
@@ -69,7 +69,7 @@ sub.routes.get("detail")(10)  # "users:detail:10"
 **Key Points:**
 
 - `prefix` parameter strips prefix from method names automatically
-- `alias` parameter overrides final registered name
+- `name` parameter overrides final registered name
 - Maintains method naming conventions in code while keeping API clean
 
 ---

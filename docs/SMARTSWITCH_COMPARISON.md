@@ -22,7 +22,7 @@ Parità e differenze funzionali
 
 ### Caratteristiche già equivalenti
 
-- Decorator per registrare metodi con alias/prefix.
+- Decorator per registrare metodi con nomi espliciti/prefix.
 - Recupero handler via `get()`/`__getitem__`, default handler e opzione SmartAsync (senza plugin dedicato).
 - Plugin hook `on_decore` / `wrap_handler`.
 - Gestione children e path puntati (`root.api.get("child.method")`).
@@ -34,7 +34,7 @@ Parità e differenze funzionali
 
 - **Scope dei plugin**: SmartSwitch supportava ereditarietà esplicita; SmartRoute eredita automaticamente quando si attacca un child router.
 - **Registrazione globale**: SmartSwitch aveva `register_plugin` e referenze per stringa; SmartRoute ora espone un registry interno.
-- **API pubblica**: SmartRoute espone solo `Router`, `route`, `RoutedClass`. Non esistono alias (es. Switcher) perché il rename è definitivo.
+- **API pubblica**: SmartRoute espone solo `Router`, `route`, `RoutedClass` e si affida a nomi espliciti (nessun alias tipo Switcher).
 - **Child discovery**: SmartRoute accetta Router runtime e collection (dict/list) già pronti, ma non tenta di riusare switcher non finalizzati come avveniva in alcune parti legacy.
 - **Documentazione**: SmartSwitch possiede doc dettagliata (guide, reference); SmartRoute ha README e skeleton, manca la documentazione estesa.
 - **Compatibilità SmartPublisher**: Non ancora verificata; eventuali script/pipeline che si aspettano `Switcher` potrebbero fallire.

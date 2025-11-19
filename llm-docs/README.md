@@ -52,14 +52,14 @@ class Service(RoutedClass):
         return "ok"
 ```
 
-### 2. With Alias
+### 2. With Explicit Name
 
 ```python
 class Service(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
 
-    @route("api", alias="short_name")
+    @route("api", name="short_name")
     def long_method_name(self):
         pass
 ```

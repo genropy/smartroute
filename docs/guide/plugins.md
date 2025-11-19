@@ -117,7 +117,7 @@ Called once when a handler is registered.
 
 - `router` - The Router instance
 - `func` - The original method
-- `entry` - MethodEntry with `name`, `func`, `metadata`, `aliases`
+- `entry` - MethodEntry with `name`, `func`, `metadata`
 
 **Use for**:
 

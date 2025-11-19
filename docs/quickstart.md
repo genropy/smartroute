@@ -38,13 +38,13 @@ assert second.api.get("describe")() == "service:beta"
 
 **Key concept**: Routers are instantiated in `__init__` with `Router(self, ...)` - each instance gets its own isolated router.
 
-## Adding Aliases
+## Custom Entry Names
 
-<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
+<!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
 [From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146)
 
-Use prefixes and aliases for cleaner method names:
+Use prefixes and explicit names for cleaner method registration:
 
 ```python
 class SubService(RoutedClass):
@@ -56,16 +56,16 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 
 sub = SubService("users")
 
-# Prefix stripped: "handle_list" � "list"
+# Prefix stripped: "handle_list" → "list"
 assert sub.routes.get("list")() == "users:list"
 
-# Alias used: "handle_detail" � "detail"
+# Custom name used: "handle_detail" → "detail"
 assert sub.routes.get("detail")(10) == "users:detail:10"
 ```
 

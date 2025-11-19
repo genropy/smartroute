@@ -65,7 +65,7 @@ class API(RoutedClass):
     def echo(self, value: str):
         return value
 
-    @route("routes", alias="alt_name")
+    @route("routes", name="alt_name")
     def action(self):
         return "executed"
 
@@ -74,7 +74,7 @@ api = API()
 # Direct name resolution
 assert api.routes.get("echo")("hello") == "hello"
 
-# Alias resolution
+# Custom name resolution
 assert api.routes.get("alt_name")() == "executed"
 ```
 
@@ -113,13 +113,13 @@ assert result == 30
 - `get(name)` returns the callable (for reuse)
 - `call(name, *args, **kwargs)` invokes immediately
 
-## Using Prefixes and Aliases
+## Using Prefixes and Custom Names
 
-<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
+<!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
 [From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146)
 
-Clean up method names with prefixes and provide alternative names with aliases:
+Clean up method names with prefixes and provide alternative names with the `name` option:
 
 ```python
 class SubService(RoutedClass):
@@ -131,7 +131,7 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 
@@ -140,14 +140,14 @@ sub = SubService("users")
 # Prefix stripped: "handle_list" → "list"
 assert sub.routes.get("list")() == "users:list"
 
-# Alias used: "handle_detail" → "detail"
+# Custom name used: "handle_detail" → "detail"
 assert sub.routes.get("detail")(10) == "users:detail:10"
 ```
 
 **Benefits**:
 
 - Prefixes keep method names organized in code
-- Aliases provide cleaner external API
+- Explicit names provide cleaner external APIs
 - Router resolves both automatically
 
 ## Default Handlers
@@ -235,7 +235,7 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 

@@ -12,46 +12,56 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**SmartRoute** is an instance-scoped routing engine for Python that enables dynamic method dispatch through a plugin-based architecture. It's the successor to SmartSwitch, designed with instance isolation and composability at its core.
+**SmartRoute** is a fully runtime routing engine that lets you expose Python methods as "endpoints" (CLI tools, orchestrators, internal services) without global blueprints or shared registries. Each instance creates its own routers, can attach child routers, configure plugins, and provides ready-to-use runtime introspection. It's the successor to SmartSwitch, preserving the core idea of method "switching" but with a simpler design and no compatibility layers.
 
-## What is SmartRoute?
+Use SmartRoute when you need to:
 
-SmartRoute allows you to organize and dispatch method calls dynamically based on string identifiers (routes). Each object instance gets its own isolated router with independent plugin stacks, making it ideal for building modular, extensible services where behavior can be customized per-instance without global state.
+- Compose internal services with many handlers (application APIs, orchestrators, CLI automation)
+- Build dashboards/portals that register routers dynamically and need runtime introspection
+- Extend handler behavior with plugins (logging, validation, audit trails)
+
+SmartRoute provides a consistent, well-tested foundation for these patterns.
 
 ## Key Features
 
-- **Instance-scoped routers** – Instantiate routers inside `__init__` with `Router(self, ...)` so every object gets its own configuration
-- **Hierarchical organization** – Build router trees with `add_child()` and dotted path traversal (`root.api.get("users.list")`)
-- **Composable plugins** – Hook into decoration and handler execution with `BasePlugin` (logging, validation, metrics)
-- **Plugin inheritance** – Plugins propagate automatically from parent to child routers
-- **Flexible registration** – Use `@route` decorator with aliases, prefixes, and custom names
-- **Runtime configuration** – Configure plugins at runtime with `routedclass.configure()` using target syntax
-- **Per-handler plugin config** – Enable/disable plugins per-handler with glob patterns and selective targeting
-- **SmartAsync support** – Optional integration with async execution
-- **100% test coverage** – Complete statement coverage with 59 comprehensive tests
+1. **Instance-scoped routers** – Each object instantiates its own routers (`Router(self, ...)`) with isolated state.
+2. **Friendly registration** – `@route(...)` accepts explicit names, auto-strips prefixes, and supports custom metadata.
+3. **Simple hierarchies** – `add_child("child1, child2")` connects child routers with dotted path access (`parent.api.get("child.method")`).
+4. **Plugin pipeline** – `BasePlugin` provides `on_decore`/`wrap_handler` hooks and plugins inherit from parents automatically.
+5. **Runtime configuration** – `routedclass.configure()` applies global or per-handler overrides with wildcards and returns reports (`"?"`).
+6. **Optional extras** – `logging`, `pydantic` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies.
+7. **Full coverage** – The package is 100% covered by Pytest (65 scenarios) with no hidden compatibility layers.
 
 ## Quick Example
 
-<!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
+<!-- test: test_switcher_basic.py::test_orders_quick_example -->
 
 ```python
 from smartroute import RoutedClass, Router, route
 
-class Service(RoutedClass):
+class OrdersAPI(RoutedClass):
     def __init__(self, label: str):
         self.label = label
-        self.api = Router(self, name="api")
+        self.api = Router(self, name="orders")
 
-    @route("api")
-    def describe(self):
-        return f"service:{self.label}"
+    @route("orders")
+    def list(self):
+        return ["order-1", "order-2"]
 
-# Each instance is isolated
-first = Service("alpha")
-second = Service("beta")
+    @route("orders")
+    def retrieve(self, ident: str):
+        return f"{self.label}:{ident}"
 
-assert first.api.get("describe")() == "service:alpha"
-assert second.api.get("describe")() == "service:beta"
+    @route("orders")
+    def create(self, payload: dict):
+        return {"status": "created", **payload}
+
+orders = OrdersAPI("acme")
+print(orders.api.get("list")())        # ["order-1", "order-2"]
+print(orders.api.get("retrieve")("42"))  # acme:42
+
+overview = orders.api.members()
+print(overview["handlers"].keys())      # dict_keys(['list', 'retrieve', 'create'])
 ```
 
 ## Installation
@@ -80,209 +90,16 @@ pip install smartroute[pydantic]
 - **`@route(\"name\")`** – Decorator that marks bound methods for the router with the matching name
 - **`RoutedClass`** – Mixin that tracks routers per instance and exposes the `routedclass` proxy
 - **`BasePlugin`** – Base class for creating plugins with `on_decore` and `wrap_handler` hooks
-- **`obj.routedclass`** – Proxy esposto da ogni RoutedClass che offre helper come `get_router(...)` e `configure(...)` per gestire router/plugin senza inquinare il namespace dell’istanza.
+- **`obj.routedclass`** – Proxy exposed by every RoutedClass that provides helpers like `get_router(...)` and `configure(...)` for managing routers/plugins without polluting the instance namespace.
 
-## Examples
+## Pattern Highlights
 
-### Basic Routing with Aliases
-
-<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
-
-```python
-from smartroute import RoutedClass, Router, route
-
-class SubService(RoutedClass):
-    def __init__(self, prefix: str):
-        self.prefix = prefix
-        self.routes = Router(self, name="routes", prefix="handle_")
-
-    @route("routes")
-    def handle_list(self):
-        return f"{self.prefix}:list"
-
-    @route("routes", alias="detail")
-    def handle_detail(self, ident: int):
-        return f"{self.prefix}:detail:{ident}"
-
-sub = SubService("users")
-assert sub.routes.get("list")() == "users:list"
-assert sub.routes.get("detail")(10) == "users:detail:10"
-```
-
-### Hierarchical Routers
-
-<!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
-
-```python
-class RootAPI(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api")
-        users = SubService("users")
-        products = SubService("products")
-
-        self.api.add_child(users, name="users")
-        self.api.add_child(products, name="products")
-
-root = RootAPI()
-assert root.api.get("users.list")() == "users:list"
-assert root.api.get("products.detail")(5) == "products:detail:5"
-```
-
-### Manual Entry Registration
-
-Routers can register handlers dynamically with `add_entry()` for patterns that don't rely on decorators:
-
-```python
-class DynamicService(RoutedClass):
-    def __init__(self):
-        self.dynamic = Router(self, name="dynamic", auto_discover=False)
-        self.dynamic.add_entry(self.handle_alpha)
-        self.dynamic.add_entry("handle_beta")
-
-    def handle_alpha(self):
-        return "alpha"
-
-    def handle_beta(self):
-        return "beta"
-
-svc = DynamicService()
-assert svc.dynamic.get("handle_alpha")() == "alpha"
-assert svc.dynamic.get("handle_beta")() == "beta"
-```
-
-### Bulk Child Registration
-
-<!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
-
-```python
-class RootAPI(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api")
-        self.users = SubService("users")
-        self.products = SubService("products")
-
-        # Register multiple children via dict
-        self.api.add_child({
-            "users": self.users,
-            "products": self.products
-        })
-
-root = RootAPI()
-assert root.api.get("users.list")() == "users:list"
-```
-
-### Plugins
-
-Built-in plugins (`logging`, `pydantic`) are pre-registered and can be used by name:
-
-<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
-
-```python
-class PluginService(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api").plug("logging")
-
-    @route("api")
-    def do_work(self):
-        return "ok"
-
-svc = PluginService()
-result = svc.api.get("do_work")()  # Logged automatically
-```
-
-### Pydantic Validation
-
-<!-- test: test_pydantic_plugin.py::test_pydantic_plugin_accepts_valid_input -->
-
-```python
-class ValidateService(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api").plug("pydantic")
-
-    @route("api")
-    def concat(self, text: str, number: int = 1) -> str:
-        return f"{text}:{number}"
-
-svc = ValidateService()
-assert svc.api.get("concat")("hello", 3) == "hello:3"
-assert svc.api.get("concat")("hi") == "hi:1"  # Default works
-```
-
-### Custom Plugins
-
-Create your own plugins by subclassing `BasePlugin`:
-
-```python
-from smartroute import RoutedClass, Router, route
-from smartroute.core import BasePlugin, MethodEntry  # Not public API
-
-class MetricsPlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="metrics")
-        self.call_counts = {}
-
-    def on_decore(self, router, func, entry: MethodEntry):
-        """Called during route registration"""
-        self.call_counts[entry.name] = 0
-
-    def wrap_handler(self, router, entry: MethodEntry, call_next):
-        """Wrap handler execution"""
-        def wrapper(*args, **kwargs):
-            self.call_counts[entry.name] += 1
-            return call_next(*args, **kwargs)
-        return wrapper
-
-# Register your plugin
-Router.register_plugin("metrics", MetricsPlugin)
-
-# Use it like built-in plugins
-class Service(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api").plug("metrics")
-
-    @route("api")
-    def work(self):
-        return "done"
-
-svc = Service()
-svc.api.get("work")()
-print(svc.api.metrics.call_counts)  # {"work": 1}
-```
-
-See [llm-docs/PATTERNS.md#pattern-12-custom-plugin-development](llm-docs/PATTERNS.md) for more examples.
-
-### Plugin Configuration
-
-<!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
-
-Configure plugins at runtime with target syntax:
-
-```python
-class ConfService(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api").plug("logging")
-
-    @route("api")
-    def foo(self):
-        return "foo"
-
-    @route("api")
-    def bar(self):
-        return "bar"
-
-svc = ConfService()
-
-# Global configuration - applies to all handlers
-svc.routedclass.configure("api:logging/_all_", level="debug")
-
-# Handler-specific configuration
-svc.routedclass.configure("api:logging/foo", enabled=False)
-
-# Glob pattern configuration
-svc.routedclass.configure("api:logging/b*", level="info")
-```
-
-See [Plugin Configuration Guide](docs/guide/plugin-configuration.md) for complete documentation.
+- **Explicit naming + prefixes** – `@route("api", name="detail")` and `Router(prefix="handle_")` separate method names from public route names ([`test_prefix_and_name_override`](tests/test_switcher_basic.py)).
+- **Attribute-level hierarchies** – `self.api.add_child("sales, finance")` connects child routers by discovering them from instance attributes ([`test_dashboard_hierarchy`](tests/test_switcher_basic.py)).
+- **Bulk registration** – Dictionaries or iterables allow connecting routers from external structures ([`test_add_child_accepts_mapping_for_named_children`](tests/test_switcher_basic.py)).
+- **Built-in and custom plugins** – `Router(...).plug("logging")`, `Router(...).plug("pydantic")` or custom plugins (`llm-docs/PATTERNS.md#pattern-12-custom-plugin-development`).
+- **Runtime configuration** – `routedclass.configure("api:logging/foo", enabled=False)` applies targeted overrides with wildcards or batch updates (see dedicated guide).
+- **Dynamic registration** – `router.add_entry(handler)` or `router.add_entry("*")` allow publishing handlers computed at runtime (`tests/test_router_runtime_extras.py`).
 
 ## Documentation
 
@@ -326,9 +143,9 @@ smartroute/
 
 ## Project Status
 
-SmartRoute is currently in **alpha** (v0.4.0). The core API is stable with complete documentation.
+SmartRoute is currently in **alpha** (v0.4.1). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (59 tests, 707 statements)
+- **Test Coverage**: 100% (66 tests, 724 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

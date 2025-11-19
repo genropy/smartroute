@@ -160,17 +160,19 @@ class Router:
         self,
         target: Any,
         *,
+        name: Optional[str] = None,
         alias: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         replace: bool = False,
         **options: Any,
     ) -> "Router":
         """Register handlers by name, callable, or wildcard."""
+        entry_name = name if name is not None else alias
         if isinstance(target, (list, tuple, set)):
             for entry in target:
                 self.add_entry(
                     entry,
-                    alias=alias,
+                    name=entry_name,
                     metadata=dict(metadata or {}),
                     replace=replace,
                     **options,
@@ -183,7 +185,7 @@ class Router:
                 return self
             if target in {"*", "_all_", "__all__"}:
                 self._register_marked(
-                    alias=alias, metadata=metadata, replace=replace, extra=options
+                    name=entry_name, metadata=metadata, replace=replace, extra=options
                 )
                 return self
             if "," in target:
@@ -192,7 +194,7 @@ class Router:
                     if chunk:
                         self.add_entry(
                             chunk,
-                            alias=alias,
+                            name=entry_name,
                             metadata=dict(metadata or {}),
                             replace=replace,
                             **options,
@@ -210,18 +212,18 @@ class Router:
 
         entry_meta = dict(metadata or {})
         entry_meta.update(options)
-        self._register_callable(bound, alias=alias, metadata=entry_meta, replace=replace)
+        self._register_callable(bound, name=entry_name, metadata=entry_meta, replace=replace)
         return self
 
     def _register_callable(
         self,
         bound: Callable,
         *,
-        alias: Optional[str] = None,
+        name: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         replace: bool = False,
     ) -> None:
-        logical_name = self._resolve_name(bound.__name__, alias=alias)
+        logical_name = self._resolve_name(bound.__name__, alias=name)
         if logical_name in self._entries and not replace:
             raise ValueError(f"Handler name collision: {logical_name}")
         entry = MethodEntry(
@@ -239,20 +241,21 @@ class Router:
     def _register_marked(
         self,
         *,
-        alias: Optional[str],
+        name: Optional[str],
         metadata: Optional[Dict[str, Any]],
         replace: bool,
         extra: Dict[str, Any],
     ) -> None:
         for func, marker in self._iter_marked_methods():
-            marker_alias = marker.pop("alias", None)
+            entry_override = marker.pop("entry_name", None) or marker.pop("alias", None)
+            entry_name = name if name is not None else entry_override
             entry_meta = dict(metadata or {})
             entry_meta.update(marker)
             entry_meta.update(extra)
             bound = func.__get__(self.instance, type(self.instance))
             self._register_callable(
                 bound,
-                alias=alias or marker_alias,
+                name=entry_name,
                 metadata=entry_meta,
                 replace=replace,
             )
@@ -395,6 +398,23 @@ class Router:
     # Children management
     # ------------------------------------------------------------------
     def add_child(self, child: Any, name: Optional[str] = None) -> "Router":
+        if isinstance(child, str):
+            tokens = [token.strip() for token in child.split(",") if token.strip()]
+            if not tokens:
+                return self
+            if name and len(tokens) > 1:
+                raise ValueError("Explicit name cannot be combined with multiple attribute targets")
+            attached: Optional[Router] = None
+            for token in tokens:
+                try:
+                    target = getattr(self.instance, token)
+                except AttributeError as exc:
+                    raise AttributeError(
+                        f"No attribute '{token}' on {type(self.instance).__name__}"
+                    ) from exc
+                attached = self.add_child(target, name=name or token)
+            assert attached is not None
+            return attached
         candidates = list(self._iter_child_routers(child))
         if not candidates:
             raise TypeError(f"Object {child!r} does not expose Router instances")
@@ -466,8 +486,6 @@ class Router:
                 continue
             if isinstance(value, Router):
                 router_items.append((attr_name, value))
-                continue
-            yield from self._iter_child_routers(value, seen, None)
 
         if not router_items:
             return

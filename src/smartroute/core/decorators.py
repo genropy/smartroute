@@ -12,14 +12,23 @@ __all__ = ["route", "routers", "RoutedClass"]
 _PROXY_ATTR = "__routed_proxy__"
 
 
-def route(name: str, *, alias: Optional[str] = None, **kwargs: Any) -> Callable:
-    """Mark a bound method for inclusion in the given router."""
+def route(
+    router: str, *, name: Optional[str] = None, alias: Optional[str] = None, **kwargs: Any
+) -> Callable:
+    """Mark a bound method for inclusion in the given router.
+
+    Args:
+        router: Router identifier (e.g. ``"api"``).
+        name: Optional explicit entry name (overrides function name/prefix stripping).
+        alias: Deprecated alias for ``name`` (kept for compatibility).
+    """
 
     def decorator(func: Callable) -> Callable:
         markers = list(getattr(func, TARGET_ATTR, []))
-        payload = {"name": name}
-        if alias is not None:
-            payload["alias"] = alias
+        payload = {"name": router}
+        entry_name = alias if name is None else name
+        if entry_name is not None:
+            payload["entry_name"] = entry_name
         for key, value in kwargs.items():
             payload[key] = value
         markers.append(payload)

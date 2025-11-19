@@ -8,6 +8,82 @@ from smartroute import RoutedClass, Router, route
 from smartroute.core import BasePlugin  # Not public API
 
 
+def test_orders_quick_example():
+    class OrdersAPI(RoutedClass):
+        def __init__(self, label: str):
+            self.label = label
+            self.api = Router(self, name="orders")
+
+        @route("orders")
+        def list(self):
+            return ["order-1", "order-2"]
+
+        @route("orders")
+        def retrieve(self, ident: str):
+            return f"{self.label}:{ident}"
+
+        @route("orders")
+        def create(self, payload: dict):
+            return {"status": "created", **payload}
+
+    orders = OrdersAPI("acme")
+    assert orders.api.get("list")() == ["order-1", "order-2"]
+    assert orders.api.get("retrieve")("42") == "acme:42"
+    overview = orders.api.members()
+    assert set(overview["handlers"].keys()) == {"list", "retrieve", "create"}
+
+
+def test_dashboard_hierarchy():
+    class Report(RoutedClass):
+        def __init__(self, name: str):
+            self.name = name
+            self.routes = Router(self, name="report")
+
+        @route("report")
+        def summary(self):
+            return f"{self.name}:summary"
+
+    class Dashboard(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="dashboard")
+            self.sales = Report("sales")
+            self.finance = Report("finance")
+            self.api.add_child(self.sales, name="sales")
+            self.api.add_child(self.finance, name="finance")
+
+    dashboard = Dashboard()
+    assert dashboard.api.get("sales.summary")() == "sales:summary"
+    assert dashboard.api.get("finance.summary")() == "finance:summary"
+
+
+def test_portal_composition():
+    class Emails(RoutedClass):
+        def __init__(self):
+            self.routes = Router(self, name="emails")
+
+        @route("emails")
+        def send(self, to: str):
+            return f"email:{to}"
+
+    class Reports(RoutedClass):
+        def __init__(self):
+            self.routes = Router(self, name="reports")
+
+        @route("reports")
+        def summary(self):
+            return "reports:summary"
+
+    class Portal(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="portal")
+            modules = {"reports": Reports(), "emails": Emails()}
+            self.api.add_child(modules)
+
+    portal = Portal()
+    assert portal.api.get("reports.summary")() == "reports:summary"
+    assert portal.api.get("emails.send")("user") == "email:user"
+
+
 class Service(RoutedClass):
     def __init__(self, label: str):
         self.label = label
@@ -27,7 +103,7 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 
@@ -112,7 +188,7 @@ class NestedRoot(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
         self.branch = NestedBranch()
-        self.api.add_child(self.branch)
+        self.api.add_child(self.branch.child_leaf, name="leaf_switch")
 
 
 class DynamicRouterService(RoutedClass):
@@ -138,7 +214,7 @@ def test_instance_bound_methods_are_isolated():
     assert first.api.get("describe") != second.api.get("describe")
 
 
-def test_prefix_and_alias_resolution():
+def test_prefix_and_name_override():
     sub = SubService("users")
 
     assert set(sub.routes.entries()) == {"list", "detail"}
@@ -197,6 +273,45 @@ def test_add_child_handles_nested_iterables_and_pairs():
     assert root.api.get("products.detail")(3) == "products:detail:3"
 
 
+def test_add_child_accepts_attribute_names():
+    class AttrParent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.users = SubService("users")
+            self.products = SubService("products")
+            self.api.add_child("users")
+            self.api.add_child("products")
+
+    parent = AttrParent()
+    assert parent.api.get("users.list")() == "users:list"
+    assert parent.api.get("products.detail")(8) == "products:detail:8"
+
+
+def test_add_child_accepts_comma_separated_attributes():
+    class MultiAttrParent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.users = SubService("users")
+            self.products = SubService("products")
+            self.api.add_child("users, products")
+
+    parent = MultiAttrParent()
+    assert parent.api.get("users.list")() == "users:list"
+    assert parent.api.get("products.detail")(9) == "products:detail:9"
+
+
+def test_add_child_blank_attribute_string_noop():
+    class BlankParent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.users = SubService("users")
+
+    parent = BlankParent()
+    parent.api.add_child(" , ")
+    with pytest.raises(KeyError):
+        parent.api.get_child("users")
+
+
 def test_plugins_are_per_instance_and_accessible():
     svc = PluginService()
     assert svc.api.capture.calls == []
@@ -213,7 +328,7 @@ def test_dynamic_router_add_entry_runtime():
     assert svc.dynamic.get("dynamic_alpha")() == "alpha"
     assert svc.dynamic.get("dynamic_beta")() == "beta"
     # Adding via string
-    svc.dynamic.add_entry("dynamic_alpha", alias="alpha_alias")
+    svc.dynamic.add_entry("dynamic_alpha", name="alpha_alias")
     assert svc.dynamic.get("alpha_alias")() == "alpha"
 
 

@@ -49,7 +49,7 @@ def test_router_auto_registers_marked_methods_and_validates_plugins():
         def __init__(self):
             self.api = Router(self, name="api")
 
-        @route("api", alias="alias")
+        @route("api", name="alias")
         def handle(self):
             return "ok"
 
@@ -66,11 +66,11 @@ def test_router_detects_handler_name_collision():
         def __init__(self):
             self.api = Router(self, name="api")
 
-        @route("api", alias="dup")
+        @route("api", name="dup")
         def first(self):
             return "one"
 
-        @route("api", alias="dup")
+        @route("api", name="dup")
         def second(self):
             return "two"
 
@@ -112,6 +112,12 @@ def test_router_add_child_error_paths():
     parent.api.add_child(first, name="leaf")
     with pytest.raises(ValueError):
         parent.api.add_child(second, name="leaf")
+
+    with pytest.raises(AttributeError):
+        parent.api.add_child("missing_attr")
+
+    with pytest.raises(ValueError):
+        parent.api.add_child("leaf, leaf", name="override")
 
     with pytest.raises(KeyError):
         parent.api.get_child("ghost")

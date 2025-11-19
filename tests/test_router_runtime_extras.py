@@ -30,7 +30,7 @@ class DualRoutes(RoutedClass):
         self.two = Router(self, name="two", auto_discover=False)
 
     @route("one")
-    @route("two", alias="two_alias")
+    @route("two", name="two_alias")
     def shared(self):
         return "shared"
 
@@ -120,7 +120,7 @@ def test_add_entry_variants_and_wildcards():
 def test_plugin_on_decore_runs_for_existing_entries():
     svc = ManualService()
     svc.api.plug("stamp_extra")
-    svc.api.add_entry(svc.first, alias="alias_first")
+    svc.api.add_entry(svc.first, name="alias_first")
     assert svc.api._entries["alias_first"].metadata["stamped"] is True
 
 
@@ -310,3 +310,19 @@ def test_get_router_skips_empty_segments():
     svc = Parent()
     router = svc.routedclass.get_router("api.child..")
     assert router.name == "leaf"
+
+
+def test_iter_child_routers_handles_repeated_objects():
+    class DummyChild(RoutedClass):
+        def __init__(self):
+            self.routes = Router(self, name="routes")
+
+    class RepeatContainer:
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = DummyChild()
+
+    container = RepeatContainer()
+    # Provide same child twice via iterable to hit seen-guard branch
+    routes = list(container.api._iter_child_routers([container.child, container.child]))
+    assert len(routes) == 1

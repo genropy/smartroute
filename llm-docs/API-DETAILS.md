@@ -440,7 +440,7 @@ info = svc.routedclass.configure("?")
 
 ## Decorators
 
-### @route(router_name: str, *, alias: str = None, **kwargs)
+### @route(router_name: str, *, name: str = None, **kwargs)
 
 Mark instance method for router registration.
 
@@ -456,16 +456,16 @@ class Service(RoutedClass):
         return "result"
 ```
 
-**With alias:**
+**With explicit name:**
 
-<!-- test: test_switcher_basic.py::test_prefix_and_alias_resolution -->
+<!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
 ```python
-@route("api", alias="short")
+@route("api", name="short")
 def long_method_name(self):
     pass
 
-# Accessible as both "long_method_name" and "short"
+# Registered as "short" instead of deriving from method name
 ```
 
 **With prefix stripping:**
@@ -483,7 +483,8 @@ class Service(RoutedClass):
 **Parameters:**
 
 - `router_name` (str): Name of router to register with (matches `Router(self, name="...")`)
-- `alias` (str, optional): Alternative name for handler
+- `name` (str, optional): Explicit handler name (overrides method name/prefix logic)
+- `alias` (str, optional, deprecated): Backwards-compatible synonym for `name`
 - `**kwargs`: Additional metadata stored in `MethodEntry.metadata`
 
 ### @routers(*router_names: str)
@@ -563,7 +564,7 @@ Called once when handler is registered. Modify metadata, validate signatures, bu
 
 - `router` - Router instance
 - `func` - Original method
-- `entry` - MethodEntry with name, func, metadata, aliases
+- `entry` - MethodEntry with name, func, metadata
 
 #### `wrap_handler(router: Router, entry: MethodEntry, call_next: Callable) -> Callable`
 
@@ -606,14 +607,12 @@ Accessible in `on_decore()` and `wrap_handler()`.
 - `name` (str) - Handler name (after prefix stripping)
 - `func` (Callable) - Original method
 - `metadata` (dict) - Custom metadata from `@route(**kwargs)`
-- `aliases` (set[str]) - Alternative names
 
 **Example:**
 
 ```python
 def on_decore(self, router, func, entry):
     print(f"Registering: {entry.name}")
-    print(f"Aliases: {entry.aliases}")
     print(f"Metadata: {entry.metadata}")
 ```
 
@@ -828,7 +827,7 @@ class UsersService(RoutedClass):
     def handle_list(self):
         return ["alice", "bob"]
 
-    @route("api", alias="detail")
+    @route("api", name="detail")
     def handle_get(self, user_id: int):
         return {"id": user_id, "name": "..."}
 

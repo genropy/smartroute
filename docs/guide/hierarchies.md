@@ -32,19 +32,19 @@ class SubService(RoutedClass):
     def handle_list(self):
         return f"{self.prefix}:list"
 
-    @route("routes", alias="detail")
+    @route("routes", name="detail")
     def handle_detail(self, ident: int):
         return f"{self.prefix}:detail:{ident}"
 
 class RootAPI(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        users = SubService("users")
-        products = SubService("products")
+        self.users = SubService("users")
+        self.products = SubService("products")
 
-        # Add children explicitly
-        self.api.add_child(users, name="users")
-        self.api.add_child(products, name="products")
+        # Add children referencing attributes
+        self.api.add_child("users")
+        self.api.add_child("products")
 
 root = RootAPI()
 
