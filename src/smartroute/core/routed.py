@@ -17,7 +17,8 @@ from __future__ import annotations
 from fnmatch import fnmatchcase
 from typing import Any, Dict, Optional
 
-from .router import ROUTER_REGISTRY_ATTR, Router
+from .base_router import ROUTER_REGISTRY_ATTR
+from .router import Router
 
 __all__ = ["RoutedClass"]
 

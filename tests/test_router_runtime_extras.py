@@ -3,7 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route, routers
-from smartroute.core.router import ROUTER_REGISTRY_ATTR, _format_annotation
+from smartroute.core.base_router import ROUTER_REGISTRY_ATTR, _format_annotation
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 
@@ -152,16 +152,16 @@ def test_inherit_plugins_branches():
     child = ManualService()
     parent.api.plug("stamp_extra")
     before = len(child.api._plugins)
-    child.api._inherit_plugins_from(parent.api)
+    child.api._on_attached_to_parent(parent.api)
     after = len(child.api._plugins)
     assert after > before
-    child.api._inherit_plugins_from(parent.api)
+    child.api._on_attached_to_parent(parent.api)
     assert len(child.api._plugins) == after
 
     orphan = ManualService()
     plain = ManualService()
     plain_before = len(orphan.api._plugins)
-    orphan.api._inherit_plugins_from(plain.api)
+    orphan.api._on_attached_to_parent(plain.api)
     assert len(orphan.api._plugins) == plain_before
 
 

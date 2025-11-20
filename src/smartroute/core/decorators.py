@@ -16,8 +16,9 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, Type
 
+from .base_router import TARGET_ATTR
 from .routed import RoutedClass
-from .router import TARGET_ATTR, Router
+from .router import Router
 
 __all__ = ["route", "routers", "RoutedClass"]
 
