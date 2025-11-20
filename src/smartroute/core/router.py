@@ -41,9 +41,9 @@ __all__ = ["Router"]
 _ACTIVATION_CTX: contextvars.ContextVar[Dict[Tuple[int, str, str], bool] | None] = (
     contextvars.ContextVar("smartroute_activation", default=None)
 )
-_RUNTIME_CTX: contextvars.ContextVar[
-    Dict[Tuple[int, str, str], Dict[str, Any]] | None
-] = contextvars.ContextVar("smartroute_runtime", default=None)
+_RUNTIME_CTX: contextvars.ContextVar[Dict[Tuple[int, str, str], Dict[str, Any]] | None] = (
+    contextvars.ContextVar("smartroute_runtime", default=None)
+)
 _PLUGIN_REGISTRY: Dict[str, Type[BasePlugin]] = {}
 
 

@@ -384,7 +384,11 @@ class BaseRouter:
         filter_active = bool(scope_filter or channel_filter)
 
         def describe_node(node: "BaseRouter") -> Dict[str, Any]:
-            scope_plugin = getattr(node, "_plugins_by_name", {}).get("scope") if hasattr(node, "_plugins_by_name") else None
+            scope_plugin = (
+                getattr(node, "_plugins_by_name", {}).get("scope")
+                if hasattr(node, "_plugins_by_name")
+                else None
+            )
 
             return {
                 "name": node.name,
@@ -471,7 +475,9 @@ class BaseRouter:
 
         return describe_node(self)
 
-    def members(self, scopes: Optional[Any] = None, channel: Optional[str] = None) -> Dict[str, Any]:
+    def members(
+        self, scopes: Optional[Any] = None, channel: Optional[str] = None
+    ) -> Dict[str, Any]:
         scope_filter = self._normalize_scope_filter(scopes)
         channel_filter = self._normalize_channel_filter(channel)
         filter_active = bool(scope_filter or channel_filter)
@@ -479,7 +485,9 @@ class BaseRouter:
         def capture(node: "BaseRouter") -> Dict[str, Any]:
             handlers = {}
             for name, entry in node._entries.items():
-                if filter_active and not _entry_matches_filters(entry, scope_filter, channel_filter):
+                if filter_active and not _entry_matches_filters(
+                    entry, scope_filter, channel_filter
+                ):
                     continue
                 handlers[name] = {
                     "callable": entry.func,
@@ -537,9 +545,7 @@ class BaseRouter:
             if not normalized:
                 raise ValueError("channel cannot be empty")
             if normalized != normalized.upper():
-                raise ValueError(
-                    f"channel must be uppercase (got '{normalized}')"
-                )
+                raise ValueError(f"channel must be uppercase (got '{normalized}')")
             return normalized
         raise TypeError("channel must be a string")
 
