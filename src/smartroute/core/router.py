@@ -692,7 +692,9 @@ class Router:
 
         return describe_node(self)
 
-    def members(self, scopes: Optional[Any] = None, channel: Optional[str] = None) -> Dict[str, Any]:
+    def members(
+        self, scopes: Optional[Any] = None, channel: Optional[str] = None
+    ) -> Dict[str, Any]:
         scope_filter = self._normalize_scope_filter(scopes)
         channel_filter = self._normalize_channel_filter(channel)
         filter_active = bool(scope_filter or channel_filter)
@@ -775,9 +777,7 @@ class Router:
             if not normalized:
                 raise ValueError("channel cannot be empty")
             if normalized != normalized.upper():
-                raise ValueError(
-                    f"channel must be uppercase (got '{normalized}')"
-                )
+                raise ValueError(f"channel must be uppercase (got '{normalized}')")
             return normalized
         raise TypeError("channel must be a string")
 

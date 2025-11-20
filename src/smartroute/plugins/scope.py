@@ -107,11 +107,7 @@ class ScopePlugin(BasePlugin):
         matrix: Dict[str, Dict[str, Any]] = {}
         for method_name, payload in self.describe_scopes().items():
             scoped_channels = payload.get("channels", {})
-            matching = [
-                scope
-                for scope, channels in scoped_channels.items()
-                if target in channels
-            ]
+            matching = [scope for scope, channels in scoped_channels.items() if target in channels]
             if matching:
                 matrix[method_name] = {
                     "tags": payload["tags"],
@@ -167,14 +163,9 @@ class ScopePlugin(BasePlugin):
         merged = self._merge_channel_maps(global_map, metadata_map)
         merged = self._merge_channel_maps(merged, method_map)
 
-        return {
-            scope: self._resolve_channels_for_scope(scope, merged)
-            for scope in scopes
-        }
+        return {scope: self._resolve_channels_for_scope(scope, merged) for scope in scopes}
 
-    def _resolve_channels_for_scope(
-        self, scope: str, mapping: Dict[str, List[str]]
-    ) -> List[str]:
+    def _resolve_channels_for_scope(self, scope: str, mapping: Dict[str, List[str]]) -> List[str]:
         channels = self._match_channel_entry(scope, mapping)
         if channels:
             return channels
@@ -286,9 +277,7 @@ class ScopePlugin(BasePlugin):
         if not normalized:
             return ""
         if normalized != normalized.upper():
-            raise ValueError(
-                f"Channel code '{normalized}' must be uppercase (e.g. CLI, SYS_HTTP)"
-            )
+            raise ValueError(f"Channel code '{normalized}' must be uppercase (e.g. CLI, SYS_HTTP)")
         return normalized
 
     def _default_channels_for_scope(self, scope: str) -> List[str]:
