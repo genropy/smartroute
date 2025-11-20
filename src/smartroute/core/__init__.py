@@ -14,8 +14,8 @@ underlying structure.
 """
 
 from .decorators import route, routers
-from .router import Router
 from .routed import RoutedClass
+from .router import Router
 
 __all__ = [
     "Router",

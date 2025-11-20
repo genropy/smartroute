@@ -29,7 +29,7 @@ for _plugin in ("logging", "pydantic", "scope"):
     import_module(f"{__name__}.plugins.{_plugin}")
 del _plugin
 
-from .plugins.scope import STANDARD_CHANNELS as _STANDARD_CHANNELS
+from .plugins.scope import STANDARD_CHANNELS as _STANDARD_CHANNELS  # noqa: E402
 
 CHANNELS = MappingProxyType(dict(_STANDARD_CHANNELS))
 channels = CHANNELS
