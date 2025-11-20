@@ -1,14 +1,25 @@
-"""Core routing primitives."""
+"""Core Runtime Aggregator
+===========================
 
-from .base import BasePlugin, MethodEntry
-from .decorators import RoutedClass, route, routers
+The `smartroute.core` package bundles the minimal pieces required to build
+instance-scoped routers:
+
+- :mod:`~smartroute.core.router` supplies the runtime Router implementation
+- :mod:`~smartroute.core.decorators` contains decorator/proxy helpers
+- :mod:`~smartroute.core.base` defines plugin primitives
+
+This module re-exports the public entry points so consumers can simply write
+``from smartroute.core import Router, route`` without worrying about the
+underlying structure.
+"""
+
+from .decorators import route, routers
 from .router import Router
+from .routed import RoutedClass
 
 __all__ = [
     "Router",
     "route",
     "routers",
     "RoutedClass",
-    "BasePlugin",
-    "MethodEntry",
 ]

@@ -485,7 +485,7 @@ svc.routedclass.configure("api:pydantic/_all_", strict=True)
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
 ```python
-from smartroute.core import BasePlugin, MethodEntry
+from smartroute.plugins._base import BasePlugin, MethodEntry
 
 class MetricsPlugin(BasePlugin):
     def __init__(self):

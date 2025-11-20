@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from smartroute import RoutedClass, Router, route
-from smartroute.core import BasePlugin  # Not public API
+from smartroute.plugins._base_plugin import BasePlugin  # Not public API
 
 
 def test_orders_quick_example():

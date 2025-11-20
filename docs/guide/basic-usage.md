@@ -287,9 +287,16 @@ info = insp.api.describe()
 assert "action" in info["handlers"]
 assert "sub" in info["children"]
 
+# Filter describe output by scope/channel (ScopePlugin)
+internal_info = insp.api.describe(scopes="internal", channel="CLI")
+
 # List all handlers
 members = insp.api.members()
-assert "action" in members
+assert "action" in members["handlers"]
+
+# When ScopePlugin is attached, filter by scope tags
+internal = insp.api.members(scopes="internal")
+internal_cli = insp.api.members(scopes="internal", channel="CLI")
 ```
 
 **Use `describe()` and `members()` to**:

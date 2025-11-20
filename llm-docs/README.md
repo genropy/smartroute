@@ -91,7 +91,7 @@ root.api.get("child.method")()  # Dotted path
 
 ### 5. With Plugins
 
-Built-in plugins (`logging`, `pydantic`) are pre-registered:
+Built-in plugins (`logging`, `pydantic`, `scope`) are pre-registered:
 
 ```python
 class Service(RoutedClass):
@@ -120,6 +120,7 @@ Pre-registered and available by name:
 
 - `"logging"` - Logs handler calls
 - `"pydantic"` - Validates args with type hints (requires `pip install smartroute[pydantic]`)
+- `"scope"` - Declares scopes and allowed channels per handler
 
 ```python
 class Service(RoutedClass):
@@ -189,9 +190,16 @@ description = svc.api.describe()
 # Returns dict with:
 # - name, plugins, handlers, children
 
+# Filter describe output (ScopePlugin)
+internal_cli_desc = svc.api.describe(scopes="internal", channel="CLI")
+
 # List handler names
 members = svc.api.members()
-# Returns list of handler names
+handler_names = members["handlers"].keys()
+
+# Filter by scope tags when ScopePlugin is active
+internal = svc.api.members(scopes="internal")
+internal_cli = svc.api.members(scopes="internal", channel="CLI")
 
 # Query configuration tree
 info = svc.routedclass.configure("?")

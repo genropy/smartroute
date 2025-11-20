@@ -1,6 +1,9 @@
-"""Built-in plugins for SmartRoute."""
+"""Plugin package initialiser.
 
-from .logging import LoggingPlugin
-from .pydantic import PydanticPlugin
+Keep this module lightweight so it can be imported during Router start-up
+without triggering the built-in plugins. Each plugin module (`logging`,
+`pydantic`, `scope`) registers itself when imported explicitly (see
+``smartroute.__init__``).
+"""
 
-__all__ = ["LoggingPlugin", "PydanticPlugin"]
+__all__: list[str] = []

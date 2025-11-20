@@ -15,7 +15,7 @@ Plugins in SmartRoute:
 
 ## Built-in Plugins
 
-SmartRoute includes two production-ready plugins:
+SmartRoute includes three production-ready plugins:
 
 **LoggingPlugin** (`logging`):
 
@@ -48,6 +48,28 @@ class ValidatedService(RoutedClass):
 svc = ValidatedService()
 svc.api.get("concat")("hello", 3)  # ✅ Valid
 # svc.api.get("concat")(123, "oops")  # ❌ ValidationError
+```
+
+**ScopePlugin** (`scope`):
+
+```python
+class ScopedService(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api").plug("scope", channels="CLI,SYS_HTTP")
+
+    @route("api", scopes="internal,admin")
+    def admin(self):
+        return "ok"
+
+svc = ScopedService()
+scope_info = svc.api.scope.describe_method("admin")
+assert scope_info["tags"] == ["internal", "admin"]
+assert scope_info["channels"]["internal"] == ["CLI", "SYS_HTTP"]
+
+# Channel codes are uppercase symbolic tokens (CLI, SYS_HTTP, HTTP, WS, MCP...).
+
+from smartroute import channels
+assert "CLI" in channels
 ```
 
 See [Quick Start - Plugins](../quickstart.md#adding-plugins) for more examples.

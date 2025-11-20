@@ -1,5 +1,16 @@
-"""
-Pydantic validation plugin adapted for the instance-scoped Router prototype.
+"""Pydantic Validation Plugin
+=============================
+
+Responsibility
+--------------
+- inspect type hints on handlers and build Pydantic models on the fly
+- validate keyword/positional arguments before calling the real handler
+- raise standard `ValidationError` instances so callers can handle them
+
+Constraints
+-----------
+- optional dependency: importing this module requires `pydantic`
+- only parameters with type hints participate in validation; others pass through
 """
 
 from __future__ import annotations
@@ -14,7 +25,8 @@ except ImportError:  # pragma: no cover - import guard
         "Pydantic plugin requires pydantic. Install with: pip install smartroute[pydantic]"
     )
 
-from smartroute.core import BasePlugin, MethodEntry, Router
+from smartroute.core.router import Router
+from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 if TYPE_CHECKING:
     from smartroute.core import Router

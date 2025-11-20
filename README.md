@@ -29,8 +29,25 @@ SmartRoute provides a consistent, well-tested foundation for these patterns.
 3. **Simple hierarchies** – `add_child("child1, child2")` connects child routers with dotted path access (`parent.api.get("child.method")`).
 4. **Plugin pipeline** – `BasePlugin` provides `on_decore`/`wrap_handler` hooks and plugins inherit from parents automatically.
 5. **Runtime configuration** – `routedclass.configure()` applies global or per-handler overrides with wildcards and returns reports (`"?"`).
-6. **Optional extras** – `logging`, `pydantic` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies.
+6. **Optional extras** – `logging`, `pydantic`, `scope` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies.
 7. **Full coverage** – The package is 100% covered by Pytest (65 scenarios) with no hidden compatibility layers.
+
+### Standard channel codes
+
+ScopePlugin uses uppercase channel codes to mark where routes may be exposed. Built-in conventions:
+
+- `CLI` – Publisher CLI commands
+- `SYS_HTTP` / `SYS_WS` – shared Publisher HTTP/WebSocket servers
+- `HTTP` / `WS` – per-app FastAPI/WS endpoints
+- `MCP` – Machine Control Protocol adapters (AI integrations)
+
+Additional channels can be declared per router (still uppercase strings) without touching the core.
+
+```python
+from smartroute import channels
+
+print(channels["CLI"])  # -> "Publisher CLI commands"
+```
 
 ## Quick Example
 
@@ -62,6 +79,10 @@ print(orders.api.get("retrieve")("42"))  # acme:42
 
 overview = orders.api.members()
 print(overview["handlers"].keys())      # dict_keys(['list', 'retrieve', 'create'])
+# Filter only handlers exposing a given scope
+internal_only = orders.api.members(scopes="internal")
+# Or limit both scope and channel
+internal_cli = orders.api.members(scopes="internal", channel="CLI")
 ```
 
 ## Installation
@@ -97,7 +118,7 @@ pip install smartroute[pydantic]
 - **Explicit naming + prefixes** – `@route("api", name="detail")` and `Router(prefix="handle_")` separate method names from public route names ([`test_prefix_and_name_override`](tests/test_switcher_basic.py)).
 - **Attribute-level hierarchies** – `self.api.add_child("sales, finance")` connects child routers by discovering them from instance attributes ([`test_dashboard_hierarchy`](tests/test_switcher_basic.py)).
 - **Bulk registration** – Dictionaries or iterables allow connecting routers from external structures ([`test_add_child_accepts_mapping_for_named_children`](tests/test_switcher_basic.py)).
-- **Built-in and custom plugins** – `Router(...).plug("logging")`, `Router(...).plug("pydantic")` or custom plugins (`llm-docs/PATTERNS.md#pattern-12-custom-plugin-development`).
+- **Built-in and custom plugins** – `Router(...).plug("logging")`, `Router(...).plug("pydantic")`, `Router(...).plug("scope")` or custom plugins (`llm-docs/PATTERNS.md#pattern-12-custom-plugin-development`).
 - **Runtime configuration** – `routedclass.configure("api:logging/foo", enabled=False)` applies targeted overrides with wildcards or batch updates (see dedicated guide).
 - **Dynamic registration** – `router.add_entry(handler)` or `router.add_entry("*")` allow publishing handlers computed at runtime (`tests/test_router_runtime_extras.py`).
 
@@ -130,7 +151,8 @@ smartroute/
 │   │   └── base.py         # BasePlugin and MethodEntry
 │   └── plugins/            # Built-in plugins
 │       ├── logging.py      # LoggingPlugin
-│       └── pydantic.py     # PydanticPlugin
+│       ├── pydantic.py     # PydanticPlugin
+│       └── scope.py        # ScopePlugin
 ├── tests/                  # Test suite (>95% coverage)
 │   ├── test_switcher_basic.py        # Core functionality
 │   ├── test_router_edge_cases.py     # Edge cases

@@ -3,7 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route, routers
-from smartroute.core import BasePlugin, MethodEntry
+from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 from smartroute.core.router import ROUTER_REGISTRY_ATTR, _format_annotation
 
 

@@ -1,5 +1,16 @@
-"""
-Logging plugin adapted for the instance-scoped Router prototype.
+"""Logging Plugin
+=================
+
+Responsibility
+--------------
+- wrap each handler invocation with a start/end message and timing metrics
+- rely on a configured `logging.Logger` (or `print` fallback) without pulling
+  additional dependencies
+
+Usage Notes
+-----------
+- designed for development environments; it emits one line per call
+- can be configured per-handler via `svc.routedclass.configure("api:logging/...", ...)`
 """
 
 from __future__ import annotations
@@ -8,7 +19,8 @@ import logging
 import time
 from typing import Callable, Optional
 
-from smartroute.core import BasePlugin, MethodEntry, Router
+from smartroute.core.router import Router
+from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 
 class LoggingPlugin(BasePlugin):

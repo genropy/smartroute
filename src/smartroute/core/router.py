@@ -1,4 +1,20 @@
-"""Runtime Router implementation without class descriptors."""
+"""Router Runtime and Plugin Registry
+=====================================
+
+Scope
+-----
+- bind handlers to object instances without using descriptors
+- manage plugin registration, inheritance, and per-handler wrapping
+- provide runtime configuration helpers (`configure`, enable/disable hooks)
+- expose introspection primitives (`describe`, `members`) for Publisher/CLI
+
+Invariants
+----------
+- routers are instance-scoped: every object owns its own router tree
+- plugin registration is global but instantiation is per-router
+- handler metadata (``MethodEntry``) is the single source of truth for
+  describing routes; no hidden registries exist outside this module
+"""
 
 from __future__ import annotations
 
@@ -11,7 +27,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type
 
 from smartseeds import SmartOptions
 
-from .base import BasePlugin, MethodEntry
+from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 __all__ = ["Router", "TARGET_ATTR", "ROUTER_REGISTRY_ATTR"]
 
@@ -534,19 +550,46 @@ class Router:
     # ------------------------------------------------------------------
     # Introspection helpers
     # ------------------------------------------------------------------
-    def describe(self) -> Dict[str, Any]:
+    def describe(
+        self, scopes: Optional[Any] = None, channel: Optional[str] = None
+    ) -> Dict[str, Any]:
+        scope_filter = self._normalize_scope_filter(scopes)
+        channel_filter = self._normalize_channel_filter(channel)
+        filter_active = bool(scope_filter or channel_filter)
+
         def describe_node(node: "Router") -> Dict[str, Any]:
+            scope_plugin = getattr(node, "_plugins_by_name", {}).get("scope")
+
             return {
                 "name": node.name,
                 "prefix": node.prefix,
                 "plugins": [p.name for p in node.iter_plugins()],
-                "methods": {
-                    name: _build_method_description(entry) for name, entry in node._entries.items()
-                },
-                "children": {key: describe_node(child) for key, child in node._children.items()},
+                "methods": _describe_methods(node, scope_plugin),
+                "children": _describe_children(node),
             }
 
-        def _build_method_description(entry: MethodEntry) -> Dict[str, Any]:
+        def _describe_methods(node: "Router", scope_plugin: Optional[BasePlugin]):
+            methods: Dict[str, Any] = {}
+            for name, entry in node._entries.items():
+                method_info = _build_method_description(entry, scope_plugin)
+                if filter_active and not _method_matches_filters(
+                    method_info, scope_filter, channel_filter
+                ):
+                    continue
+                methods[name] = method_info
+            return methods
+
+        def _describe_children(node: "Router") -> Dict[str, Any]:
+            children: Dict[str, Any] = {}
+            for key, child in node._children.items():
+                payload = describe_node(child)
+                if not filter_active or payload["methods"] or payload["children"]:
+                    children[key] = payload
+            return children
+
+        def _build_method_description(
+            entry: MethodEntry, scope_plugin: Optional[BasePlugin]
+        ) -> Dict[str, Any]:
             func = entry.func
             signature = inspect.signature(func)
             method_info: Dict[str, Any] = {
@@ -607,29 +650,136 @@ class Router:
                     if validation:
                         field_info["validation"] = validation
 
+            if scope_plugin and hasattr(scope_plugin, "describe_method"):
+                scope_meta = scope_plugin.describe_method(entry.name)
+                if scope_meta:
+                    method_info["scope"] = scope_meta
+
             return method_info
+
+        def _method_matches_filters(
+            method_info: Dict[str, Any],
+            scope_filter: Optional[set[str]],
+            channel_filter: Optional[str],
+        ) -> bool:
+            scope_meta = method_info.get("scope")
+            tags = scope_meta.get("tags") if isinstance(scope_meta, dict) else None
+
+            if scope_filter:
+                if not tags or not any(tag in scope_filter for tag in tags):
+                    return False
+
+            if channel_filter:
+                if not scope_meta:
+                    return False
+                channel_map = scope_meta.get("channels", {}) if isinstance(scope_meta, dict) else {}
+                if not isinstance(channel_map, dict):
+                    return False
+                relevant_scopes = tags or list(channel_map.keys())
+                allowed: set[str] = set()
+                for scope_name in relevant_scopes:
+                    codes = channel_map.get(scope_name, [])
+                    for code in codes or []:
+                        normalized = str(code).strip()
+                        if normalized:
+                            allowed.add(normalized)
+                if channel_filter not in allowed:
+                    return False
+
+            if scope_filter or channel_filter:
+                return bool(tags)
+            return True
 
         return describe_node(self)
 
-    def members(self) -> Dict[str, Any]:
+    def members(self, scopes: Optional[Any] = None, channel: Optional[str] = None) -> Dict[str, Any]:
+        scope_filter = self._normalize_scope_filter(scopes)
+        channel_filter = self._normalize_channel_filter(channel)
+        filter_active = bool(scope_filter or channel_filter)
+
         def capture(node: "Router") -> Dict[str, Any]:
+            handlers = {}
+            for name, entry in node._entries.items():
+                if filter_active and not _entry_matches(entry, scope_filter, channel_filter):
+                    continue
+                handlers[name] = {
+                    "callable": entry.func,
+                    "metadata": entry.metadata,
+                }
+
+            children = {}
+            for child_name, child in node._children.items():
+                child_payload = capture(child)
+                if not filter_active or child_payload["handlers"] or child_payload["children"]:
+                    children[child_name] = child_payload
+
             return {
                 "name": node.name,
                 "router": node,
                 "instance": node.instance,
-                "handlers": {
-                    name: {
-                        "callable": entry.func,
-                        "metadata": entry.metadata,
-                    }
-                    for name, entry in node._entries.items()
-                },
-                "children": {
-                    child_name: capture(child) for child_name, child in node._children.items()
-                },
+                "handlers": handlers,
+                "children": children,
             }
 
+        def _entry_matches(
+            entry: MethodEntry, scope_filter: Optional[set[str]], channel_filter: Optional[str]
+        ) -> bool:
+            scope_meta = entry.metadata.get("scope") if entry.metadata else None
+            tags = scope_meta.get("tags") if isinstance(scope_meta, dict) else None
+
+            if scope_filter:
+                if not tags or not any(tag in scope_filter for tag in tags):
+                    return False
+
+            if channel_filter:
+                if not scope_meta:
+                    return False
+                channel_map = scope_meta.get("channels", {})
+                if not isinstance(channel_map, dict):
+                    return False
+                relevant_scopes = tags or list(channel_map.keys())
+                allowed: set[str] = set()
+                for scope_name in relevant_scopes:
+                    codes = channel_map.get(scope_name, [])
+                    for code in codes or []:
+                        normalized = str(code).strip()
+                        if normalized:
+                            allowed.add(normalized)
+                if channel_filter not in allowed:
+                    return False
+
+            if scope_filter or channel_filter:
+                return bool(tags)
+            return True
+
         return capture(self)
+
+    def _normalize_scope_filter(self, scopes: Optional[Any]) -> Optional[set[str]]:
+        if scopes is None or scopes is False:
+            return None
+        if isinstance(scopes, str):
+            items = scopes.split(",")
+        elif isinstance(scopes, Iterable):
+            items = scopes
+        else:
+            raise TypeError("scopes must be a string or iterable of strings")
+
+        cleaned = {str(item).strip() for item in items if str(item).strip()}
+        return cleaned or None
+
+    def _normalize_channel_filter(self, channel: Optional[str]) -> Optional[str]:
+        if channel is None or channel is False:
+            return None
+        if isinstance(channel, str):
+            normalized = channel.strip()
+            if not normalized:
+                raise ValueError("channel cannot be empty")
+            if normalized != normalized.upper():
+                raise ValueError(
+                    f"channel must be uppercase (got '{normalized}')"
+                )
+            return normalized
+        raise TypeError("channel must be a string")
 
 
 def _format_annotation(annotation: Any) -> str:

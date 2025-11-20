@@ -4,7 +4,7 @@
 
 For complete plugin documentation, see:
 - [LLM API Details - Plugin API](../../llm-docs/API-DETAILS.md#plugin-api) - BasePlugin API
-- [LLM API Details - Built-in Plugins](../../llm-docs/API-DETAILS.md#built-in-plugins) - LoggingPlugin and PydanticPlugin
+- [LLM API Details - Built-in Plugins](../../llm-docs/API-DETAILS.md#built-in-plugins) - LoggingPlugin, PydanticPlugin, ScopePlugin
 
 ## Auto-Generated Plugin API
 
@@ -15,6 +15,11 @@ For complete plugin documentation, see:
    :show-inheritance:
 
 .. automodule:: smartroute.plugins.pydantic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: smartroute.plugins.scope
    :members:
    :undoc-members:
    :show-inheritance:
