@@ -35,8 +35,10 @@ Runtime flags and data
 ----------------------
 Contextvars keep per-instance/plugin/handler state using key
 ``(id(instance), method_name, plugin_name)``:
+
 - ``set_plugin_enabled``/``is_plugin_enabled`` toggle middleware activation
   (default True when no flag stored).
+
 - ``set_runtime_data``/``get_runtime_data`` store arbitrary dict values per
   plugin/handler.
 
@@ -70,8 +72,10 @@ filter plugins refreshed, and handlers rebuilt.
 Filtering
 ---------
 ``_prepare_filter_args`` extends ``BaseRouter`` by normalizing:
+
 - ``scopes``: optional string or iterable → set of non-empty strings; falsy
   values removed.
+
 - ``channel``: must be uppercase string; stripped; falsy removes filter;
   mismatched case raises ``ValueError``; non-string raises ``TypeError``.
 
@@ -90,8 +94,10 @@ Data shapes
 -----------
 ``_PluginSpec`` dataclass stores ``factory``, ``kwargs``, optional ``alias`` and
 provides:
+
 - ``instantiate()`` → creates plugin via factory(**kwargs); applies alias to
   ``plugin.name`` if set.
+
 - ``clone()`` → returns a new spec with a shallow-copied kwargs dict and same
   alias.
 

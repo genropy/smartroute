@@ -15,9 +15,11 @@ Constructor and slots
 - Slots: ``instance``, ``name``, ``prefix`` (string trimmed from function names),
   ``_entries`` (logical name → MethodEntry), ``_handlers`` (name → callable),
   ``_children`` (name → child router), ``_get_defaults`` (SmartOptions defaults).
+
 - Default options: ``get_default_handler`` and ``get_use_smartasync`` become
   defaults merged via ``SmartOptions`` in ``get()``; extra ``get_kwargs`` are
   copied into ``_get_defaults``.
+
 - On init: registers with owner via optional ``_register_router`` hook, then
   auto-discovers entries when ``auto_discover`` is true by calling
   ``add_entry(auto_selector)`` (``"*"` by default).
@@ -25,17 +27,22 @@ Constructor and slots
 Registration and naming
 -----------------------
 ``add_entry(target, *, name=None, alias=None, metadata=None, replace=False, **options)``
+
 - Accepts a callable or string/iterable of attribute names. Comma-separated
   strings are split and each processed. Empty/whitespace-only strings are
   ignored. ``replace=False`` raises on logical name collision.
+
 - Special markers ``"*"``, ``"_all_"``, ``"__all__"`` trigger marker discovery
   via ``_register_marked`` (see below). A comma inside such marker string is
   split and each chunk processed recursively.
+
 - When ``target`` is a string, it is resolved as an attribute of ``owner``; an
   ``AttributeError`` is surfaced with a helpful message.
+
 - When ``target`` is a function, it is bound to ``owner`` unless already a
   bound method. ``metadata`` + ``options`` are merged into the MethodEntry
   metadata.
+
 - ``_resolve_name`` strips ``prefix`` from ``func.__name__`` when present; an
   explicit ``name``/``alias`` always overrides.
 
@@ -54,6 +61,7 @@ Handler table and wrapping
 - ``_register_callable`` creates a ``MethodEntry`` (name, bound func, router,
   empty plugins list, metadata dict) and stores it in ``_entries``; it invokes
   ``_after_entry_registered`` hook then rebuilds the handler cache.
+
 - ``_rebuild_handlers`` recreates ``_handlers`` by passing each entry through
   ``_wrap_handler`` (default: passthrough). Subclasses may inject middleware.
 
@@ -65,8 +73,10 @@ Lookup and execution
   method name; no dot returns ``self`` + selector. Missing children raise
   ``KeyError`` via ``get_child``. Missing handlers fall back to
   ``default_handler`` (if provided) else raise ``NotImplementedError``.
+
 - When ``use_smartasync`` option is truthy, the returned handler is wrapped via
   ``smartasync.smartasync`` before returning.
+
 - ``__getitem__`` aliases ``get``; ``call`` fetches then invokes the handler
   with given args/kwargs. ``entries`` returns a tuple of registered handler
   names (built from ``_handlers`` keys).
@@ -74,28 +84,34 @@ Lookup and execution
 Children
 --------
 ``add_child(child, name=None)``
+
 - If ``child`` is a comma-separated string, each token is resolved as an
   attribute on ``owner``; explicit ``name`` cannot be combined with multiple
   tokens (raises ``ValueError``). Missing attributes raise ``AttributeError``.
+
 - Otherwise, routers are collected from the object (router instance, mapping
   with string keys as name hints, iterable with optional ``(name, router)``
   tuples, or attributes/slots containing routers). At least one router must be
   found or ``TypeError`` is raised. Children are attached under ``name`` or
   inferred attribute/override name; collisions with a different router raise
   ``ValueError``. For each attached child, ``_on_attached_to_parent`` is called.
+
 - ``get_child`` retrieves by name or raises ``KeyError`` with a descriptive
   message.
 
 Child discovery helpers
 -----------------------
 ``_collect_child_routers(source, override_name=None, seen=None)``
+
 - Uses structural matching to collect routers from a single source:
+
   * ``BaseRouter`` → returns the router with name hint
   * ``Mapping`` → recurses into values using string keys as hints
   * ``Iterable`` (non-string) → recurses elements; ``(name, router)`` tuples
     provide a name hint
   * otherwise inspects attributes/slots for ``BaseRouter`` instances, building
     unique keys (override → attr name → router.name → ``"child"``)
+
 - ``seen`` tracks object ids to avoid cycles.
 
 Introspection
@@ -103,18 +119,22 @@ Introspection
 - ``describe(scopes=None, channel=None)`` builds a nested dict:
   ``{"name", "prefix", "plugins", "methods", "children"}``.
   Methods map logical name → info:
+
     * ``doc`` (``inspect.getdoc`` or ``__doc__`` fallback)
     * ``signature`` string of ``inspect.signature``; ``return_type`` formatted
       via ``_format_annotation``
     * ``plugins`` (MethodEntry.plugins), ``metadata_keys`` list
     * ``parameters``: name → ``{"type", "default", "required"}`` from signature
       annotations/defaults only.
+
   Subclasses can inject additional data per entry via
   ``_describe_entry_extra(entry, base_description)``. The base router contributes
   nothing beyond the signature-derived fields.
+
 - Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and
   ``_should_include_entry`` (base: always True) allow subclasses to hide
   entries. Filters are applied both to ``methods`` and recursively to children.
+
 - ``members(scopes=None, channel=None)`` returns live objects instead of
   strings: router, instance, handlers dict (callable + metadata), and children
   respecting the same filters; empty children pruned only when filters active.
@@ -125,6 +145,7 @@ Hooks for subclasses
 - ``_after_entry_registered``: invoked after registering a handler.
 - ``_on_attached_to_parent``: invoked when attached via ``add_child``.
 - ``_describe_entry_extra``: allow subclasses to extend per-entry description.
+
 Default implementations are no-ops/passthrough.
 
 Invariants and guarantees

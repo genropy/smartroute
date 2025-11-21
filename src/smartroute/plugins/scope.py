@@ -45,6 +45,7 @@ Lifecycle and behaviour
   allowed channel list contains the requested channel.
 - ``filter_entry`` honours normalized filters provided by the router
   (``scopes`` set, ``channel`` string):
+
     * if scope filter supplied: require overlap with tags or exclude
     * if channel filter supplied: require allowed channel match; missing/invalid
       scope metadata excludes the entry

@@ -4,17 +4,22 @@ Rebuild this module exactly from the behaviours below. It contains only marker
 helpers; no router mutation happens at decoration time.
 
 ``route(router, *, name=None, alias=None, **kwargs)``
+
 - Returns a decorator storing metadata on the function under ``TARGET_ATTR`` as
   a list of dicts. Each payload starts with ``{"name": router}``.
+
 - Explicit logical name: if ``name`` (or legacy ``alias``) is provided, the
   payload sets ``entry_name`` to that value. Otherwise the handler name defaults
   to the function name (after optional prefix stripping by ``BaseRouter``).
+
 - Extra ``**kwargs`` are copied verbatim into the payload (e.g. ``scopes``,
   ``scope_channels``, plugin flags). Existing markers are preserved; the new
   one is appended so multiple routers can target the same function.
+
 - The decorator returns the original function unchanged aside from the marker.
 
 ``routers(*names, **named)``
+
 - Legacy placeholder kept for API compatibility. It returns a decorator that
   returns the class unchanged; it does not register or create routers.
 

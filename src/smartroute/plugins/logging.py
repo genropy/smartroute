@@ -19,11 +19,13 @@ Behaviour and API
 - ``_emit(message)`` writes to ``self._logger.info`` when handlers exist, else
   ``print(message)``.
 - ``wrap_handler(route, entry, call_next)`` returns ``logged`` callable:
+
     * records ``start`` via ``time.perf_counter()``
     * emits start message
     * calls ``call_next(*args, **kwargs)``
     * emits end message with elapsed time in ms
     * propagates the return value
+
   Exceptions from ``call_next`` propagate; the end message is not emitted when
   an exception is raised.
 
