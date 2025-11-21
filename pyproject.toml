@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smartroute"
-version = "0.5.0"
+version = "0.5.1"
 description = "Instance-scoped routing engine for Python with hierarchical handlers and composable plugins"
 authors = [
     {name = "Genropy Team", email = "softwell@softwell.it"},

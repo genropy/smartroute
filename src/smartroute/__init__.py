@@ -22,7 +22,7 @@ Constraints
 from importlib import import_module
 from types import MappingProxyType
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 from .core import RoutedClass, Router, route, routers
 
