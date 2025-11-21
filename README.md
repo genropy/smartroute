@@ -30,7 +30,7 @@ SmartRoute provides a consistent, well-tested foundation for these patterns.
 4. **Plugin pipeline** – `BasePlugin` provides `on_decore`/`wrap_handler` hooks and plugins inherit from parents automatically.
 5. **Runtime configuration** – `routedclass.configure()` applies global or per-handler overrides with wildcards and returns reports (`"?"`).
 6. **Optional extras** – `logging`, `pydantic`, `scope` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies.
-7. **Full coverage** – The package is 100% covered by Pytest (65 scenarios) with no hidden compatibility layers.
+7. **Full coverage** – The package is 99% test coverage with 74 comprehensive tests with no hidden compatibility layers.
 
 ### Standard channel codes
 
@@ -126,13 +126,14 @@ pip install smartroute[pydantic]
 
 - **[Full Documentation](https://smartroute.readthedocs.io/)** – Complete guides, tutorials, and API reference
 - **[Quick Start](docs/quickstart.md)** – Get started in 5 minutes
+- **[FAQ](docs/FAQ.md)** – Common questions and answers about SmartRoute and plugins
 - **[LLM Reference](llm-docs/README.md)** – Token-optimized reference for AI code generation
 - **[API Details](llm-docs/API-DETAILS.md)** – Complete API reference generated from tests
 - **[Usage Patterns](llm-docs/PATTERNS.md)** – Common patterns extracted from test suite
 
 ## Testing
 
-SmartRoute achieves 100% statement coverage with 59 comprehensive tests:
+SmartRoute achieves 99% test coverage with 74 comprehensive tests:
 
 ```bash
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
@@ -167,7 +168,7 @@ smartroute/
 
 SmartRoute is currently in **alpha** (v0.4.1). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (66 tests, 724 statements)
+- **Test Coverage**: 99% (74 tests, 1042 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

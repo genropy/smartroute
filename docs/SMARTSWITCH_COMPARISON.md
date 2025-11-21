@@ -1,6 +1,8 @@
 SmartSwitch vs SmartRoute
 =========================
 
+<!-- test: test_switcher_basic.py::test_dashboard_hierarchy -->
+
 Questo documento confronta **SmartSwitch** (branch `main` del repo originale) con **SmartRoute**, coprendo parità funzionale, differenze progettuali, solidità percepita, considerazioni prestazionali e una guida di migrazione.
 
 Panoramica
@@ -14,8 +16,8 @@ Panoramica
 | Decorator                  | `@switch` + `switchers()`                             | `@route` + `routers()`                                                   |
 | Compat layer               | API storica (SwitchClass/Switcher)                    | Terminologia nuova (Router) e nessuna compatibilità implicita           |
 | Dipendenze                 | Basato su `smartswitch.core`                          | Core completamente autonomo                                              |
-| Test copertura             | Alta ma distribuita su molte varianti                 | ~98% statement coverage (Pytest)                                         |
-| Plugin built-in            | Logging, Pydantic                                     | Logging e Pydantic (registry interno)                                    |
+| Test copertura             | Alta ma distribuita su molte varianti                 | 99% statement coverage (Pytest) - 74 test, 1042 statements               |
+| Plugin built-in            | Logging, Pydantic                                     | Logging, Pydantic, Scope (registry interno)                              |
 
 Parità e differenze funzionali
 ------------------------------

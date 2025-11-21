@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 project = "SmartRoute"
 copyright = "2025, Genropy Team"
 author = "Genropy Team"
-release = "0.2.0"
-version = "0.2"
+release = "0.4.1"
+version = "0.4"
 
 # General configuration
 extensions = [

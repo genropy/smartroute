@@ -1,29 +1,106 @@
-"""Router runtime with plugin registry.
+"""Router with plugin pipeline (source of truth).
 
-This module layers plugin capabilities on top of
-:class:`smartroute.core.base_router.BaseRouter`. The class exported here
-matches the behaviour of the historical ``smartroute.core.router.Router`` and
-adds a clear separation between the plain router engine and the middleware
-pipeline.
+If this module disappeared, rebuild it exactly as described. ``Router`` extends
+``BaseRouter`` with a global plugin registry, per-router plugin instances,
+middleware wrapping, and runtime config storage in contextvars.
 
-Responsibilities
-----------------
-- keep the global plugin registry (name → plugin class)
-- instantiate plugins per router instance, allowing inheritance across child
-  routers
-- expose helper APIs for enabling/disabling plugins at runtime and storing
-  execution context
-- wrap handlers with plugin-provided middleware and feed metadata back into
-  ``MethodEntry``
+Internal state
+--------------
+- ``_plugin_specs``: list of ``_PluginSpec`` (factory, kwargs copy, alias).
+- ``_plugins``: instantiated plugins in the order they were attached.
+- ``_plugins_by_name``: name → plugin instance (first wins).
+- ``_filter_plugins``: plugins exposing ``filter_entry`` callable.
+- ``_inherited_from``: set of parent ids already inherited to avoid double
+  cloning when the same child is attached multiple times.
+
+Global registry
+---------------
+``Router.register_plugin(name, plugin_class)`` validates that ``plugin_class``
+is a subclass of ``BasePlugin`` and ``name`` is non-empty. Re-registering an
+existing name with a different class raises ``ValueError``; otherwise it is
+idempotent. ``available_plugins`` returns a shallow copy of the registry.
+
+Attaching plugins
+-----------------
+``plug(plugin_name, **config)`` looks up the plugin class by name in the global
+registry (raises ``ValueError`` with available names if missing). It stores a
+``_PluginSpec`` clone, instantiates the plugin (applying alias=name), appends
+to ``_plugins`` and ``_plugins_by_name`` if not present, refreshes
+``_filter_plugins``, applies ``plugin.on_decore`` to all existing entries (also
+ensuring ``entry.plugins`` lists the plugin), rebuilds handlers, and returns
+``self``. ``__getattr__`` exposes attached plugins by name or raises
+``AttributeError``.
+
+Runtime flags and data
+----------------------
+Contextvars keep per-instance/plugin/handler state using key
+``(id(instance), method_name, plugin_name)``:
+- ``set_plugin_enabled``/``is_plugin_enabled`` toggle middleware activation
+  (default True when no flag stored).
+- ``set_runtime_data``/``get_runtime_data`` store arbitrary dict values per
+  plugin/handler.
+
+Wrapping pipeline
+-----------------
+``_wrap_handler(entry, call_next)`` builds middleware layers from the current
+``_plugins`` in reverse order (last attached closest to the handler). For each
+plugin, it calls ``plugin.wrap_handler(self, entry, wrapped)`` to produce a
+callable, then wraps it with a guard that skips execution when
+``is_plugin_enabled`` is False. ``functools.wraps`` preserves metadata of the
+next callable. The final callable is stored in ``_handlers`` by ``BaseRouter``.
+
+Entry/plugin application
+------------------------
+- ``_apply_plugin_to_entries`` ensures ``entry.plugins`` contains the plugin
+  name and invokes ``plugin.on_decore`` on each existing entry. Called when a
+  plugin is attached and during inheritance.
+- ``_after_entry_registered`` (override) is triggered by ``BaseRouter`` whenever
+  a new handler is registered; it applies all attached plugins the same way and
+  leaves names in ``entry.plugins``.
+
+Inheritance behaviour
+---------------------
+``_on_attached_to_parent(parent)`` runs when a child router is attached.
+Parent specs are cloned once per parent (id tracked in ``_inherited_from``).
+Cloned specs are instantiated into new plugins that are *prepended* ahead of
+existing child plugins to preserve parent-first order. ``_plugins_by_name`` is
+seeded without overwriting existing names. ``on_decore`` is applied to entries,
+filter plugins refreshed, and handlers rebuilt.
+
+Filtering
+---------
+``_prepare_filter_args`` extends ``BaseRouter`` by normalizing:
+- ``scopes``: optional string or iterable → set of non-empty strings; falsy
+  values removed.
+- ``channel``: must be uppercase string; stripped; falsy removes filter;
+  mismatched case raises ``ValueError``; non-string raises ``TypeError``.
+
+``_should_include_entry`` first calls ``BaseRouter`` then asks each plugin in
+``_filter_plugins`` (ordered as attached). Any explicit ``False`` hides the
+entry; any other truthy/None keeps it.
+
+Description hooks
+-----------------
+- ``_describe_entry_extra`` asks plugins to contribute extra fields for
+  ``BaseRouter.describe``. Plugins implement
+  ``describe_entry(router, entry, base_description) -> dict``; contributions are
+  merged in attachment order; non-dict returns raise ``TypeError``.
+
+Data shapes
+-----------
+``_PluginSpec`` dataclass stores ``factory``, ``kwargs``, optional ``alias`` and
+provides:
+- ``instantiate()`` → creates plugin via factory(**kwargs); applies alias to
+  ``plugin.name`` if set.
+- ``clone()`` → returns a new spec with a shallow-copied kwargs dict and same
+  alias.
 
 Invariants
 ----------
-- routers remain instance-scoped; plugin configuration never leaks across
-  object instances unless explicitly shared via child routers
-- plugin registration is global but idempotent; re-registering the same name
-  with a different class raises immediately
-- ``MethodEntry.plugins`` lists plugins in application order to guarantee the
-  wrapping stack is deterministic
+- Plugin order is deterministic (first attached = outermost layer; reversed
+  wrapping). Filter evaluation follows attachment order.
+- Global registry changes do not mutate existing router instances.
+- Plugin access via attribute never fails silently.
 """
 
 from __future__ import annotations
@@ -31,7 +108,7 @@ from __future__ import annotations
 import contextvars
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 
 from smartroute.core.base_router import BaseRouter
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
@@ -86,6 +163,7 @@ class Router(BaseRouter):
         "_plugin_specs",
         "_plugins",
         "_plugins_by_name",
+        "_filter_plugins",
         "_inherited_from",
     )
 
@@ -93,6 +171,7 @@ class Router(BaseRouter):
         self._plugin_specs: List[_PluginSpec] = []
         self._plugins: List[BasePlugin] = []
         self._plugins_by_name: Dict[str, BasePlugin] = {}
+        self._filter_plugins: List[BasePlugin] = []
         self._inherited_from: set[int] = set()
         super().__init__(*args, **kwargs)
 
@@ -130,6 +209,7 @@ class Router(BaseRouter):
         instance = spec.instantiate()
         self._plugins.append(instance)
         self._plugins_by_name[instance.name] = instance
+        self._refresh_filter_plugins()
         self._apply_plugin_to_entries(instance)
         self._rebuild_handlers()
         return self
@@ -216,6 +296,7 @@ class Router(BaseRouter):
         new_plugins = [spec.instantiate() for spec in parent_specs]
         self._plugin_specs = parent_specs + self._plugin_specs
         self._plugins = new_plugins + self._plugins
+        self._refresh_filter_plugins()
         for plugin in new_plugins:
             self._plugins_by_name.setdefault(plugin.name, plugin)
             self._apply_plugin_to_entries(plugin)
@@ -226,3 +307,78 @@ class Router(BaseRouter):
             if plugin.name not in entry.plugins:
                 entry.plugins.append(plugin.name)
             plugin.on_decore(self, entry.func, entry)
+
+    def _prepare_filter_args(self, **raw_filters: Any) -> Dict[str, Any]:
+        filters = super()._prepare_filter_args(**raw_filters)
+        scopes_value = raw_filters.get("scopes")
+        channel_value = raw_filters.get("channel")
+        scope_filter = self._normalize_scope_filter(scopes_value)
+        if scope_filter:
+            filters["scopes"] = scope_filter
+        else:
+            filters.pop("scopes", None)
+        channel_filter = self._normalize_channel_filter(channel_value)
+        if channel_filter:
+            filters["channel"] = channel_filter
+        else:
+            filters.pop("channel", None)
+        return filters
+
+    def _should_include_entry(self, entry: MethodEntry, **filters: Any) -> bool:
+        if not super()._should_include_entry(entry, **filters):
+            return False  # pragma: no cover - base hook currently always True
+        if not self._filter_plugins:
+            return True
+        for plugin in self._filter_plugins:
+            verdict = plugin.filter_entry(self, entry, **filters)  # type: ignore[attr-defined]
+            if verdict is False:
+                return False
+        return True
+
+    def _describe_entry_extra(  # type: ignore[override]
+        self, entry: MethodEntry, base_description: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Gather extra description data from attached plugins."""
+        merged: Dict[str, Any] = {}
+        for plugin in self._plugins:
+            contrib = None
+            describe_entry = getattr(plugin, "describe_entry", None)
+            if callable(describe_entry):
+                contrib = describe_entry(self, entry, base_description)
+            if contrib:
+                if not isinstance(contrib, dict):
+                    raise TypeError(  # pragma: no cover - defensive guard
+                        f"Plugin {plugin.name} returned non-dict "
+                        f"from describe hook: {type(contrib)}"
+                    )
+                merged.update(contrib)
+        return merged
+
+    def _refresh_filter_plugins(self) -> None:
+        self._filter_plugins = [
+            plugin for plugin in self._plugins if callable(getattr(plugin, "filter_entry", None))
+        ]
+
+    def _normalize_scope_filter(self, scopes: Optional[Any]) -> Optional[set[str]]:
+        if scopes is None or scopes is False:
+            return None
+        if isinstance(scopes, str):
+            items = scopes.split(",")
+        elif isinstance(scopes, Iterable):
+            items = scopes
+        else:
+            raise TypeError("scopes must be a string or iterable of strings")
+        cleaned = {str(item).strip() for item in items if str(item).strip()}
+        return cleaned or None
+
+    def _normalize_channel_filter(self, channel: Optional[str]) -> Optional[str]:
+        if channel is None or channel is False:
+            return None
+        if isinstance(channel, str):
+            normalized = channel.strip()
+            if not normalized:
+                raise ValueError("channel cannot be empty")  # pragma: no cover
+            if normalized != normalized.upper():
+                raise ValueError(f"channel must be uppercase (got '{normalized}')")
+            return normalized
+        raise TypeError("channel must be a string")

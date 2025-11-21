@@ -1,16 +1,36 @@
-"""Logging Plugin
-=================
+"""Logging plugin (source of truth).
 
-Responsibility
---------------
-- wrap each handler invocation with a start/end message and timing metrics
-- rely on a configured `logging.Logger` (or `print` fallback) without pulling
-  additional dependencies
+Rebuild behaviour exactly as described; no hidden defaults beyond this text.
 
-Usage Notes
------------
-- designed for development environments; it emits one line per call
-- can be configured per-handler via `svc.routedclass.configure("api:logging/...", ...)`
+Responsibilities
+----------------
+- Wrap each handler call and emit two messages: ``"{entry.name} start"`` before
+  execution, ``"{entry.name} end (<ms> ms)"`` after. Elapsed time is in
+  milliseconds with ``{elapsed:.2f}`` formatting.
+- Use a provided ``logging.Logger`` (default ``logging.getLogger("smartswitch")``).
+  If the logger reports no handlers via ``hasHandlers()``, fall back to ``print``
+  to avoid dropping output.
+
+Behaviour and API
+-----------------
+- ``LoggingPlugin(name=None, logger=None, **cfg)`` delegates to ``BasePlugin``;
+  if ``name`` is falsy it sets ``"logger"`` as the plugin name. ``logger`` is
+  stored in ``self._logger``.
+- ``_emit(message)`` writes to ``self._logger.info`` when handlers exist, else
+  ``print(message)``.
+- ``wrap_handler(route, entry, call_next)`` returns ``logged`` callable:
+    * records ``start`` via ``time.perf_counter()``
+    * emits start message
+    * calls ``call_next(*args, **kwargs)``
+    * emits end message with elapsed time in ms
+    * propagates the return value
+  Exceptions from ``call_next`` propagate; the end message is not emitted when
+  an exception is raised.
+
+Registration
+------------
+At module import, the plugin registers itself globally as ``"logging"`` via
+``Router.register_plugin("logging", LoggingPlugin)``.
 """
 
 from __future__ import annotations

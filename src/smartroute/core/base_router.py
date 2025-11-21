@@ -1,12 +1,139 @@
-"""Plugin-free router runtime.
+"""Plugin-free router runtime (source of truth).
 
-This module isolates the minimal routing engine used by SmartRoute. The
-:class:`BaseRouter` binds methods from a host object, exposes hierarchical
-lookup (``foo.bar`` selectors), provides handler introspection, and keeps
-the runtime free from any plugin logic. Plugins extend the behaviour via the
-derived :class:`~smartroute.core.router.Router` class, but the base router must
-always work on its own so lightweight apps are unaffected by the plugin
-system.
+If this file vanished, rebuild it verbatim from this description. The module
+exposes a single class, :class:`BaseRouter`, which binds methods on an object
+instance, resolves dotted selectors, and exposes rich introspection without any
+plugin logic. Subclasses add middleware but must preserve these semantics.
+
+Constructor and slots
+---------------------
+``BaseRouter(owner, name=None, prefix=None, *,
+  get_default_handler=None, get_use_smartasync=None, get_kwargs=None,
+  auto_discover=True, auto_selector="*")``
+- ``owner`` is required; ``None`` raises ``ValueError``. Routers are bound to
+  this instance and never re-bound.
+- Slots: ``instance``, ``name``, ``prefix`` (string trimmed from function names),
+  ``_entries`` (logical name → MethodEntry), ``_handlers`` (name → callable),
+  ``_children`` (name → child router), ``_get_defaults`` (SmartOptions defaults).
+- Default options: ``get_default_handler`` and ``get_use_smartasync`` become
+  defaults merged via ``SmartOptions`` in ``get()``; extra ``get_kwargs`` are
+  copied into ``_get_defaults``.
+- On init: registers with owner via optional ``_register_router`` hook, then
+  auto-discovers entries when ``auto_discover`` is true by calling
+  ``add_entry(auto_selector)`` (``"*"` by default).
+
+Registration and naming
+-----------------------
+``add_entry(target, *, name=None, alias=None, metadata=None, replace=False, **options)``
+- Accepts a callable or string/iterable of attribute names. Comma-separated
+  strings are split and each processed. Empty/whitespace-only strings are
+  ignored. ``replace=False`` raises on logical name collision.
+- Special markers ``"*"``, ``"_all_"``, ``"__all__"`` trigger marker discovery
+  via ``_register_marked`` (see below). A comma inside such marker string is
+  split and each chunk processed recursively.
+- When ``target`` is a string, it is resolved as an attribute of ``owner``; an
+  ``AttributeError`` is surfaced with a helpful message.
+- When ``target`` is a function, it is bound to ``owner`` unless already a
+  bound method. ``metadata`` + ``options`` are merged into the MethodEntry
+  metadata.
+- ``_resolve_name`` strips ``prefix`` from ``func.__name__`` when present; an
+  explicit ``name``/``alias`` always overrides.
+
+Marker discovery
+----------------
+``_iter_marked_methods`` walks the reversed MRO of ``type(owner)`` (child first
+wins), scans ``__dict__`` for plain functions carrying ``TARGET_ATTR`` markers.
+Duplicates (by function identity) are skipped. Only markers whose ``name``
+matches this router's ``name`` are used; the name key is removed from the
+payload before consumption. ``_register_marked`` binds each function to owner,
+merges marker data + metadata + extra options, and registers with collision
+behaviour governed by ``replace``.
+
+Handler table and wrapping
+--------------------------
+- ``_register_callable`` creates a ``MethodEntry`` (name, bound func, router,
+  empty plugins list, metadata dict) and stores it in ``_entries``; it invokes
+  ``_after_entry_registered`` hook then rebuilds the handler cache.
+- ``_rebuild_handlers`` recreates ``_handlers`` by passing each entry through
+  ``_wrap_handler`` (default: passthrough). Subclasses may inject middleware.
+
+Lookup and execution
+--------------------
+- ``get(selector, **options)`` merges ``options`` into ``SmartOptions`` using
+  ``_get_defaults``. It resolves ``selector`` via ``_resolve_path``: a dotted
+  string traverses children (``get_child``) and yields the terminal router plus
+  method name; no dot returns ``self`` + selector. Missing children raise
+  ``KeyError`` via ``get_child``. Missing handlers fall back to
+  ``default_handler`` (if provided) else raise ``NotImplementedError``.
+- When ``use_smartasync`` option is truthy, the returned handler is wrapped via
+  ``smartasync.smartasync`` before returning.
+- ``__getitem__`` aliases ``get``; ``call`` fetches then invokes the handler
+  with given args/kwargs. ``entries`` returns a tuple of registered handler
+  names (built from ``_handlers`` keys).
+
+Children
+--------
+``add_child(child, name=None)``
+- If ``child`` is a comma-separated string, each token is resolved as an
+  attribute on ``owner``; explicit ``name`` cannot be combined with multiple
+  tokens (raises ``ValueError``). Missing attributes raise ``AttributeError``.
+- Otherwise, routers are collected from the object (router instance, mapping
+  with string keys as name hints, iterable with optional ``(name, router)``
+  tuples, or attributes/slots containing routers). At least one router must be
+  found or ``TypeError`` is raised. Children are attached under ``name`` or
+  inferred attribute/override name; collisions with a different router raise
+  ``ValueError``. For each attached child, ``_on_attached_to_parent`` is called.
+- ``get_child`` retrieves by name or raises ``KeyError`` with a descriptive
+  message.
+
+Child discovery helpers
+-----------------------
+``_collect_child_routers(source, override_name=None, seen=None)``
+- Uses structural matching to collect routers from a single source:
+  * ``BaseRouter`` → returns the router with name hint
+  * ``Mapping`` → recurses into values using string keys as hints
+  * ``Iterable`` (non-string) → recurses elements; ``(name, router)`` tuples
+    provide a name hint
+  * otherwise inspects attributes/slots for ``BaseRouter`` instances, building
+    unique keys (override → attr name → router.name → ``"child"``)
+- ``seen`` tracks object ids to avoid cycles.
+
+Introspection
+-------------
+- ``describe(scopes=None, channel=None)`` builds a nested dict:
+  ``{"name", "prefix", "plugins", "methods", "children"}``.
+  Methods map logical name → info:
+    * ``doc`` (``inspect.getdoc`` or ``__doc__`` fallback)
+    * ``signature`` string of ``inspect.signature``; ``return_type`` formatted
+      via ``_format_annotation``
+    * ``plugins`` (MethodEntry.plugins), ``metadata_keys`` list
+    * ``parameters``: name → ``{"type", "default", "required"}`` from signature
+      annotations/defaults only.
+  Subclasses can inject additional data per entry via
+  ``_describe_entry_extra(entry, base_description)``. The base router contributes
+  nothing beyond the signature-derived fields.
+- Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and
+  ``_should_include_entry`` (base: always True) allow subclasses to hide
+  entries. Filters are applied both to ``methods`` and recursively to children.
+- ``members(scopes=None, channel=None)`` returns live objects instead of
+  strings: router, instance, handlers dict (callable + metadata), and children
+  respecting the same filters; empty children pruned only when filters active.
+
+Hooks for subclasses
+--------------------
+- ``_wrap_handler``: override to wrap callables (middleware stack).
+- ``_after_entry_registered``: invoked after registering a handler.
+- ``_on_attached_to_parent``: invoked when attached via ``add_child``.
+- ``_describe_entry_extra``: allow subclasses to extend per-entry description.
+Default implementations are no-ops/passthrough.
+
+Invariants and guarantees
+-------------------------
+- Handler names are unique unless ``replace=True``.
+- Selector traversal never fabricates routers: only attached children are used.
+- Marker discovery is deterministic (reversed MRO, first occurrence wins).
+- Introspection never mutates handler metadata; it reads from ``MethodEntry``.
+- All normalizations preserve user-provided metadata copies (shallow-copied).
 """
 
 from __future__ import annotations
@@ -207,7 +334,9 @@ class BaseRouter:
             return func_name[len(self.prefix) :]
         return func_name
 
-    def _wrap_handler(self, entry: MethodEntry, call_next: Callable) -> Callable:
+    def _wrap_handler(
+        self, entry: MethodEntry, call_next: Callable
+    ) -> Callable:  # pragma: no cover - overridden by plugin routers
         return call_next
 
     # ------------------------------------------------------------------
@@ -263,7 +392,7 @@ class BaseRouter:
                 return self
             if name and len(tokens) > 1:
                 raise ValueError("Explicit name cannot be combined with multiple attribute targets")
-            attached: Optional[BaseRouter] = None
+            result: Optional[BaseRouter] = None
             for token in tokens:
                 try:
                     target = getattr(self.instance, token)
@@ -271,12 +400,14 @@ class BaseRouter:
                     raise AttributeError(
                         f"No attribute '{token}' on {type(self.instance).__name__}"
                     ) from exc
-                attached = self.add_child(target, name=name or token)
-            assert attached is not None
-            return attached
-        candidates = list(self._iter_child_routers(child))
+                result = self.add_child(target, name=name or token)
+            assert result is not None
+            return result
+
+        candidates = self._collect_child_routers(child)
         if not candidates:
             raise TypeError(f"Object {child!r} does not expose Router instances")
+
         attached: Optional[BaseRouter] = None
         for attr_name, router in candidates:
             key = name or attr_name or router.name or "child"
@@ -294,55 +425,61 @@ class BaseRouter:
         except KeyError:
             raise KeyError(f"No child route named {name!r}")
 
-    def _iter_child_routers(
-        self, source: Any, seen: Optional[set[int]] = None, override_name: Optional[str] = None
-    ) -> Iterator[Tuple[str, "BaseRouter"]]:
-        if isinstance(source, BaseRouter):
-            yield override_name or source.name or "router", source
-            return
+    def _collect_child_routers(
+        self, source: Any, *, override_name: Optional[str] = None, seen: Optional[set[int]] = None
+    ) -> List[Tuple[str, "BaseRouter"]]:
+        """Return all routers found inside ``source``."""
         if seen is None:
             seen = set()
         obj_id = id(source)
         if obj_id in seen:
-            return
+            return []
         seen.add(obj_id)
 
-        if isinstance(source, Mapping):
-            for key, value in source.items():
-                hint = key if isinstance(key, str) else None
-                yield from self._iter_child_routers(value, seen, hint)
-            return
-        if isinstance(source, Iterable) and not isinstance(source, (str, bytes, bytearray)):
-            for value in source:
-                name_hint = None
-                target = value
-                if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str):
-                    name_hint = value[0]
-                    target = value[1]
-                yield from self._iter_child_routers(target, seen, name_hint)
-            return
+        match source:
+            case BaseRouter():
+                key = override_name or source.name or "router"
+                return [(key, source)]
+            case Mapping():
+                collected: List[Tuple[str, BaseRouter]] = []
+                for key, value in source.items():
+                    hint = key if isinstance(key, str) else None
+                    collected.extend(
+                        self._collect_child_routers(value, override_name=hint, seen=seen)
+                    )
+                return collected
+            case Iterable() if not isinstance(source, (str, bytes, bytearray)):
+                collected = []
+                for value in source:
+                    name_hint = None
+                    target = value
+                    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str):
+                        name_hint = value[0]
+                        target = value[1]
+                    collected.extend(
+                        self._collect_child_routers(target, override_name=name_hint, seen=seen)
+                    )
+                return collected
+            case _:
+                router_items: List[Tuple[str, BaseRouter]] = []
+                for attr_name, value in self._iter_instance_attributes(source):
+                    if value is None or value is source:
+                        continue
+                    if isinstance(value, BaseRouter):
+                        router_items.append((attr_name, value))
 
-        router_items: List[Tuple[str, BaseRouter]] = []
-        for attr_name, value in self._iter_instance_attributes(source):
-            if value is None or value is source:
-                continue
-            if isinstance(value, BaseRouter):
-                router_items.append((attr_name, value))
+                if not router_items:
+                    return []
 
-        if not router_items:
-            return
-
-        if override_name and len(router_items) == 1:
-            yield (override_name, router_items[0][1])
-            return
-
-        yielded: set[str] = set()
-        for attr_name, router in router_items:
-            key = override_name or attr_name or router.name or "child"
-            if key in yielded:
-                continue
-            yielded.add(key)
-            yield (key, router)
+                keyed: List[Tuple[str, BaseRouter]] = []
+                seen_keys: set[str] = set()
+                for attr_name, router in router_items:
+                    key = override_name or attr_name or router.name or "child"
+                    if key in seen_keys:
+                        continue
+                    seen_keys.add(key)
+                    keyed.append((key, router))
+                return keyed
 
     @staticmethod
     def _iter_instance_attributes(obj: Any) -> Iterator[Tuple[str, Any]]:
@@ -379,33 +516,22 @@ class BaseRouter:
     def describe(
         self, scopes: Optional[Any] = None, channel: Optional[str] = None
     ) -> Dict[str, Any]:
-        scope_filter = self._normalize_scope_filter(scopes)
-        channel_filter = self._normalize_channel_filter(channel)
-        filter_active = bool(scope_filter or channel_filter)
+        filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
 
         def describe_node(node: "BaseRouter") -> Dict[str, Any]:
-            scope_plugin = (
-                getattr(node, "_plugins_by_name", {}).get("scope")
-                if hasattr(node, "_plugins_by_name")
-                else None
-            )
-
             return {
                 "name": node.name,
                 "prefix": node.prefix,
                 "plugins": [p.name for p in node.iter_plugins()],
                 "methods": {
-                    name: _build_method_description(entry, scope_plugin)
+                    name: _build_method_description(node, entry)
                     for name, entry in node._entries.items()
-                    if not filter_active
-                    or _entry_matches_filters(entry, scope_filter, channel_filter)
+                    if node._should_include_entry(entry, **filter_args)
                 },
                 "children": {key: describe_node(child) for key, child in node._children.items()},
             }
 
-        def _build_method_description(
-            entry: MethodEntry, scope_plugin: Optional[Any]
-        ) -> Dict[str, Any]:
+        def _build_method_description(node: "BaseRouter", entry: MethodEntry) -> Dict[str, Any]:
             func = entry.func
             signature = inspect.signature(func)
             method_info: Dict[str, Any] = {
@@ -427,49 +553,11 @@ class BaseRouter:
 
             pydantic_meta = entry.metadata.get("pydantic")
             if pydantic_meta and pydantic_meta.get("enabled"):
-                model = pydantic_meta.get("model")
-                fields = getattr(model, "model_fields", {}) if model is not None else {}
-                for field_name, field in fields.items():
-                    field_info = params.setdefault(
-                        field_name,
-                        {
-                            "type": _format_annotation(
-                                getattr(field, "annotation", inspect._empty)
-                            ),
-                            "default": None,
-                            "required": True,
-                        },
-                    )
-                    annotation = getattr(field, "annotation", inspect._empty)
-                    field_info["type"] = _format_annotation(annotation)
-                    default = getattr(field, "default", None)
-                    if not _is_pydantic_undefined(default):
-                        field_info["default"] = default
-                    required = getattr(field, "is_required", None)
-                    if callable(required):
-                        field_info["required"] = bool(required())
-                    else:
-                        field_info["required"] = field_info["default"] is None
-                    validation: Dict[str, Any] = {"source": "pydantic"}
-                    metadata = getattr(field, "metadata", None)
-                    if metadata:
-                        validation["metadata"] = list(metadata)
-                    json_extra = getattr(field, "json_schema_extra", None)
-                    if json_extra:
-                        validation["json_schema_extra"] = json_extra
-                    description = getattr(field, "description", None)
-                    if description:
-                        validation["description"] = description
-                    examples = getattr(field, "examples", None)
-                    if examples:
-                        validation["examples"] = examples
-                    if validation:
-                        field_info["validation"] = validation
+                _apply_pydantic_metadata(pydantic_meta, params)
 
-            if scope_plugin and hasattr(scope_plugin, "describe_method"):
-                scope_meta = scope_plugin.describe_method(entry.name)
-                if scope_meta:
-                    method_info["scope"] = scope_meta
+            extra = node._describe_entry_extra(entry, method_info)
+            if extra:
+                method_info.update(extra)
 
             return method_info
 
@@ -478,16 +566,13 @@ class BaseRouter:
     def members(
         self, scopes: Optional[Any] = None, channel: Optional[str] = None
     ) -> Dict[str, Any]:
-        scope_filter = self._normalize_scope_filter(scopes)
-        channel_filter = self._normalize_channel_filter(channel)
-        filter_active = bool(scope_filter or channel_filter)
+        filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
+        filter_active = bool(filter_args)
 
         def capture(node: "BaseRouter") -> Dict[str, Any]:
             handlers = {}
             for name, entry in node._entries.items():
-                if filter_active and not _entry_matches_filters(
-                    entry, scope_filter, channel_filter
-                ):
+                if not node._should_include_entry(entry, **filter_args):
                     continue
                 handlers[name] = {
                     "callable": entry.func,
@@ -516,38 +601,31 @@ class BaseRouter:
     def iter_plugins(self) -> List[Any]:  # pragma: no cover - base router has no plugins
         return []
 
-    def _on_attached_to_parent(self, parent: "BaseRouter") -> None:
+    def _on_attached_to_parent(
+        self, parent: "BaseRouter"
+    ) -> None:  # pragma: no cover - hook for subclasses
         """Hook for plugin-enabled routers to override when attached."""
         return None
 
-    def _after_entry_registered(self, entry: MethodEntry) -> None:
+    def _after_entry_registered(
+        self, entry: MethodEntry
+    ) -> None:  # pragma: no cover - hook for subclasses
         """Hook invoked after a handler is registered (subclasses may override)."""
         return None
 
-    def _normalize_scope_filter(self, scopes: Optional[Any]) -> Optional[set[str]]:
-        if scopes is None or scopes is False:
-            return None
-        if isinstance(scopes, str):
-            items = scopes.split(",")
-        elif isinstance(scopes, Iterable):
-            items = scopes
-        else:
-            raise TypeError("scopes must be a string or iterable of strings")
+    def _describe_entry_extra(
+        self, entry: MethodEntry, base_description: Dict[str, Any]
+    ) -> Dict[str, Any]:  # pragma: no cover - overridden when plugins present
+        """Hook used by subclasses to inject extra description data."""
+        return {}
 
-        cleaned = {str(item).strip() for item in items if str(item).strip()}
-        return cleaned or None
+    def _prepare_filter_args(self, **raw_filters: Any) -> Dict[str, Any]:
+        """Return normalized filters understood by subclasses (default: passthrough)."""
+        return {key: value for key, value in raw_filters.items() if value not in (None, False)}
 
-    def _normalize_channel_filter(self, channel: Optional[str]) -> Optional[str]:
-        if channel is None or channel is False:
-            return None
-        if isinstance(channel, str):
-            normalized = channel.strip()
-            if not normalized:
-                raise ValueError("channel cannot be empty")
-            if normalized != normalized.upper():
-                raise ValueError(f"channel must be uppercase (got '{normalized}')")
-            return normalized
-        raise TypeError("channel must be a string")
+    def _should_include_entry(self, entry: MethodEntry, **filters: Any) -> bool:
+        """Hook used by subclasses to decide if an entry is exposed."""
+        return True
 
 
 def _format_annotation(annotation: Any) -> str:
@@ -560,38 +638,46 @@ def _format_annotation(annotation: Any) -> str:
     return getattr(annotation, "__qualname__", str(annotation))
 
 
+def _apply_pydantic_metadata(meta: Dict[str, Any], params: Dict[str, Any]) -> None:
+    """Enrich parameter descriptions using stored Pydantic metadata."""
+    model = meta.get("model")
+    fields = getattr(model, "model_fields", {}) if model is not None else {}
+    for field_name, field in fields.items():
+        field_info = params.setdefault(
+            field_name,
+            {
+                "type": _format_annotation(getattr(field, "annotation", inspect._empty)),
+                "default": None,
+                "required": True,
+            },
+        )
+        annotation = getattr(field, "annotation", inspect._empty)
+        field_info["type"] = _format_annotation(annotation)
+        default = getattr(field, "default", None)
+        if not _is_pydantic_undefined(default):
+            field_info["default"] = default
+        required = getattr(field, "is_required", None)
+        if callable(required):
+            field_info["required"] = bool(required())
+        else:
+            field_info["required"] = field_info["default"] is None
+        validation: Dict[str, Any] = {"source": "pydantic"}
+        metadata = getattr(field, "metadata", None)
+        if metadata:
+            validation["metadata"] = list(metadata)
+        json_extra = getattr(field, "json_schema_extra", None)
+        if json_extra:
+            validation["json_schema_extra"] = json_extra
+        description = getattr(field, "description", None)
+        if description:
+            validation["description"] = description
+        examples = getattr(field, "examples", None)
+        if examples:
+            validation["examples"] = examples
+        if validation:
+            field_info["validation"] = validation
+
+
 def _is_pydantic_undefined(value: Any) -> bool:
     cls = getattr(value, "__class__", None)
     return cls is not None and cls.__name__ == "PydanticUndefinedType"
-
-
-def _entry_matches_filters(
-    entry: MethodEntry, scope_filter: Optional[set[str]], channel_filter: Optional[str]
-) -> bool:
-    scope_meta = entry.metadata.get("scope") if entry.metadata else None
-    tags = scope_meta.get("tags") if isinstance(scope_meta, dict) else None
-
-    if scope_filter:
-        if not tags or not any(tag in scope_filter for tag in tags):
-            return False
-
-    if channel_filter:
-        if not scope_meta:
-            return False
-        channel_map = scope_meta.get("channels", {}) if isinstance(scope_meta, dict) else {}
-        if not isinstance(channel_map, dict):
-            return False
-        relevant_scopes = tags or list(channel_map.keys())
-        allowed: set[str] = set()
-        for scope_name in relevant_scopes:
-            codes = channel_map.get(scope_name, [])
-            for code in codes or []:
-                normalized = str(code).strip()
-                if normalized:
-                    allowed.add(normalized)
-        if channel_filter not in allowed:
-            return False
-
-    if scope_filter or channel_filter:
-        return bool(tags)
-    return True

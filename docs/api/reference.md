@@ -1,5 +1,7 @@
 # API Reference
 
+<!-- test: test_router_runtime_extras.py::test_router_call_and_members_structure -->
+
 Below is the Sphinx API reference. For more context or quick-start guides, see:
 
 - [LLM API Details](../../llm-docs/API-DETAILS.md) – Complete API reference generated from tests

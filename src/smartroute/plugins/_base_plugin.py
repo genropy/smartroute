@@ -65,6 +65,12 @@ Objects
         the router, the MethodEntry, and the next callable; they must return a
         callable with the same signature.
 
+    ``filter_entry`` (optional)
+        when implemented, allows the plugin to decide if a handler should be
+        exposed during introspection. It receives the router, the MethodEntry,
+        and keyword filters (``scopes``, ``channel``, ...); returning ``False``
+        hides the handler from ``describe()``/``members()``.
+
 Design constraints
 ~~~~~~~~~~~~~~~~~~
 * The Router only imports this module (not the concrete plugins) to avoid

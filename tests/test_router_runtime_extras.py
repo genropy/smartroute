@@ -168,7 +168,7 @@ def test_inherit_plugins_branches():
 def test_iter_child_routers_override_deduplicates():
     root = ManualService()
     holder = MultiChild()
-    results = list(root.api._iter_child_routers({"bundle": holder}))
+    results = root.api._collect_child_routers({"bundle": holder})
     assert results and results[0][0] == "bundle"
 
 
@@ -324,5 +324,5 @@ def test_iter_child_routers_handles_repeated_objects():
 
     container = RepeatContainer()
     # Provide same child twice via iterable to hit seen-guard branch
-    routes = list(container.api._iter_child_routers([container.child, container.child]))
+    routes = container.api._collect_child_routers([container.child, container.child])
     assert len(routes) == 1

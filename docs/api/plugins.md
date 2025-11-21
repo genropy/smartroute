@@ -1,5 +1,7 @@
 # Plugin API Reference
 
+<!-- test: test_router_edge_cases.py::test_builtin_plugins_registered -->
+
 **Coming soon** - This section is under development.
 
 For complete plugin documentation, see:

@@ -1,15 +1,64 @@
-"""RoutedClass mixin and router proxy helpers.
+"""RoutedClass mixin and router proxy (source of truth).
 
-`RoutedClass` is the glue between plain application classes and the runtime
-Router. It keeps a per-instance registry of routers, exposes a `routedclass`
-proxy for configuration (CLI/Publisher commands), and centralises helper logic
-that would otherwise be duplicated in every service.
+Reconstruct exactly from the following contract. The mixin keeps router state
+off user instances via slots and offers a proxy for configuration/lookup.
 
-Responsibilities
-----------------
-- ensure each instance discovers routers added in ``__init__`` and tracks them
-- provide indirection for runtime configuration (`configure`, `get_router`)
-- keep all helper state off the user object via `__slots__`
+RoutedClass
+-----------
+- ``__slots__``: ``__routed_proxy__`` (cache) and ``ROUTER_REGISTRY_ATTR`` (dict).
+- ``_register_router(router)``: lazily creates a registry dict on the instance
+  and stores the router under ``router.name`` if truthy.
+- ``_iter_registered_routers``: yields ``(name, router)`` for registry entries
+  (empty dict if none).
+- ``routedclass`` property: returns cached ``_RoutedProxy`` bound to the owner,
+  creating and storing it on first access.
+
+_RoutedProxy
+------------
+Bound to the owning ``RoutedClass`` instance.
+
+Router lookup:
+- ``get_router(name, path=None)`` splits combined specs (``foo.bar``) into
+  base router + child path (``_split_router_spec``). Looks in the registry
+  first, then falls back to owner attributes (cached if a ``Router``). Raises
+  ``AttributeError`` if no router is found. If ``path`` is provided (or found in
+  the dotted name), traverses children via ``get_child`` for each segment,
+  skipping empty segments.
+
+Configuration entrypoint:
+- ``configure(target, **options)`` accepts:
+  * list/tuple: config each element; shared ``options`` not allowed (raises).
+  * dict: must include ``"target"`` key; remaining items are options.
+  * string: either ``"?"`` (describe all) or ``"router:plugin/selector"``.
+- Errors: non-string/dict/list targets raise ``TypeError``; missing options for
+  string targets raise ``ValueError``; bad syntax (missing ``:``) or empty
+  router/plugin names raise ``ValueError``; unknown router/plugin raises
+  ``AttributeError``; unmatched handlers raise ``KeyError``.
+- Selector parsing: ``_parse_target`` splits on the first ``:`` (router/component)
+  then optional ``/`` (selector); default selector is ``"_all_"``. Trimmed
+  strings must be non-empty; channel/scope semantics are left to plugins.
+- Handler matching: ``_match_handlers`` fnmatch-es selectors (comma-separated)
+  against router ``_entries`` keys, returning a set.
+- Application: for ``"_all_"`` selector, applies options to ``plugin.configure``
+  (global config) and returns ``{"target": target, "updated": ["_all_"]}``.
+  Otherwise for each matched handler, uses ``plugin.configure[handler]`` proxy,
+  sets attributes via ``_apply_config``, and returns ``{"target": target,
+  "updated": sorted(matches)}``.
+- ``"?"`` shortcut returns ``_describe_all()``.
+
+Describe helpers:
+- ``_describe_all``: iterates registry routers and returns a dict of name →
+  ``_describe_router`` output.
+- ``_describe_router``: returns a dict with router name, per-plugin info
+  (``name``, ``description``, global config, per-handler overrides), handler
+  names list, and child routers described recursively.
+
+Invariants
+----------
+- Registry is per-instance; attribute lookup fallback is cached for future use.
+- Proxies never mutate router internals beyond plugin config proxies.
+- Fnmatch is used for selector matching; an empty match set is an error unless
+  selector is ``_all_``.
 """
 
 from __future__ import annotations
