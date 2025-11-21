@@ -53,7 +53,7 @@ assert second.api.get("describe")() == "service:beta"
 
 #### `Router.plug(plugin: str) -> Router`
 
-Add a plugin to the router by name. Plugins must be pre-registered with `Router.register_plugin()`. Built-in plugins (`"logging"`, `"pydantic"`, `"scope"`) are pre-registered. Returns self for chaining.
+Add a plugin to the router by name. Plugins must be pre-registered with `Router.register_plugin()`. Built-in plugins (`"logging"`, `"pydantic"`) are pre-registered. Returns self for chaining.
 
 <!-- test: test_router_edge_cases.py::test_builtin_plugins_registered -->
 
@@ -105,7 +105,7 @@ Router.register_plugin("custom", CustomPlugin)
 
 ```python
 plugins = Router.available_plugins()
-# Returns: ["logging", "pydantic", "scope", ...custom plugins...]
+# Returns: ["logging", "pydantic", ...custom plugins...]
 ```
 
 ---
@@ -173,7 +173,7 @@ result = svc.api.call("action", "value", flag=True)
 
 #### `members(scopes: Optional[Union[str, Iterable[str]]] = None, channel: Optional[str] = None) -> Dict[str, Any]`
 
-Get structured information sul router. Pass `scopes` (string CSV o iterabile) per filtrare sugli scope dichiarati dagli handler; passa `channel` per includere solo gli handler i cui scope permettono quel codice canale (secondo i metadati di `ScopePlugin`).
+Get structured information sul router. Pass `scopes` (string CSV o iterabile) per filtrare sugli scope dichiarati dagli handler; passa `channel` per includere solo gli handler i cui scope permettono quel codice canale (quando un plugin come `PublishPlugin` fornisce quei metadati).
 
 <!-- test: test_router_runtime_extras.py::test_router_call_and_members_structure -->
 
@@ -181,6 +181,7 @@ Get structured information sul router. Pass `scopes` (string CSV o iterabile) pe
 tree = svc.api.members()
 first_handler = tree["handlers"]["action"]
 
+# Scope/channel filters require a plugin (e.g. PublishPlugin) to populate metadata
 internal_only = svc.api.members(scopes="internal,admin")
 cli_only = svc.api.members(channel="CLI")
 internal_cli = svc.api.members(scopes="internal", channel="CLI")
@@ -190,7 +191,7 @@ internal_cli = svc.api.members(scopes="internal", channel="CLI")
 
 #### `describe(scopes: Optional[Union[str, Iterable[str]]] = None, channel: Optional[str] = None) -> Dict[str, Any]`
 
-Get complete descrizione gerarchica (router, plugin, handlers, metadata). Con `scopes` e/o `channel` puoi limitare l’output agli handler che hanno quei tag/canali (stessa logica di `members`).
+Get complete descrizione gerarchica (router, plugin, handlers, metadata). Con `scopes` e/o `channel` puoi limitare l’output agli handler che hanno quei tag/canali (stessa logica di `members`) quando un plugin ha arricchito i metadati con questi attributi.
 
 <!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
 
@@ -675,14 +676,17 @@ except Exception as e:
 svc.routedclass.configure("api:pydantic/_all_", strict=True)
 ```
 
-### ScopePlugin
+### PublishPlugin (SmartPublisher)
 
-Pre-registered as `"scope"`. Dichiarazione di scope + mappatura dei canali, che sono **stringhe uppercase** (es. `CLI`, `SYS_HTTP`, `HTTP`, `WS`, `MCP`).
+Provided by `smartpublisher.smartroute_plugins.publish.PublishPlugin`. Importing the module registers the `"publish"` plugin name; attach it with `.plug("publish")`. It carries the scope/channel semantics (uppercase codes such as `CLI`, `SYS_HTTP`, `HTTP`, `WS`, `MCP`) formerly bundled in the core.
 
 ```python
+from smartpublisher.smartroute_plugins.publish import PublishPlugin
+
 class ScopedService(RoutedClass):
     def __init__(self):
-        self.api = Router(self, name="api").plug("scope", channels="CLI,SYS_HTTP")
+        # import registers the plugin
+        self.api = Router(self, name="api").plug("publish")
 
     @route("api", scopes="internal,admin")
     def admin(self):
@@ -693,25 +697,22 @@ class ScopedService(RoutedClass):
         return "ok"
 
 svc = ScopedService()
-svc.routedclass.configure("api:scope/_all_", scopes="internal,sales")
+svc.routedclass.configure("api:publish/_all_", scopes="internal,sales")
 
 # Retrieve handlers exposed via a specific channel
-cli_methods = svc.api.scope.get_channel_map("CLI")
+cli_methods = svc.api.publish.get_channel_map("CLI")
 assert set(cli_methods) == {"admin", "public"}
 
 public_scope = svc.api.describe()["methods"]["public"]["scope"]
 assert public_scope == {"tags": ["public_shop"], "channels": {"public_shop": ["HTTP"]}}
-
-from smartroute import channels
-assert "CLI" in channels
 ```
 
 **Configuration examples:**
 
 ```python
-svc.routedclass.configure("api:scope/_all_", scope_channels={"sales": ["CLI"]})
-svc.routedclass.configure("api:scope/public", scopes="public_shop,internal")
-svc.routedclass.configure("api:scope/admin", channels="CLI")  # alias for {"*": ["CLI"]}
+svc.routedclass.configure("api:publish/_all_", scope_channels={"sales": ["CLI"]})
+svc.routedclass.configure("api:publish/public", scopes="public_shop,internal")
+svc.routedclass.configure("api:publish/admin", channels="CLI")  # alias for {"*": ["CLI"]}
 ```
 
 ---

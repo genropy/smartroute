@@ -1,5 +1,5 @@
 """Sphinx configuration for SmartRoute documentation."""
-import os
+
 import sys
 from pathlib import Path
 
@@ -10,30 +10,30 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 project = "SmartRoute"
 copyright = "2025, Genropy Team"
 author = "Genropy Team"
-release = "0.5.1"
+release = "0.5.2"
 version = "0.5"
 
 # General configuration
 extensions = [
-    "sphinx.ext.autodoc",           # Auto-generate docs from docstrings
-    "sphinx.ext.napoleon",          # Google/NumPy style docstrings
-    "sphinx.ext.viewcode",          # Add links to source code
-    "sphinx.ext.intersphinx",       # Link to other projects' docs
-    "sphinx.ext.todo",              # TODO notes support
-    "sphinx.ext.coverage",          # Coverage reporting
-    "sphinx.ext.doctest",           # Execute examples in docs
-    "sphinx.ext.githubpages",       # GitHub Pages support
-    "sphinx_autodoc_typehints",     # Type hints in docs
-    "myst_parser",                  # Markdown support (CRITICAL)
-    "sphinxcontrib.mermaid",        # Mermaid diagrams (CRITICAL)
+    "sphinx.ext.autodoc",  # Auto-generate docs from docstrings
+    "sphinx.ext.napoleon",  # Google/NumPy style docstrings
+    "sphinx.ext.viewcode",  # Add links to source code
+    "sphinx.ext.intersphinx",  # Link to other projects' docs
+    "sphinx.ext.todo",  # TODO notes support
+    "sphinx.ext.coverage",  # Coverage reporting
+    "sphinx.ext.doctest",  # Execute examples in docs
+    "sphinx.ext.githubpages",  # GitHub Pages support
+    "sphinx_autodoc_typehints",  # Type hints in docs
+    "myst_parser",  # Markdown support (CRITICAL)
+    "sphinxcontrib.mermaid",  # Mermaid diagrams (CRITICAL)
 ]
 
 # MyST Parser configuration (Markdown)
 myst_enable_extensions = [
-    "colon_fence",      # ::: fences
-    "deflist",          # Definition lists
-    "substitution",     # Variable substitutions
-    "tasklist",         # Task lists with checkboxes
+    "colon_fence",  # ::: fences
+    "deflist",  # Definition lists
+    "substitution",  # Variable substitutions
+    "tasklist",  # Task lists with checkboxes
 ]
 myst_heading_anchors = 3
 
@@ -60,9 +60,9 @@ exclude_patterns = [
 
 # Suppress specific warnings
 suppress_warnings = [
-    "toc.not_included",              # Docs not in toctree
-    "myst.xref_missing",             # Missing cross-references
-    "misc.highlighting_failure",     # Pygments highlighting issues
+    "toc.not_included",  # Docs not in toctree
+    "myst.xref_missing",  # Missing cross-references
+    "misc.highlighting_failure",  # Pygments highlighting issues
 ]
 
 # HTML output configuration
@@ -78,7 +78,7 @@ html_theme_options = {
 }
 
 html_static_path = []  # No static files yet
-html_css_files = []    # No custom CSS yet
+html_css_files = []  # No custom CSS yet
 
 # HTML context (GitHub integration)
 html_context = {

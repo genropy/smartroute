@@ -1,0 +1,655 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hierarchical Routers &mdash; SmartRoute 0.5.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Best Practices" href="best-practices.html" />
+    <link rel="prev" title="Plugin Configuration" href="plugin-configuration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SmartRoute
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#from-pypi">From PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#with-optional-dependencies">With Optional Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#pydantic-plugin">Pydantic Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-tools">Development Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#all-dependencies">All Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#from-source">From Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#your-first-router">Your First Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#custom-entry-names">Custom Entry Names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#building-hierarchies">Building Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#adding-plugins">Adding Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#validating-arguments">Validating Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#need-help">Need Help?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../FAQ.html">SmartRoute - Frequently Asked Questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#what-is-smartroute">What is SmartRoute?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#what-problem-does-smartroute-solve">What problem does SmartRoute solve?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#smartroute-vs-function-dictionary">SmartRoute vs function dictionary?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#is-smartroute-a-web-framework">Is SmartRoute a web framework?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#core-concepts">Core Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#what-is-a-router">What is a Router?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-does-the-route-decorator-work">How does the &#64;route decorator work?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#what-is-routedclass">What is RoutedClass?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#hierarchies-and-child-routers">Hierarchies and Child Routers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-organize-nested-routers">How do I organize nested routers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-access-child-routers">How do I access child routers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#do-plugins-inherit-to-children">Do plugins inherit to children?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#plugin-system">Plugin System</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#what-are-plugins">What are plugins?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-use-built-in-plugins">How do I use built-in plugins?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-configure-plugins-at-runtime">How do I configure plugins at runtime?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#can-i-create-custom-plugins">Can I create custom plugins?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#scope-and-channel">Scope and Channel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#what-are-scope-and-channel">What are scope and channel?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#when-should-i-use-publishplugin">When should I use PublishPlugin?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#advanced-use-cases">Advanced Use Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-register-handlers-dynamically">How do I register handlers dynamically?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-handle-errors-and-defaults">How do I handle errors and defaults?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-use-smartasync">How do I use SmartAsync?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-introspect-the-structure">How do I introspect the structure?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#comparisons">Comparisons</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#smartroute-vs-decorator-dispatch">SmartRoute vs decorator dispatch?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#no-plugin-named-x-attached-to-router">“No plugin named ‘X’ attached to router”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#handler-name-collision">“Handler name collision”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#plugins-don-t-propagate-to-children">Plugins don’t propagate to children</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#validationerror-with-pydantic">ValidationError with Pydantic</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#when-should-i-use-smartroute">When should I use SmartRoute?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#does-plugin-order-matter">Does plugin order matter?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ.html#how-do-i-test-code-with-smartroute">How do I test code with SmartRoute?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#useful-links">Useful Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ.html#contributing">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="basic-usage.html">Basic Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#creating-your-first-router">Creating Your First Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#registering-handlers">Registering Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#calling-handlers">Calling Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#using-prefixes-and-custom-names">Using Prefixes and Custom Names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#default-handlers">Default Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#dynamic-handler-registration">Dynamic Handler Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#building-hierarchies">Building Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugin Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#built-in-plugins">Built-in Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugins.html#publish-ready-plugin-ecosystem">Publish-ready plugin (ecosystem)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#creating-custom-plugins">Creating Custom Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#plugin-hooks">Plugin Hooks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugins.html#on-decore-router-func-entry">on_decore(router, func, entry)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins.html#wrap-handler-router-entry-call-next">wrap_handler(router, entry, call_next)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#plugin-registration">Plugin Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#per-instance-state">Per-Instance State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#runtime-data">Runtime Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#plugin-configuration">Plugin Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#complete-example-authorization-plugin">Complete Example: Authorization Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugins.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugin-configuration.html">Plugin Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#target-syntax">Target Syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#basic-configuration">Basic Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#batch-updates">Batch Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#exposing-configuration-api">Exposing Configuration API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#error-handling">Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-configuration.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Hierarchical Routers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-hierarchy">Basic Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dictionary-registration">Dictionary Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flexible-registration-patterns">Flexible Registration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-inheritance">Plugin Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dotted-path-navigation">Dotted Path Navigation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#real-world-example">Real-World Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/reference.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#constructor-and-slots">Constructor and slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#registration-and-naming">Registration and naming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#marker-discovery">Marker discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#handler-table-and-wrapping">Handler table and wrapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#lookup-and-execution">Lookup and execution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#children">Children</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#child-discovery-helpers">Child discovery helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#hooks-for-subclasses">Hooks for subclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#invariants-and-guarantees">Invariants and guarantees</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter"><code class="docutils literal notranslate"><span class="pre">BaseRouter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.__init__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.name"><code class="docutils literal notranslate"><span class="pre">BaseRouter.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.prefix"><code class="docutils literal notranslate"><span class="pre">BaseRouter.prefix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.add_entry"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_entry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.get"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__getitem__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.call"><code class="docutils literal notranslate"><span class="pre">BaseRouter.call()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.entries"><code class="docutils literal notranslate"><span class="pre">BaseRouter.entries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.add_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_child()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.get_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get_child()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.describe"><code class="docutils literal notranslate"><span class="pre">BaseRouter.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.members"><code class="docutils literal notranslate"><span class="pre">BaseRouter.members()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.iter_plugins"><code class="docutils literal notranslate"><span class="pre">BaseRouter.iter_plugins()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#internal-state">Internal state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#global-registry">Global registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#attaching-plugins">Attaching plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#runtime-flags-and-data">Runtime flags and data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#wrapping-pipeline">Wrapping pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#entry-plugin-application">Entry/plugin application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#inheritance-behaviour">Inheritance behaviour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#filtering">Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#description-hooks">Description hooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#data-shapes">Data shapes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#router-invariants">Router Invariants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router"><code class="docutils literal notranslate"><span class="pre">Router</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.__init__"><code class="docutils literal notranslate"><span class="pre">Router.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.register_plugin"><code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.get_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.get_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.instance"><code class="docutils literal notranslate"><span class="pre">Router.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.name"><code class="docutils literal notranslate"><span class="pre">Router.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.prefix"><code class="docutils literal notranslate"><span class="pre">Router.prefix</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#re-exports">Re-exports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.route"><code class="docutils literal notranslate"><span class="pre">route()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.routers"><code class="docutils literal notranslate"><span class="pre">routers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.RoutedClass"><code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.RoutedClass.routedclass"><code class="docutils literal notranslate"><span class="pre">RoutedClass.routedclass</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/plugins.html">Plugin API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/plugins.html#module-smartroute.plugins.logging">Auto-Generated Plugin API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#responsibilities">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#behaviour-and-api">Behaviour and API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#registration">Registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.name"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.config"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#id1">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#dependencies-and-guards">Dependencies and guards</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#behaviour-and-data">Behaviour and data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#id2">Registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.on_decore"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.on_decore()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.name"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.config"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.describe_entry"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.describe_entry()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SmartRoute</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Hierarchical Routers</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/genropy/smartroute/blob/main/docs/guide/hierarchies.md" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hierarchical-routers">
+<h1>Hierarchical Routers<a class="headerlink" href="#hierarchical-routers" title="Link to this heading"></a></h1>
+<p>Build complex routing structures with nested routers, dotted path navigation, and automatic plugin inheritance.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>SmartRoute supports hierarchical router composition where:</p>
+<ul class="simple">
+<li><p><strong>Parent routers</strong> can have <strong>child routers</strong></p></li>
+<li><p><strong>Dotted paths</strong> navigate the hierarchy (<code class="docutils literal notranslate"><span class="pre">root.api.get(&quot;users.list&quot;)</span></code>)</p></li>
+<li><p><strong>Plugins propagate</strong> from parent to children automatically</p></li>
+<li><p><strong>Each level</strong> maintains independent handler registration</p></li>
+<li><p><strong>Multiple registration patterns</strong> support flexible organization</p></li>
+</ul>
+</section>
+<section id="basic-hierarchy">
+<h2>Basic Hierarchy<a class="headerlink" href="#basic-hierarchy" title="Link to this heading"></a></h2>
+<!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158">From test</a></p>
+<p>Create a hierarchy by adding child instances:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SubService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;routes&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;handle_&quot;</span><span class="p">)</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;routes&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s2">:list&quot;</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;routes&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_detail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ident</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s2">:detail:</span><span class="si">{</span><span class="n">ident</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RootAPI</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">users</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">products</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Add children referencing attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+
+<span class="n">root</span> <span class="o">=</span> <span class="n">RootAPI</span><span class="p">()</span>
+
+<span class="c1"># Access with dotted paths</span>
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;users.list&quot;</span><span class="p">)()</span> <span class="o">==</span> <span class="s2">&quot;users:list&quot;</span>
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;products.detail&quot;</span><span class="p">)(</span><span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;products:detail:5&quot;</span>
+</pre></div>
+</div>
+<p><strong>Key points</strong>:</p>
+<ul class="simple">
+<li><p>Each child is an independent <code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code> instance</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_child(instance,</span> <span class="pre">name=&quot;...&quot;)</span></code> registers the child</p></li>
+<li><p>Dotted paths navigate: <code class="docutils literal notranslate"><span class="pre">parent.child.handler</span></code></p></li>
+<li><p>Children maintain their own routing state</p></li>
+</ul>
+</section>
+<section id="dictionary-registration">
+<h2>Dictionary Registration<a class="headerlink" href="#dictionary-registration" title="Link to this heading"></a></h2>
+<!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L174-L182">From test</a></p>
+<p>Register multiple children with a dictionary:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="o">=</span> <span class="n">RootAPI</span><span class="p">()</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+<span class="n">products</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+
+<span class="c1"># Register multiple children at once</span>
+<span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">({</span><span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">users</span><span class="p">,</span> <span class="s2">&quot;products&quot;</span><span class="p">:</span> <span class="n">products</span><span class="p">})</span>
+
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;users.list&quot;</span><span class="p">)()</span> <span class="o">==</span> <span class="s2">&quot;users:list&quot;</span>
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;products.detail&quot;</span><span class="p">)(</span><span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;products:detail:7&quot;</span>
+</pre></div>
+</div>
+<p><strong>Benefits</strong>:</p>
+<ul class="simple">
+<li><p>Cleaner code for multiple children</p></li>
+<li><p>Dictionary keys become child names</p></li>
+<li><p>Single method call for bulk registration</p></li>
+</ul>
+</section>
+<section id="flexible-registration-patterns">
+<h2>Flexible Registration Patterns<a class="headerlink" href="#flexible-registration-patterns" title="Link to this heading"></a></h2>
+<!-- test: test_switcher_basic.py::test_add_child_handles_nested_iterables_and_pairs -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L185-L197">From test</a></p>
+<p>Mix different registration patterns:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">root</span> <span class="o">=</span> <span class="n">RootAPI</span><span class="p">()</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+<span class="n">products</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;products&quot;</span><span class="p">)</span>
+
+<span class="c1"># Mix dictionaries, lists, and tuples</span>
+<span class="n">registry</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">users</span><span class="p">},</span>
+    <span class="p">[(</span><span class="s2">&quot;products&quot;</span><span class="p">,</span> <span class="n">products</span><span class="p">)],</span>
+<span class="p">]</span>
+
+<span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;users.list&quot;</span><span class="p">)()</span> <span class="o">==</span> <span class="s2">&quot;users:list&quot;</span>
+<span class="k">assert</span> <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;products.detail&quot;</span><span class="p">)(</span><span class="mi">3</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;products:detail:3&quot;</span>
+</pre></div>
+</div>
+<p><strong>Supports</strong>:</p>
+<ul class="simple">
+<li><p>Nested lists and dictionaries</p></li>
+<li><p>Tuple pairs: <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">instance)</span></code></p></li>
+<li><p>Mixed structures</p></li>
+<li><p>Dynamic configuration-driven registration</p></li>
+</ul>
+</section>
+<section id="plugin-inheritance">
+<h2>Plugin Inheritance<a class="headerlink" href="#plugin-inheritance" title="Link to this heading"></a></h2>
+<!-- test: test_switcher_basic.py::test_parent_plugins_inherit_to_children -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L220-L234">From test</a></p>
+<p>Plugins propagate automatically from parent to children:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ParentAPI</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Plugin attached to parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;logging&quot;</span><span class="p">)</span>
+
+<span class="n">parent</span> <span class="o">=</span> <span class="n">ParentAPI</span><span class="p">()</span>
+<span class="n">child</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add child - plugins inherit automatically</span>
+<span class="n">parent</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;child&quot;</span><span class="p">)</span>
+
+<span class="c1"># Child router now has the logging plugin</span>
+<span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="s2">&quot;logging&quot;</span><span class="p">)</span>
+
+<span class="c1"># Plugin applies to child handlers</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;list&quot;</span><span class="p">)()</span>
+<span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">&quot;child:list&quot;</span>
+<span class="c1"># Logging plugin was active during call</span>
+</pre></div>
+</div>
+<p><strong>Inheritance rules</strong>:</p>
+<ul class="simple">
+<li><p>Parent plugins apply to all child handlers</p></li>
+<li><p>Children can add their own plugins</p></li>
+<li><p>Plugin order: parent plugins → child plugins</p></li>
+<li><p>Configuration inherits but can be overridden</p></li>
+</ul>
+</section>
+<section id="dotted-path-navigation">
+<h2>Dotted Path Navigation<a class="headerlink" href="#dotted-path-navigation" title="Link to this heading"></a></h2>
+<!-- test: test_router_edge_cases.py::test_routed_proxy_get_router_handles_dotted_path -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L268-L281">From test</a></p>
+<p>Navigate hierarchy with dotted paths via <code class="docutils literal notranslate"><span class="pre">routedclass.get_router()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Parent</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">Child</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;child&quot;</span><span class="p">)</span>
+
+<span class="n">svc</span> <span class="o">=</span> <span class="n">Parent</span><span class="p">()</span>
+
+<span class="c1"># Get child router directly</span>
+<span class="n">child_router</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">routedclass</span><span class="o">.</span><span class="n">get_router</span><span class="p">(</span><span class="s2">&quot;api.child&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">child_router</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;api&quot;</span>
+</pre></div>
+</div>
+<p><strong>Navigation features</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_router(&quot;router.child.grandchild&quot;)</span></code> traverses hierarchy</p></li>
+<li><p>Returns the target router instance</p></li>
+<li><p>Enables programmatic router access</p></li>
+<li><p>Useful for dynamic configuration</p></li>
+</ul>
+</section>
+<section id="introspection">
+<h2>Introspection<a class="headerlink" href="#introspection" title="Link to this heading"></a></h2>
+<!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L370-L379">From test</a></p>
+<p>Inspect the full hierarchy structure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Inspectable</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+        <span class="n">child_service</span> <span class="o">=</span> <span class="n">SubService</span><span class="p">(</span><span class="s2">&quot;child&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">child_service</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sub&quot;</span><span class="p">)</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">insp</span> <span class="o">=</span> <span class="n">Inspectable</span><span class="p">()</span>
+
+<span class="c1"># Get complete hierarchy metadata</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">insp</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+<span class="k">assert</span> <span class="s2">&quot;action&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;handlers&quot;</span><span class="p">]</span>
+<span class="k">assert</span> <span class="s2">&quot;sub&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">]</span>
+
+<span class="c1"># Nested structure included</span>
+<span class="k">assert</span> <span class="s2">&quot;routes&quot;</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">][</span><span class="s2">&quot;sub&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Introspection provides</strong>:</p>
+<ul class="simple">
+<li><p>Complete handler list at each level</p></li>
+<li><p>Child router names and structure</p></li>
+<li><p>Plugin configuration per level</p></li>
+<li><p>Nested hierarchy representation</p></li>
+</ul>
+</section>
+<section id="real-world-example">
+<h2>Real-World Example<a class="headerlink" href="#real-world-example" title="Link to this heading"></a></h2>
+<p>Complete service composition pattern:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AuthService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">}</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">}</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UserService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_users</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="s2">&quot;bob&quot;</span><span class="p">]</span>
+
+    <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">}</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Application</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Root router with logging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;logging&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create services</span>
+        <span class="n">auth</span> <span class="o">=</span> <span class="n">AuthService</span><span class="p">()</span>
+        <span class="n">users</span> <span class="o">=</span> <span class="n">UserService</span><span class="p">()</span>
+
+        <span class="c1"># Compose hierarchy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">({</span>
+            <span class="s2">&quot;auth&quot;</span><span class="p">:</span> <span class="n">auth</span><span class="p">,</span>
+            <span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">users</span><span class="p">,</span>
+        <span class="p">})</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">()</span>
+
+<span class="c1"># Access through hierarchy</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;auth.login&quot;</span><span class="p">,</span> <span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="s2">&quot;secret123&quot;</span><span class="p">)</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;users.list_users&quot;</span><span class="p">)</span>
+
+<span class="c1"># Logging applies to all handlers automatically</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<p><strong>Logical grouping</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Group related services</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">({</span>
+    <span class="s2">&quot;auth&quot;</span><span class="p">:</span> <span class="n">AuthService</span><span class="p">(),</span>
+    <span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">UserService</span><span class="p">(),</span>
+    <span class="s2">&quot;orders&quot;</span><span class="p">:</span> <span class="n">OrderService</span><span class="p">(),</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><strong>Shared plugins at root</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Apply logging and validation to entire hierarchy</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;logging&quot;</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;pydantic&quot;</span><span class="p">)</span>
+
+<span class="c1"># All children inherit both plugins</span>
+</pre></div>
+</div>
+<p><strong>Deep hierarchies</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Organize by domain and subdomain</span>
+<span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">({</span><span class="s2">&quot;admin&quot;</span><span class="p">:</span> <span class="n">admin_api</span><span class="p">})</span>
+<span class="n">admin_api</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">({</span><span class="s2">&quot;users&quot;</span><span class="p">:</span> <span class="n">user_admin</span><span class="p">,</span> <span class="s2">&quot;reports&quot;</span><span class="p">:</span> <span class="n">report_admin</span><span class="p">})</span>
+
+<span class="c1"># Access: root.api.get(&quot;admin.users.create_user&quot;)</span>
+</pre></div>
+</div>
+<p><strong>Dynamic registration</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load services from configuration</span>
+<span class="n">services_config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">&quot;services.yaml&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">service_class</span> <span class="ow">in</span> <span class="n">services_config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">service</span> <span class="o">=</span> <span class="n">service_class</span><span class="p">()</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong><a class="reference internal" href="plugin-configuration.html"><span class="std std-doc">Plugin Configuration</span></a></strong> - Configure plugins across hierarchies</p></li>
+<li><p><strong><a class="reference internal" href="best-practices.html"><span class="std std-doc">Best Practices</span></a></strong> - Production-ready patterns</p></li>
+<li><p><strong><a class="reference internal" href="../api/reference.html"><span class="std std-doc">API Reference</span></a></strong> - Complete API documentation</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plugin-configuration.html" class="btn btn-neutral float-left" title="Plugin Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="best-practices.html" class="btn btn-neutral float-right" title="Best Practices" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Genropy Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,9 +1,8 @@
 # SmartRoute Plugin Layer
 
-This package hosts the built-in plugins (`logging`, `pydantic`, `scope`) and
-the shared contract found in :mod:`smartroute.plugins._base_plugin`. Every
-plugin—internal or custom—must inherit from :class:`BasePlugin` and implement
-its hooks.
+This package hosts the built-in plugins (`logging`, `pydantic`) and the shared
+contract found in :mod:`smartroute.plugins._base_plugin`. Every plugin—internal
+or custom—must inherit from :class:`BasePlugin` and implement its hooks.
 
 Guidelines
 ---------

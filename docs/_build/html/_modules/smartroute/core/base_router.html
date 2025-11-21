@@ -1,0 +1,1137 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>smartroute.core.base_router &mdash; SmartRoute 0.5.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+      <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+      <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+      <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SmartRoute
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#from-pypi">From PyPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#with-optional-dependencies">With Optional Dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../installation.html#pydantic-plugin">Pydantic Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../installation.html#development-tools">Development Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../installation.html#all-dependencies">All Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#from-source">From Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#your-first-router">Your First Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#custom-entry-names">Custom Entry Names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#building-hierarchies">Building Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#adding-plugins">Adding Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#validating-arguments">Validating Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#next-steps">Next Steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#need-help">Need Help?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FAQ.html">SmartRoute - Frequently Asked Questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#what-is-smartroute">What is SmartRoute?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#what-problem-does-smartroute-solve">What problem does SmartRoute solve?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#smartroute-vs-function-dictionary">SmartRoute vs function dictionary?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#is-smartroute-a-web-framework">Is SmartRoute a web framework?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#core-concepts">Core Concepts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#what-is-a-router">What is a Router?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-does-the-route-decorator-work">How does the &#64;route decorator work?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#what-is-routedclass">What is RoutedClass?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#hierarchies-and-child-routers">Hierarchies and Child Routers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-organize-nested-routers">How do I organize nested routers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-access-child-routers">How do I access child routers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#do-plugins-inherit-to-children">Do plugins inherit to children?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#plugin-system">Plugin System</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#what-are-plugins">What are plugins?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-use-built-in-plugins">How do I use built-in plugins?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-configure-plugins-at-runtime">How do I configure plugins at runtime?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#can-i-create-custom-plugins">Can I create custom plugins?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#scope-and-channel">Scope and Channel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#what-are-scope-and-channel">What are scope and channel?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#when-should-i-use-publishplugin">When should I use PublishPlugin?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#advanced-use-cases">Advanced Use Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-register-handlers-dynamically">How do I register handlers dynamically?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-handle-errors-and-defaults">How do I handle errors and defaults?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-use-smartasync">How do I use SmartAsync?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-introspect-the-structure">How do I introspect the structure?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#comparisons">Comparisons</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#smartroute-vs-decorator-dispatch">SmartRoute vs decorator dispatch?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#no-plugin-named-x-attached-to-router">“No plugin named ‘X’ attached to router”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#handler-name-collision">“Handler name collision”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#plugins-don-t-propagate-to-children">Plugins don’t propagate to children</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#validationerror-with-pydantic">ValidationError with Pydantic</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#when-should-i-use-smartroute">When should I use SmartRoute?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#does-plugin-order-matter">Does plugin order matter?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../FAQ.html#how-do-i-test-code-with-smartroute">How do I test code with SmartRoute?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#useful-links">Useful Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../FAQ.html#contributing">Contributing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/basic-usage.html">Basic Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#creating-your-first-router">Creating Your First Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#registering-handlers">Registering Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#calling-handlers">Calling Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#using-prefixes-and-custom-names">Using Prefixes and Custom Names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#default-handlers">Default Handlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#dynamic-handler-registration">Dynamic Handler Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#building-hierarchies">Building Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/basic-usage.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/plugins.html">Plugin Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#built-in-plugins">Built-in Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#publish-ready-plugin-ecosystem">Publish-ready plugin (ecosystem)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#creating-custom-plugins">Creating Custom Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-hooks">Plugin Hooks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#on-decore-router-func-entry">on_decore(router, func, entry)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#wrap-handler-router-entry-call-next">wrap_handler(router, entry, call_next)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-registration">Plugin Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#per-instance-state">Per-Instance State</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#runtime-data">Runtime Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-configuration">Plugin Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#complete-example-authorization-plugin">Complete Example: Authorization Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/plugin-configuration.html">Plugin Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#target-syntax">Target Syntax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#basic-configuration">Basic Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#batch-updates">Batch Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#exposing-configuration-api">Exposing Configuration API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#error-handling">Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugin-configuration.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/hierarchies.html">Hierarchical Routers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#basic-hierarchy">Basic Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#dictionary-registration">Dictionary Registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#flexible-registration-patterns">Flexible Registration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#plugin-inheritance">Plugin Inheritance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#dotted-path-navigation">Dotted Path Navigation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#real-world-example">Real-World Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/best-practices.html">Best Practices</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/reference.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#constructor-and-slots">Constructor and slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#registration-and-naming">Registration and naming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#marker-discovery">Marker discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#handler-table-and-wrapping">Handler table and wrapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#lookup-and-execution">Lookup and execution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#children">Children</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#child-discovery-helpers">Child discovery helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#introspection">Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#hooks-for-subclasses">Hooks for subclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#invariants-and-guarantees">Invariants and guarantees</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter"><code class="docutils literal notranslate"><span class="pre">BaseRouter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.__init__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.name"><code class="docutils literal notranslate"><span class="pre">BaseRouter.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.prefix"><code class="docutils literal notranslate"><span class="pre">BaseRouter.prefix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.add_entry"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_entry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.get"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__getitem__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.call"><code class="docutils literal notranslate"><span class="pre">BaseRouter.call()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.entries"><code class="docutils literal notranslate"><span class="pre">BaseRouter.entries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.add_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_child()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.get_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get_child()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.describe"><code class="docutils literal notranslate"><span class="pre">BaseRouter.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.members"><code class="docutils literal notranslate"><span class="pre">BaseRouter.members()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.iter_plugins"><code class="docutils literal notranslate"><span class="pre">BaseRouter.iter_plugins()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#internal-state">Internal state</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#global-registry">Global registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#attaching-plugins">Attaching plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#runtime-flags-and-data">Runtime flags and data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#wrapping-pipeline">Wrapping pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#entry-plugin-application">Entry/plugin application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#inheritance-behaviour">Inheritance behaviour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#filtering">Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#description-hooks">Description hooks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#data-shapes">Data shapes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#router-invariants">Router Invariants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router"><code class="docutils literal notranslate"><span class="pre">Router</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.__init__"><code class="docutils literal notranslate"><span class="pre">Router.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.register_plugin"><code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.get_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.get_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.instance"><code class="docutils literal notranslate"><span class="pre">Router.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.name"><code class="docutils literal notranslate"><span class="pre">Router.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.prefix"><code class="docutils literal notranslate"><span class="pre">Router.prefix</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#re-exports">Re-exports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.route"><code class="docutils literal notranslate"><span class="pre">route()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.routers"><code class="docutils literal notranslate"><span class="pre">routers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.RoutedClass"><code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.RoutedClass.routedclass"><code class="docutils literal notranslate"><span class="pre">RoutedClass.routedclass</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/plugins.html">Plugin API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/plugins.html#module-smartroute.plugins.logging">Auto-Generated Plugin API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#responsibilities">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#behaviour-and-api">Behaviour and API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#registration">Registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.name"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.config"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#id1">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#dependencies-and-guards">Dependencies and guards</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#behaviour-and-data">Behaviour and data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#id2">Registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.on_decore"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.on_decore()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.name"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.config"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.describe_entry"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.describe_entry()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SmartRoute</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">smartroute.core.base_router</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for smartroute.core.base_router</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Plugin-free router runtime (source of truth).</span>
+
+<span class="sd">If this file vanished, rebuild it verbatim from this description. The module</span>
+<span class="sd">exposes a single class, :class:`BaseRouter`, which binds methods on an object</span>
+<span class="sd">instance, resolves dotted selectors, and exposes rich introspection without any</span>
+<span class="sd">plugin logic. Subclasses add middleware but must preserve these semantics.</span>
+
+<span class="sd">Constructor and slots</span>
+<span class="sd">---------------------</span>
+<span class="sd">Constructor signature::</span>
+
+<span class="sd">    BaseRouter(owner, name=None, prefix=None, *,</span>
+<span class="sd">               get_default_handler=None, get_use_smartasync=None,</span>
+<span class="sd">               get_kwargs=None, auto_discover=True, auto_selector=&quot;*&quot;)</span>
+
+<span class="sd">- ``owner`` is required; ``None`` raises ``ValueError``. Routers are bound to</span>
+<span class="sd">  this instance and never re-bound.</span>
+<span class="sd">- Slots: ``instance``, ``name``, ``prefix`` (string trimmed from function names),</span>
+<span class="sd">  ``_entries`` (logical name → MethodEntry), ``_handlers`` (name → callable),</span>
+<span class="sd">  ``_children`` (name → child router), ``_get_defaults`` (SmartOptions defaults).</span>
+
+<span class="sd">- Default options: ``get_default_handler`` and ``get_use_smartasync`` become</span>
+<span class="sd">  defaults merged via ``SmartOptions`` in ``get()``; extra ``get_kwargs`` are</span>
+<span class="sd">  copied into ``_get_defaults``.</span>
+
+<span class="sd">- On init: registers with owner via optional ``_register_router`` hook, then</span>
+<span class="sd">  auto-discovers entries when ``auto_discover`` is true by calling</span>
+<span class="sd">  ``add_entry(auto_selector)`` (``&quot;*&quot;`` by default).</span>
+
+<span class="sd">Registration and naming</span>
+<span class="sd">-----------------------</span>
+<span class="sd">``add_entry(target, *, name=None, alias=None, metadata=None, replace=False, **options)``</span>
+
+<span class="sd">- Accepts a callable or string/iterable of attribute names. Comma-separated</span>
+<span class="sd">  strings are split and each processed. Empty/whitespace-only strings are</span>
+<span class="sd">  ignored. ``replace=False`` raises on logical name collision.</span>
+
+<span class="sd">- Special markers ``&quot;*&quot;``, ``&quot;_all_&quot;``, ``&quot;__all__&quot;`` trigger marker discovery</span>
+<span class="sd">  via ``_register_marked`` (see below). A comma inside such marker string is</span>
+<span class="sd">  split and each chunk processed recursively.</span>
+
+<span class="sd">- When ``target`` is a string, it is resolved as an attribute of ``owner``; an</span>
+<span class="sd">  ``AttributeError`` is surfaced with a helpful message.</span>
+
+<span class="sd">- When ``target`` is a function, it is bound to ``owner`` unless already a</span>
+<span class="sd">  bound method. ``metadata`` + ``options`` are merged into the MethodEntry</span>
+<span class="sd">  metadata.</span>
+
+<span class="sd">- ``_resolve_name`` strips ``prefix`` from ``func.__name__`` when present; an</span>
+<span class="sd">  explicit ``name``/``alias`` always overrides.</span>
+
+<span class="sd">Marker discovery</span>
+<span class="sd">----------------</span>
+<span class="sd">``_iter_marked_methods`` walks the reversed MRO of ``type(owner)`` (child first</span>
+<span class="sd">wins), scans ``__dict__`` for plain functions carrying ``TARGET_ATTR`` markers.</span>
+<span class="sd">Duplicates (by function identity) are skipped. Only markers whose ``name``</span>
+<span class="sd">matches this router&#39;s ``name`` are used; the name key is removed from the</span>
+<span class="sd">payload before consumption. ``_register_marked`` binds each function to owner,</span>
+<span class="sd">merges marker data + metadata + extra options, and registers with collision</span>
+<span class="sd">behaviour governed by ``replace``.</span>
+
+<span class="sd">Handler table and wrapping</span>
+<span class="sd">--------------------------</span>
+<span class="sd">- ``_register_callable`` creates a ``MethodEntry`` (name, bound func, router,</span>
+<span class="sd">  empty plugins list, metadata dict) and stores it in ``_entries``; it invokes</span>
+<span class="sd">  ``_after_entry_registered`` hook then rebuilds the handler cache.</span>
+
+<span class="sd">- ``_rebuild_handlers`` recreates ``_handlers`` by passing each entry through</span>
+<span class="sd">  ``_wrap_handler`` (default: passthrough). Subclasses may inject middleware.</span>
+
+<span class="sd">Lookup and execution</span>
+<span class="sd">--------------------</span>
+<span class="sd">- ``get(selector, **options)`` merges ``options`` into ``SmartOptions`` using</span>
+<span class="sd">  ``_get_defaults``. It resolves ``selector`` via ``_resolve_path``: a dotted</span>
+<span class="sd">  string traverses children (``get_child``) and yields the terminal router plus</span>
+<span class="sd">  method name; no dot returns ``self`` + selector. Missing children raise</span>
+<span class="sd">  ``KeyError`` via ``get_child``. Missing handlers fall back to</span>
+<span class="sd">  ``default_handler`` (if provided) else raise ``NotImplementedError``.</span>
+
+<span class="sd">- When ``use_smartasync`` option is truthy, the returned handler is wrapped via</span>
+<span class="sd">  ``smartasync.smartasync`` before returning.</span>
+
+<span class="sd">- ``__getitem__`` aliases ``get``; ``call`` fetches then invokes the handler</span>
+<span class="sd">  with given args/kwargs. ``entries`` returns a tuple of registered handler</span>
+<span class="sd">  names (built from ``_handlers`` keys).</span>
+
+<span class="sd">Children</span>
+<span class="sd">--------</span>
+<span class="sd">``add_child(child, name=None)``</span>
+
+<span class="sd">- If ``child`` is a comma-separated string, each token is resolved as an</span>
+<span class="sd">  attribute on ``owner``; explicit ``name`` cannot be combined with multiple</span>
+<span class="sd">  tokens (raises ``ValueError``). Missing attributes raise ``AttributeError``.</span>
+
+<span class="sd">- Otherwise, routers are collected from the object (router instance, mapping</span>
+<span class="sd">  with string keys as name hints, iterable with optional ``(name, router)``</span>
+<span class="sd">  tuples, or attributes/slots containing routers). At least one router must be</span>
+<span class="sd">  found or ``TypeError`` is raised. Children are attached under ``name`` or</span>
+<span class="sd">  inferred attribute/override name; collisions with a different router raise</span>
+<span class="sd">  ``ValueError``. For each attached child, ``_on_attached_to_parent`` is called.</span>
+
+<span class="sd">- ``get_child`` retrieves by name or raises ``KeyError`` with a descriptive</span>
+<span class="sd">  message.</span>
+
+<span class="sd">Child discovery helpers</span>
+<span class="sd">-----------------------</span>
+<span class="sd">``_collect_child_routers(source, override_name=None, seen=None)``</span>
+
+<span class="sd">- Uses structural matching to collect routers from a single source:</span>
+
+<span class="sd">  * ``BaseRouter`` → returns the router with name hint</span>
+<span class="sd">  * ``Mapping`` → recurses into values using string keys as hints</span>
+<span class="sd">  * ``Iterable`` (non-string) → recurses elements; ``(name, router)`` tuples</span>
+<span class="sd">    provide a name hint</span>
+<span class="sd">  * otherwise inspects attributes/slots for ``BaseRouter`` instances, building</span>
+<span class="sd">    unique keys (override → attr name → router.name → ``&quot;child&quot;``)</span>
+
+<span class="sd">- ``seen`` tracks object ids to avoid cycles.</span>
+
+<span class="sd">Introspection</span>
+<span class="sd">-------------</span>
+<span class="sd">- ``describe(scopes=None, channel=None)`` builds a nested dict:</span>
+<span class="sd">  ``{&quot;name&quot;, &quot;prefix&quot;, &quot;plugins&quot;, &quot;methods&quot;, &quot;children&quot;}``.</span>
+<span class="sd">  Methods map logical name → info:</span>
+
+<span class="sd">    * ``doc`` (``inspect.getdoc`` or ``__doc__`` fallback)</span>
+<span class="sd">    * ``signature`` string of ``inspect.signature``; ``return_type`` formatted</span>
+<span class="sd">      via ``_format_annotation``</span>
+<span class="sd">    * ``plugins`` (MethodEntry.plugins), ``metadata_keys`` list</span>
+<span class="sd">    * ``parameters``: name → ``{&quot;type&quot;, &quot;default&quot;, &quot;required&quot;}`` from signature</span>
+<span class="sd">      annotations/defaults only.</span>
+
+<span class="sd">  Subclasses can inject additional data per entry via</span>
+<span class="sd">  ``_describe_entry_extra(entry, base_description)``. The base router contributes</span>
+<span class="sd">  nothing beyond the signature-derived fields.</span>
+
+<span class="sd">- Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and</span>
+<span class="sd">  ``_should_include_entry`` (base: always True) allow subclasses to hide</span>
+<span class="sd">  entries. Filters are applied both to ``methods`` and recursively to children.</span>
+
+<span class="sd">- ``members(scopes=None, channel=None)`` returns live objects instead of</span>
+<span class="sd">  strings: router, instance, handlers dict (callable + metadata), and children</span>
+<span class="sd">  respecting the same filters; empty children pruned only when filters active.</span>
+
+<span class="sd">Hooks for subclasses</span>
+<span class="sd">--------------------</span>
+<span class="sd">- ``_wrap_handler``: override to wrap callables (middleware stack).</span>
+<span class="sd">- ``_after_entry_registered``: invoked after registering a handler.</span>
+<span class="sd">- ``_on_attached_to_parent``: invoked when attached via ``add_child``.</span>
+<span class="sd">- ``_describe_entry_extra``: allow subclasses to extend per-entry description.</span>
+
+<span class="sd">Default implementations are no-ops/passthrough.</span>
+
+<span class="sd">Invariants and guarantees</span>
+<span class="sd">-------------------------</span>
+<span class="sd">- Handler names are unique unless ``replace=True``.</span>
+<span class="sd">- Selector traversal never fabricates routers: only attached children are used.</span>
+<span class="sd">- Marker discovery is deterministic (reversed MRO, first occurrence wins).</span>
+<span class="sd">- Introspection never mutates handler metadata; it reads from ``MethodEntry``.</span>
+<span class="sd">- All normalizations preserve user-provided metadata copies (shallow-copied).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">smartseeds</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmartOptions</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">smartroute.plugins._base_plugin</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethodEntry</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BaseRouter&quot;</span><span class="p">,</span> <span class="s2">&quot;TARGET_ATTR&quot;</span><span class="p">,</span> <span class="s2">&quot;ROUTER_REGISTRY_ATTR&quot;</span><span class="p">]</span>
+
+<span class="n">TARGET_ATTR</span> <span class="o">=</span> <span class="s2">&quot;__smartroute_targets__&quot;</span>
+<span class="n">ROUTER_REGISTRY_ATTR</span> <span class="o">=</span> <span class="s2">&quot;__smartroute_router_registry__&quot;</span>
+
+
+<div class="viewcode-block" id="BaseRouter">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseRouter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin-free router bound to an object instance.</span>
+
+<span class="sd">    Responsibilities:</span>
+<span class="sd">    - register bound methods/functions with logical names (optionally via markers)</span>
+<span class="sd">    - resolve dotted selectors across child routers</span>
+<span class="sd">    - expose handler tables and introspection data</span>
+<span class="sd">    - provide hooks for subclasses to wrap handlers or filter introspection</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;instance&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prefix&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_entries&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_handlers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_children&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_get_defaults&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseRouter.__init__">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">owner</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">get_default_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">get_use_smartasync</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">get_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">auto_discover</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">auto_selector</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">owner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Router requires a parent instance&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MethodEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseRouter</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">defaults</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">get_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">get_default_handler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">defaults</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;default_handler&quot;</span><span class="p">,</span> <span class="n">get_default_handler</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">get_use_smartasync</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">defaults</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;use_smartasync&quot;</span><span class="p">,</span> <span class="n">get_use_smartasync</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_defaults</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaults</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_with_owner</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">auto_discover</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="n">auto_selector</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Registration helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_with_owner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">hook</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;_register_router&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">hook</span><span class="p">):</span>
+            <span class="n">hook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseRouter.add_entry">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.add_entry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_entry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alias</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">replace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">options</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register handler(s) on this router.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            target: Callable, attribute name(s), comma-separated string, or wildcard marker.</span>
+<span class="sd">            name: Logical name override for this entry.</span>
+<span class="sd">            alias: Deprecated alias for ``name``.</span>
+<span class="sd">            metadata: Extra metadata stored on the MethodEntry.</span>
+<span class="sd">            replace: Allow overwriting an existing logical name.</span>
+<span class="sd">            options: Extra metadata merged into entry metadata.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            self (to allow chaining).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: on handler name collision when replace is False.</span>
+<span class="sd">            AttributeError: when resolving missing attributes on owner.</span>
+<span class="sd">            TypeError: on unsupported target type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">entry_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">alias</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span>
+                    <span class="n">entry</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">entry_name</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
+                    <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">options</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;_all_&quot;</span><span class="p">,</span> <span class="s2">&quot;__all__&quot;</span><span class="p">}:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_register_marked</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">entry_name</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">options</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">target</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+                    <span class="n">chunk</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span>
+                            <span class="n">chunk</span><span class="p">,</span>
+                            <span class="n">name</span><span class="o">=</span><span class="n">entry_name</span><span class="p">,</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
+                            <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">options</span><span class="p">,</span>
+                        <span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="n">bound</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="n">bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">target</span>
+                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">target</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported add_entry target: </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">entry_meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">entry_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_callable</span><span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">entry_name</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">entry_meta</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_callable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">bound</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">replace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logical_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_name</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">logical_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">replace</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Handler name collision: </span><span class="si">{</span><span class="n">logical_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">MethodEntry</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">logical_name</span><span class="p">,</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">bound</span><span class="p">,</span>
+            <span class="n">router</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">plugins</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">logical_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_after_entry_registered</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rebuild_handlers</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_marked</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">replace</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">extra</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">marker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_marked_methods</span><span class="p">():</span>
+            <span class="n">entry_override</span> <span class="o">=</span> <span class="n">marker</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;entry_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">marker</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;alias&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">entry_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">entry_override</span>
+            <span class="n">entry_meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="n">entry_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">marker</span><span class="p">)</span>
+            <span class="n">entry_meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
+            <span class="n">bound</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_callable</span><span class="p">(</span>
+                <span class="n">bound</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">entry_name</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">entry_meta</span><span class="p">,</span>
+                <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_marked_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">):</span>
+            <span class="n">base_dict</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">base_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">func_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">func_id</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">func_id</span><span class="p">)</span>
+                <span class="n">markers</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">TARGET_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">markers</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">marker</span> <span class="ow">in</span> <span class="n">markers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">marker</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">payload</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">marker</span><span class="p">)</span>
+                    <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">value</span><span class="p">,</span> <span class="n">payload</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">alias</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">alias</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="ow">and</span> <span class="n">func_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func_name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">func_name</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_handler</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">:</span> <span class="n">Callable</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>  <span class="c1"># pragma: no cover - overridden by plugin routers</span>
+        <span class="k">return</span> <span class="n">call_next</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Handler execution</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">handlers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">logical_name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">wrapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_handler</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+            <span class="n">handlers</span><span class="p">[</span><span class="n">logical_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapped</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span> <span class="o">=</span> <span class="n">handlers</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Public API</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+<div class="viewcode-block" id="BaseRouter.get">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selector</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve and return a handler callable for the given selector.</span>
+
+<span class="sd">        Dotted selectors traverse attached children. Falls back to</span>
+<span class="sd">        ``default_handler`` if provided, otherwise raises NotImplementedError.</span>
+<span class="sd">        When ``use_smartasync`` is true, the handler is wrapped accordingly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">SmartOptions</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_defaults</span><span class="p">)</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;default_handler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">use_smartasync</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;use_smartasync&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">node</span><span class="p">,</span> <span class="n">method_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">selector</span><span class="p">)</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">default</span>
+        <span class="k">if</span> <span class="n">handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Handler &#39;</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&#39; not found for selector &#39;</span><span class="si">{</span><span class="n">selector</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">use_smartasync</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">smartasync</span><span class="w"> </span><span class="kn">import</span> <span class="n">smartasync</span>  <span class="c1"># type: ignore</span>
+
+            <span class="n">handler</span> <span class="o">=</span> <span class="n">smartasync</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handler</span></div>
+
+
+    <span class="fm">__getitem__</span> <span class="o">=</span> <span class="n">get</span>
+
+<div class="viewcode-block" id="BaseRouter.call">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.call">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selector</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch and invoke a handler in one step.&quot;&quot;&quot;</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">selector</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseRouter.entries">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.entries">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entries</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a tuple of logical handler names registered on this router.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Children management</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+<div class="viewcode-block" id="BaseRouter.add_child">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.add_child">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach child router(s) discovered inside ``child``.</span>
+
+<span class="sd">        Accepts a Router, mapping/iterable of routers, or attribute name(s) on</span>
+<span class="sd">        the owner. Optional ``name`` overrides inferred names. Collisions raise</span>
+<span class="sd">        ValueError. Returns the last attached router.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Explicit name cannot be combined with multiple attribute targets&quot;</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseRouter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No attribute &#39;</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">&#39; on </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="n">token</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_child_routers</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Object </span><span class="si">{</span><span class="n">child</span><span class="si">!r}</span><span class="s2"> does not expose Router instances&quot;</span><span class="p">)</span>
+
+        <span class="n">attached</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseRouter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">attr_name</span> <span class="ow">or</span> <span class="n">router</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;child&quot;</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">router</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Child name collision: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">router</span>
+            <span class="n">router</span><span class="o">.</span><span class="n">_on_attached_to_parent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">attached</span> <span class="o">=</span> <span class="n">router</span>
+        <span class="k">assert</span> <span class="n">attached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">attached</span></div>
+
+
+<div class="viewcode-block" id="BaseRouter.get_child">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.get_child">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No child route named </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_child_routers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">override_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all routers found inside ``source``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">seen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">obj_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj_id</span><span class="p">)</span>
+
+        <span class="k">match</span> <span class="n">source</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">BaseRouter</span><span class="p">():</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">override_name</span> <span class="ow">or</span> <span class="n">source</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;router&quot;</span>
+                <span class="k">return</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">source</span><span class="p">)]</span>
+            <span class="k">case</span> <span class="n">Mapping</span><span class="p">():</span>
+                <span class="n">collected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseRouter</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">hint</span> <span class="o">=</span> <span class="n">key</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="n">collected</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_collect_child_routers</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">override_name</span><span class="o">=</span><span class="n">hint</span><span class="p">,</span> <span class="n">seen</span><span class="o">=</span><span class="n">seen</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="n">collected</span>
+            <span class="k">case</span> <span class="n">Iterable</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">)):</span>
+                <span class="n">collected</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+                    <span class="n">name_hint</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="n">name_hint</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">target</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">collected</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_collect_child_routers</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">override_name</span><span class="o">=</span><span class="n">name_hint</span><span class="p">,</span> <span class="n">seen</span><span class="o">=</span><span class="n">seen</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">return</span> <span class="n">collected</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="n">router_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseRouter</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_instance_attributes</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">source</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">BaseRouter</span><span class="p">):</span>
+                        <span class="n">router_items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">router_items</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">[]</span>
+
+                <span class="n">keyed</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseRouter</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">seen_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">router_items</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">override_name</span> <span class="ow">or</span> <span class="n">attr_name</span> <span class="ow">or</span> <span class="n">router</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;child&quot;</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">seen_keys</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">seen_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="n">keyed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">router</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">keyed</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_iter_instance_attributes</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="n">inst_dict</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__dict__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inst_dict</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">inst_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+        <span class="n">slots</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="s2">&quot;__slots__&quot;</span><span class="p">,</span> <span class="p">())</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">slots</span> <span class="o">=</span> <span class="p">(</span><span class="n">slots</span><span class="p">,)</span>
+        <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">slot</span> <span class="o">==</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">slot</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">slot</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">slot</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Routing helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selector</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;BaseRouter&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selector</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">,</span> <span class="n">selector</span>
+        <span class="n">node</span><span class="p">:</span> <span class="n">BaseRouter</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">selector</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="p">,</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Introspection helpers</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+<div class="viewcode-block" id="BaseRouter.describe">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scopes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a serialisable description of handlers and children.</span>
+
+<span class="sd">        Filters (``scopes``, ``channel``) are normalized by subclass hooks and</span>
+<span class="sd">        applied both to methods and child routers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filter_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_filter_args</span><span class="p">(</span><span class="n">scopes</span><span class="o">=</span><span class="n">scopes</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">describe_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;prefix&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">iter_plugins</span><span class="p">()],</span>
+                <span class="s2">&quot;methods&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">name</span><span class="p">:</span> <span class="n">_build_method_description</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">_should_include_entry</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="o">**</span><span class="n">filter_args</span><span class="p">)</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">describe_node</span><span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="p">}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_build_method_description</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">func</span>
+            <span class="n">signature</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="n">method_info</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;doc&quot;</span><span class="p">:</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getdoc</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">signature</span><span class="p">),</span>
+                <span class="s2">&quot;return_type&quot;</span><span class="p">:</span> <span class="n">_format_annotation</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">return_annotation</span><span class="p">),</span>
+                <span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">plugins</span><span class="p">),</span>
+                <span class="s2">&quot;metadata_keys&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="p">}</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">method_info</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">_format_annotation</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">),</span>
+                    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span> <span class="k">else</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span><span class="p">,</span>
+                    <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="n">pydantic_meta</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pydantic&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pydantic_meta</span> <span class="ow">and</span> <span class="n">pydantic_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">):</span>
+                <span class="n">_apply_pydantic_metadata</span><span class="p">(</span><span class="n">pydantic_meta</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+            <span class="n">extra</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">_describe_entry_extra</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">method_info</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
+                <span class="n">method_info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">method_info</span>
+
+        <span class="k">return</span> <span class="n">describe_node</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseRouter.members">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.members">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">members</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scopes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a live tree of routers/handlers/metadata respecting filters.&quot;&quot;&quot;</span>
+        <span class="n">filter_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_filter_args</span><span class="p">(</span><span class="n">scopes</span><span class="o">=</span><span class="n">scopes</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">)</span>
+        <span class="n">filter_active</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">filter_args</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">capture</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="s2">&quot;BaseRouter&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+            <span class="n">handlers</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">_should_include_entry</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="o">**</span><span class="n">filter_args</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">handlers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;callable&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
+                    <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">child_payload</span> <span class="o">=</span> <span class="n">capture</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">filter_active</span> <span class="ow">or</span> <span class="n">child_payload</span><span class="p">[</span><span class="s2">&quot;handlers&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">child_payload</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">]:</span>
+                    <span class="n">children</span><span class="p">[</span><span class="n">child_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_payload</span>
+
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;router&quot;</span><span class="p">:</span> <span class="n">node</span><span class="p">,</span>
+                <span class="s2">&quot;instance&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span>
+                <span class="s2">&quot;handlers&quot;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span>
+                <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="n">children</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">capture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Plugin hooks (no-op for BaseRouter)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+<div class="viewcode-block" id="BaseRouter.iter_plugins">
+<a class="viewcode-back" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.iter_plugins">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">iter_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pragma: no cover - base router has no plugins</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_attached_to_parent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="s2">&quot;BaseRouter&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - hook for subclasses</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook for plugin-enabled routers to override when attached.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_after_entry_registered</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - hook for subclasses</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook invoked after a handler is registered (subclasses may override).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_describe_entry_extra</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span><span class="p">,</span> <span class="n">base_description</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>  <span class="c1"># pragma: no cover - overridden when plugins present</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook used by subclasses to inject extra description data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_filter_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">raw_filters</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return normalized filters understood by subclasses (default: passthrough).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">raw_filters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">)}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_should_include_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hook used by subclasses to decide if an entry is exposed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_annotation</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Any&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">annotation</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">annotation</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;__qualname__&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">annotation</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_pydantic_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enrich parameter descriptions using stored Pydantic metadata.&quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">)</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;model_fields&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">field_info</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+            <span class="n">field_name</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">_format_annotation</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;annotation&quot;</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">)),</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">annotation</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;annotation&quot;</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">)</span>
+        <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_format_annotation</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_pydantic_undefined</span><span class="p">(</span><span class="n">default</span><span class="p">):</span>
+            <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
+        <span class="n">required</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;is_required&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">required</span><span class="p">):</span>
+            <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">required</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;required&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="n">validation</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;pydantic&quot;</span><span class="p">}</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+            <span class="n">validation</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="n">json_extra</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;json_schema_extra&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">json_extra</span><span class="p">:</span>
+            <span class="n">validation</span><span class="p">[</span><span class="s2">&quot;json_schema_extra&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json_extra</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">description</span><span class="p">:</span>
+            <span class="n">validation</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span>
+        <span class="n">examples</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">&quot;examples&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">examples</span><span class="p">:</span>
+            <span class="n">validation</span><span class="p">[</span><span class="s2">&quot;examples&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">examples</span>
+        <span class="k">if</span> <span class="n">validation</span><span class="p">:</span>
+            <span class="n">field_info</span><span class="p">[</span><span class="s2">&quot;validation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">validation</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_pydantic_undefined</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;__class__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;PydanticUndefinedType&quot;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Genropy Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
