@@ -261,7 +261,9 @@ class ScopePlugin(BasePlugin):
         if metadata_scopes:
             return list(metadata_scopes)
 
-        return self._normalize_scopes(self._global_config.get("scopes"))  # pragma: no cover - uses global fallback
+        return self._normalize_scopes(
+            self._global_config.get("scopes")
+        )  # pragma: no cover - uses global fallback
 
     def _resolve_channels(self, method_name: str, scopes: Iterable[str]) -> Dict[str, List[str]]:
         global_map = self._normalize_scope_channels(self._global_config.get("scope_channels"))
@@ -350,7 +352,9 @@ class ScopePlugin(BasePlugin):
             cleaned.append(token)
         return cleaned
 
-    def _normalize_scope_channels(self, raw) -> Dict[str, List[str]]:  # pragma: no cover - normalization helper
+    def _normalize_scope_channels(
+        self, raw
+    ) -> Dict[str, List[str]]:  # pragma: no cover - normalization helper
         if not raw:
             return {}
         if not isinstance(raw, dict):
