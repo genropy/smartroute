@@ -1,5 +1,7 @@
 # Ticket: Extend SmartRoute `describe()` to expose runtime handlers
 
+<!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
+
 ## Background
 In SmartRoute, `Router.describe()` currently returns a purely descriptive schema:
 

@@ -1,16 +1,18 @@
-"""Core Runtime Aggregator
-===========================
+"""Core runtime aggregator (source of truth).
 
-The `smartroute.core` package bundles the minimal pieces required to build
-instance-scoped routers:
+Purpose: expose the runtime building blocks from a single module:
+``BaseRouter``, ``Router``, ``route``, ``routers``, ``RoutedClass``. No extra
+logic beyond imports/exports.
 
-- :mod:`~smartroute.core.base_router` supplies the plugin-free router
-- :mod:`~smartroute.core.decorators` contains decorator/proxy helpers
-- :mod:`~smartroute.core.routed` defines :class:`RoutedClass`
-
-This module re-exports the public entry points so consumers can simply write
-``from smartroute.core import Router, route`` without worrying about the
-underlying structure.
+Guarantees
+----------
+- Importing this module performs only imports; it does not register plugins or
+  instantiate routers.
+- Public API mirrors underlying modules 1:1:
+  * ``base_router`` → ``BaseRouter`` (plugin-free engine)
+  * ``router`` → ``Router`` (plugin-enabled)
+  * ``decorators`` → ``route``, ``routers`` helpers
+  * ``routed`` → ``RoutedClass`` mixin
 """
 
 from .base_router import BaseRouter

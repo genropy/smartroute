@@ -51,6 +51,8 @@ This installs SmartRoute in editable mode with all optional dependencies.
 
 ## Verify Installation
 
+<!-- test: test_switcher_basic.py::test_orders_quick_example -->
+
 Test your installation:
 
 ```python

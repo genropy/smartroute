@@ -1,22 +1,63 @@
-"""Pydantic Validation Plugin
-=============================
+"""Pydantic validation plugin (source of truth).
 
-Responsibility
---------------
-- inspect type hints on handlers and build Pydantic models on the fly
-- validate keyword/positional arguments before calling the real handler
-- raise standard `ValidationError` instances so callers can handle them
+Rebuild exactly from this contract; no hidden behaviour.
 
-Constraints
------------
-- optional dependency: importing this module requires `pydantic`
-- only parameters with type hints participate in validation; others pass through
+Responsibilities
+----------------
+- At registration time (``on_decore``), inspect handler type hints and build a
+  Pydantic model capturing annotated parameters.
+- At call time (``wrap_handler``), validate annotated args/kwargs before
+  calling the real handler; non-annotated parameters bypass validation.
+- Surface validation failures as Pydantic ``ValidationError`` with contextual
+  title ``"Validation error in <entry.name>"``.
+
+Dependencies and guards
+-----------------------
+- Importing this module requires ``pydantic``; otherwise an ImportError is
+  raised with install guidance. Under TYPE_CHECKING it hints ``Router`` import.
+- If type hint resolution fails or no usable hints remain after dropping the
+  return annotation, ``entry.metadata["pydantic"]`` is set to
+  ``{"enabled": False}`` and wrapping becomes a passthrough.
+
+Behaviour and data
+------------------
+- ``PydanticPlugin(name=None, **config)``: delegates to ``BasePlugin``; default
+  name is ``"pydantic"``.
+- ``on_decore(route, func, entry)``:
+    * resolves type hints via ``get_type_hints(func)``; exceptions mark disabled.
+    * removes ``return`` hint if present.
+    * builds a fields dict from function signature:
+        - annotated parameters missing from signature get required ellipsis.
+        - parameters with default use that default; otherwise required.
+    * creates a model ``<func.__name__>_Model`` via ``create_model``.
+    * stores metadata in ``entry.metadata["pydantic"]``:
+      ``{"enabled": True, "model": model, "hints": hints, "signature": sig}``.
+- ``wrap_handler(route, entry, call_next)``:
+    * if metadata missing or ``enabled`` is false, returns ``call_next``.
+    * binds incoming args/kwargs with the captured ``signature`` (``sig.bind``)
+      and applies defaults.
+    * splits bound arguments into two dicts: annotated (validated) and
+      non-annotated (passthrough).
+    * runs the model with annotated args; on ``ValidationError`` raises a new
+      ``ValidationError.from_exception_data`` with the contextual title.
+    * merges validated values back with passthrough args into ``final_args`` and
+      calls ``call_next(**final_args)``.
+    * return value is propagated unchanged.
+- ``describe_entry(router, entry, base_description)``: enriches the entry
+  description parameters using stored Pydantic metadata (types/defaults/
+  required/validation keys) and returns an empty dict after mutating
+  ``base_description["parameters"]`` in place.
+
+Registration
+------------
+Registers itself globally as ``"pydantic"`` during module import via
+``Router.register_plugin("pydantic", PydanticPlugin)``.
 """
 
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Optional, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, get_type_hints
 
 try:
     from pydantic import ValidationError, create_model
@@ -25,6 +66,7 @@ except ImportError:  # pragma: no cover - import guard
         "Pydantic plugin requires pydantic. Install with: pip install smartroute[pydantic]"
     )
 
+from smartroute.core.base_router import _apply_pydantic_metadata
 from smartroute.core.router import Router
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
@@ -98,6 +140,15 @@ class PydanticPlugin(BasePlugin):
             return call_next(**final_args)
 
         return wrapper
+
+    def describe_entry(  # pragma: no cover - exercised indirectly by router describe
+        self, router: "Router", entry: MethodEntry, base_description: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        meta = entry.metadata.get("pydantic", {})
+        if not meta or not meta.get("enabled"):
+            return {}
+        _apply_pydantic_metadata(meta, base_description.get("parameters", {}))
+        return {}
 
 
 Router.register_plugin("pydantic", PydanticPlugin)

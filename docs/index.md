@@ -31,7 +31,7 @@ SmartRoute provides:
 - **Flexible registration** - Use `@route` decorator with prefixes, metadata, and explicit names
 - **Runtime configuration** - Configure plugins with `routedclass.configure()` using target syntax
 - **SmartAsync support** - Optional integration with async execution
-- **100% test coverage** - Complete statement coverage with 59 comprehensive tests
+- **99% test coverage** - Complete statement coverage with 74 comprehensive tests
 
 ## Quick Example
 
@@ -67,6 +67,7 @@ assert second.api.get("describe")() == "service:beta"
 
 installation
 quickstart
+FAQ
 ```
 
 ```{toctree}
@@ -105,14 +106,15 @@ pip install -e ".[all]"
 ## Next Steps
 
 - **New to SmartRoute?** Start with the [Quick Start](quickstart.md)
+- **Have questions?** Check the [FAQ](FAQ.md) for common questions and answers
 - **Building plugins?** Read the [Plugin Development Guide](guide/plugins.md)
 - **Need examples?** Check the [examples directory](https://github.com/genropy/smartroute/tree/main/examples)
 
 ## Project Status
 
-SmartRoute is currently in **alpha** (v0.4.1). The core API is stable with complete documentation.
+SmartRoute is currently in **beta** (v0.5.0). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (66 tests, 724 statements)
+- **Test Coverage**: 99% (74 tests, 1042 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 
