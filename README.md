@@ -4,7 +4,7 @@
   <img src="docs/assets/logo.png" alt="SmartRoute Logo" width="200"/>
 </p>
 
-[![PyPI version](https://badge.fury.io/py/smartroute.svg)](https://badge.fury.io/py/smartroute)
+[![PyPI version](https://img.shields.io/pypi/v/smartroute?cacheSeconds=300)](https://pypi.org/project/smartroute/)
 [![Tests](https://github.com/genropy/smartroute/actions/workflows/test.yml/badge.svg)](https://github.com/genropy/smartroute/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/genropy/smartroute/branch/main/graph/badge.svg?token=71c0b591-018b-41cb-9fd2-dc627d14a519)](https://codecov.io/gh/genropy/smartroute)
 [![Documentation](https://readthedocs.org/projects/smartroute/badge/?version=latest)](https://smartroute.readthedocs.io/en/latest/)
@@ -166,7 +166,7 @@ smartroute/
 
 ## Project Status
 
-SmartRoute is currently in **beta** (v0.5.0). The core API is stable with complete documentation.
+SmartRoute is currently in **beta** (v0.5.1). The core API is stable with complete documentation.
 
 - **Test Coverage**: 99% (74 tests, 1042 statements)
 - **Python Support**: 3.10, 3.11, 3.12
