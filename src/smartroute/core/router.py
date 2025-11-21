@@ -95,14 +95,14 @@ Data shapes
 ``_PluginSpec`` dataclass stores ``factory``, ``kwargs``, optional ``alias`` and
 provides:
 
-- ``instantiate()`` → creates plugin via factory(**kwargs); applies alias to
+- ``instantiate()`` → creates plugin via ``factory(**kwargs)``; applies alias to
   ``plugin.name`` if set.
 
 - ``clone()`` → returns a new spec with a shallow-copied kwargs dict and same
   alias.
 
-Invariants
-----------
+Router Invariants
+-----------------
 - Plugin order is deterministic (first attached = outermost layer; reversed
   wrapping). Filter evaluation follows attachment order.
 - Global registry changes do not mutate existing router instances.

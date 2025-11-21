@@ -7,9 +7,12 @@ plugin logic. Subclasses add middleware but must preserve these semantics.
 
 Constructor and slots
 ---------------------
-``BaseRouter(owner, name=None, prefix=None, *,
-  get_default_handler=None, get_use_smartasync=None, get_kwargs=None,
-  auto_discover=True, auto_selector="*")``
+Constructor signature::
+
+    BaseRouter(owner, name=None, prefix=None, *,
+               get_default_handler=None, get_use_smartasync=None,
+               get_kwargs=None, auto_discover=True, auto_selector="*")
+
 - ``owner`` is required; ``None`` raises ``ValueError``. Routers are bound to
   this instance and never re-bound.
 - Slots: ``instance``, ``name``, ``prefix`` (string trimmed from function names),
@@ -22,7 +25,7 @@ Constructor and slots
 
 - On init: registers with owner via optional ``_register_router`` hook, then
   auto-discovers entries when ``auto_discover`` is true by calling
-  ``add_entry(auto_selector)`` (``"*"` by default).
+  ``add_entry(auto_selector)`` (``"*"`` by default).
 
 Registration and naming
 -----------------------
