@@ -59,6 +59,8 @@ class LoggingPlugin(BasePlugin):
             print(message)
 
     def wrap_handler(self, route, entry: MethodEntry, call_next: Callable):
+        """Wrap handler with start/end logging and timing."""
+
         def logged(*args, **kwargs):
             self._emit(f"{entry.name} start")
             t0 = time.perf_counter()

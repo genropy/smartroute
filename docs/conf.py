@@ -118,7 +118,8 @@ napoleon_attr_annotations = True
 
 # Intersphinx configuration
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
+    # Temporarily disabled due to frequent 503 errors
+    # "python": ("https://docs.python.org/3", None),
     "pydantic": ("https://docs.pydantic.dev/latest/", None),
 }
 
