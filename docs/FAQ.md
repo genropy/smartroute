@@ -308,7 +308,7 @@ router = Router(self, name="api").plug("audit")
 - **Scope** = **logical tag** identifying visibility level (e.g., `internal`, `public_read`, `admin`)
 - **Channel** = **physical channel** where the handler can be exposed (e.g., `CLI`, `HTTP`, `WS`, `MCP`)
 
-SmartRoute core no longer attaches or enforces scope/channel rules. To add them, use the SmartPublisher ecosystem plugin (`PublishPlugin`).
+For scope/channel rules, use the SmartPublisher ecosystem plugin (`PublishPlugin`).
 
 **Example**:
 ```python

@@ -29,7 +29,7 @@ SmartRoute provides a consistent, well-tested foundation for these patterns.
 3. **Simple hierarchies** – `add_child("child1, child2")` connects child routers with dotted path access (`parent.api.get("child.method")`).
 4. **Plugin pipeline** – `BasePlugin` provides `on_decore`/`wrap_handler` hooks and plugins inherit from parents automatically.
 5. **Runtime configuration** – `routedclass.configure()` applies global or per-handler overrides with wildcards and returns reports (`"?"`).
-6. **Optional extras** – `logging`, `pydantic` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies. Scope/channel policies now live in the ecosystem (see *Publish-ready plugin*).
+6. **Optional extras** – `logging`, `pydantic` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies. For scope/channel policies, use the ecosystem plugin (see *Publish-ready plugin*).
 7. **Full coverage** – The package ships with a comprehensive test suite and no hidden compatibility layers.
 
 ## Quick Example
@@ -66,7 +66,7 @@ print(overview["handlers"].keys())      # dict_keys(['list', 'retrieve', 'create
 
 ## Publish-ready plugin
 
-SmartRoute no longer ships a built-in scope/channel policy. To attach scopes and channels for publication, use the SmartPublisher plugin:
+For scope/channel policies, SmartRoute uses an ecosystem plugin. To attach scopes and channels for publication, use the SmartPublisher plugin:
 
 ```python
 from smartpublisher.smartroute_plugins.publish import PublishPlugin

@@ -678,7 +678,7 @@ svc.routedclass.configure("api:pydantic/_all_", strict=True)
 
 ### PublishPlugin (SmartPublisher)
 
-Provided by `smartpublisher.smartroute_plugins.publish.PublishPlugin`. Importing the module registers the `"publish"` plugin name; attach it with `.plug("publish")`. It carries the scope/channel semantics (uppercase codes such as `CLI`, `SYS_HTTP`, `HTTP`, `WS`, `MCP`) formerly bundled in the core.
+Provided by `smartpublisher.smartroute_plugins.publish.PublishPlugin`. Importing the module registers the `"publish"` plugin name; attach it with `.plug("publish")`. It provides scope/channel semantics using uppercase codes such as `CLI`, `SYS_HTTP`, `HTTP`, `WS`, `MCP`.
 
 ```python
 from smartpublisher.smartroute_plugins.publish import PublishPlugin
