@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**SmartRoute** is a fully runtime routing engine that lets you expose Python methods as "endpoints" (CLI tools, orchestrators, internal services) without global blueprints or shared registries. Each instance creates its own routers, can attach child routers, configure plugins, and provides ready-to-use runtime introspection. It's the successor to SmartSwitch, preserving the core idea of method "switching" but with a simpler design and no compatibility layers.
+**SmartRoute** is a fully runtime routing engine that lets you expose Python methods as "endpoints" (CLI tools, orchestrators, internal services) without global blueprints or shared registries. Each instance creates its own routers, can attach child routers, configure plugins, and provides ready-to-use runtime introspection.
 
 Use SmartRoute when you need to:
 
@@ -166,7 +166,7 @@ smartroute/
 
 ## Project Status
 
-SmartRoute is currently in **alpha** (v0.4.1). The core API is stable with complete documentation.
+SmartRoute is currently in **beta** (v0.5.0). The core API is stable with complete documentation.
 
 - **Test Coverage**: 99% (74 tests, 1042 statements)
 - **Python Support**: 3.10, 3.11, 3.12
@@ -195,4 +195,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-SmartRoute is the successor to SmartSwitch, designed with lessons learned from production use.
+SmartRoute was designed with lessons learned from real-world production use.
