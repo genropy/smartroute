@@ -177,7 +177,14 @@ ROUTER_REGISTRY_ATTR = "__smartroute_router_registry__"
 
 
 class BaseRouter:
-    """Router bound directly to an object instance (no plugin support)."""
+    """Plugin-free router bound to an object instance.
+
+    Responsibilities:
+    - register bound methods/functions with logical names (optionally via markers)
+    - resolve dotted selectors across child routers
+    - expose handler tables and introspection data
+    - provide hooks for subclasses to wrap handlers or filter introspection
+    """
 
     __slots__ = (
         "instance",
@@ -237,6 +244,24 @@ class BaseRouter:
         replace: bool = False,
         **options: Any,
     ) -> "BaseRouter":
+        """Register handler(s) on this router.
+
+        Args:
+            target: Callable, attribute name(s), comma-separated string, or wildcard marker.
+            name: Logical name override for this entry.
+            alias: Deprecated alias for ``name``.
+            metadata: Extra metadata stored on the MethodEntry.
+            replace: Allow overwriting an existing logical name.
+            options: Extra metadata merged into entry metadata.
+
+        Returns:
+            self (to allow chaining).
+
+        Raises:
+            ValueError: on handler name collision when replace is False.
+            AttributeError: when resolving missing attributes on owner.
+            TypeError: on unsupported target type.
+        """
         entry_name = name if name is not None else alias
         if isinstance(target, (list, tuple, set)):
             for entry in target:
@@ -377,6 +402,12 @@ class BaseRouter:
     # Public API
     # ------------------------------------------------------------------
     def get(self, selector: str, **options: Any) -> Callable:
+        """Resolve and return a handler callable for the given selector.
+
+        Dotted selectors traverse attached children. Falls back to
+        ``default_handler`` if provided, otherwise raises NotImplementedError.
+        When ``use_smartasync`` is true, the handler is wrapped accordingly.
+        """
         opts = SmartOptions(options, defaults=self._get_defaults)
         default = getattr(opts, "default_handler", None)
         use_smartasync = getattr(opts, "use_smartasync", False)
@@ -400,16 +431,24 @@ class BaseRouter:
     __getitem__ = get
 
     def call(self, selector: str, *args, **kwargs):
+        """Fetch and invoke a handler in one step."""
         handler = self.get(selector)
         return handler(*args, **kwargs)
 
     def entries(self) -> Tuple[str, ...]:
+        """Return a tuple of logical handler names registered on this router."""
         return tuple(self._handlers.keys())
 
     # ------------------------------------------------------------------
     # Children management
     # ------------------------------------------------------------------
     def add_child(self, child: Any, name: Optional[str] = None) -> "BaseRouter":
+        """Attach child router(s) discovered inside ``child``.
+
+        Accepts a Router, mapping/iterable of routers, or attribute name(s) on
+        the owner. Optional ``name`` overrides inferred names. Collisions raise
+        ValueError. Returns the last attached router.
+        """
         if isinstance(child, str):
             tokens = [token.strip() for token in child.split(",") if token.strip()]
             if not tokens:
@@ -540,6 +579,11 @@ class BaseRouter:
     def describe(
         self, scopes: Optional[Any] = None, channel: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Return a serialisable description of handlers and children.
+
+        Filters (``scopes``, ``channel``) are normalized by subclass hooks and
+        applied both to methods and child routers.
+        """
         filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
 
         def describe_node(node: "BaseRouter") -> Dict[str, Any]:
@@ -590,6 +634,7 @@ class BaseRouter:
     def members(
         self, scopes: Optional[Any] = None, channel: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Return a live tree of routers/handlers/metadata respecting filters."""
         filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
         filter_active = bool(filter_args)
 

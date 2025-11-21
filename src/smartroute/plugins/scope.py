@@ -170,6 +170,7 @@ class ScopePlugin(BasePlugin):
     def describe_entry(
         self, router: Router, entry: MethodEntry, base_description: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Expose scope metadata for describe() hook."""
         payload = self.describe_method(entry.name)
         return {"scope": payload} if payload else {}
 
@@ -182,6 +183,7 @@ class ScopePlugin(BasePlugin):
         return info
 
     def get_channel_map(self, channel: str) -> Dict[str, Dict[str, Any]]:
+        """Return handlers whose scopes are exposed on the given channel."""
         target = self._validate_channel_code(channel)
         if not target:
             raise ValueError("Channel code cannot be empty")  # pragma: no cover

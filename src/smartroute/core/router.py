@@ -163,7 +163,7 @@ class _PluginSpec:
 
 
 class Router(BaseRouter):
-    """Default router with plugin support."""
+    """Router with plugin registry/pipeline support."""
 
     __slots__ = BaseRouter.__slots__ + (
         "_plugin_specs",
@@ -200,6 +200,7 @@ class Router(BaseRouter):
         return dict(_PLUGIN_REGISTRY)
 
     def plug(self, plugin: str, **config: Any) -> "Router":
+        """Attach a plugin by name (previously registered globally)."""
         if not isinstance(plugin, str):
             raise TypeError(
                 f"Plugin must be referenced by name string, got {type(plugin).__name__}"
@@ -221,6 +222,7 @@ class Router(BaseRouter):
         return self
 
     def iter_plugins(self) -> List[BasePlugin]:  # type: ignore[override]
+        """Return attached plugin instances in application order."""
         return list(self._plugins)
 
     def __getattr__(self, name: str) -> Any:

@@ -113,6 +113,7 @@ class PydanticPlugin(BasePlugin):
         }
 
     def wrap_handler(self, route: "Router", entry: MethodEntry, call_next: Callable):
+        """Validate annotated parameters with the cached Pydantic model before calling."""
         meta = entry.metadata.get("pydantic", {})
         if not meta.get("enabled"):
             return call_next
@@ -144,6 +145,7 @@ class PydanticPlugin(BasePlugin):
     def describe_entry(  # pragma: no cover - exercised indirectly by router describe
         self, router: "Router", entry: MethodEntry, base_description: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Enrich describe() output with Pydantic field metadata."""
         meta = entry.metadata.get("pydantic", {})
         if not meta or not meta.get("enabled"):
             return {}
