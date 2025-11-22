@@ -3,6 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route, routers
+from smartroute.core.routed import is_routed_class
 from smartroute.core.base_router import ROUTER_REGISTRY_ATTR, _format_annotation
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
@@ -326,3 +327,9 @@ def test_iter_child_routers_handles_repeated_objects():
     # Provide same child twice via iterable to hit seen-guard branch
     routes = container.api._collect_child_routers([container.child, container.child])
     assert len(routes) == 1
+
+
+def test_is_routed_class_helper():
+    svc = ManualService()
+    assert is_routed_class(svc) is True
+    assert is_routed_class(object()) is False

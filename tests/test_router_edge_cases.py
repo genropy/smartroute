@@ -128,6 +128,22 @@ def test_router_add_child_error_paths():
     assert attached is bound_child
 
 
+def test_routed_parent_recorded_on_add_child():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = Child()
+
+    parent = Parent()
+    assert parent.child._routed_parent is None
+    parent.api.add_child(parent.child, name="child")
+    assert parent.child._routed_parent is parent
+
+
 def test_base_plugin_default_hooks():
     plugin = BasePlugin()
     entry = MethodEntry(name="foo", func=lambda: "ok", router=None, plugins=[])
