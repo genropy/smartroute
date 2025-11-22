@@ -64,12 +64,16 @@ Invariants
 from __future__ import annotations
 
 from fnmatch import fnmatchcase
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+from smartseeds.typeutils import safe_is_instance
 
 from .base_router import ROUTER_REGISTRY_ATTR
-from .router import Router
 
-__all__ = ["RoutedClass"]
+if TYPE_CHECKING:  # pragma: no cover - import for typing only
+    from .router import Router
+
+__all__ = ["RoutedClass", "is_routed_class"]
 
 _PROXY_ATTR = "__routed_proxy__"
 
@@ -77,13 +81,15 @@ _PROXY_ATTR = "__routed_proxy__"
 class RoutedClass:
     """Mixin providing helper proxies for runtime routers."""
 
-    __slots__ = (_PROXY_ATTR, ROUTER_REGISTRY_ATTR)
+    __slots__ = (_PROXY_ATTR, ROUTER_REGISTRY_ATTR, "_routed_parent")
 
-    def _register_router(self, router: Router) -> None:
+    def _register_router(self, router: "Router") -> None:
         registry = getattr(self, ROUTER_REGISTRY_ATTR, None)
         if registry is None:
             registry = {}
             setattr(self, ROUTER_REGISTRY_ATTR, registry)
+        if not hasattr(self, "_routed_parent"):
+            object.__setattr__(self, "_routed_parent", None)
         if router.name:
             registry[router.name] = router
 
@@ -115,13 +121,13 @@ class _RoutedProxy:
             return router
         return self._navigate_router(router, extra_path)
 
-    def _lookup_router(self, owner: RoutedClass, name: str) -> Optional[Router]:
+    def _lookup_router(self, owner: RoutedClass, name: str) -> Optional["Router"]:
         registry = getattr(owner, ROUTER_REGISTRY_ATTR, None) or {}
         router = registry.get(name)
         if router:
             return router
         candidate = getattr(owner, name, None)
-        if isinstance(candidate, Router):
+        if safe_is_instance(candidate, "smartroute.core.base_router.BaseRouter"):
             registry[name] = candidate
             return candidate
         return None
@@ -142,7 +148,6 @@ class _RoutedProxy:
                 continue
             node = node.get_child(segment)
         return node
-
     def _parse_target(self, target: str) -> tuple[str, str, str]:
         if ":" not in target:
             raise ValueError("Target must include router:plugin")
@@ -240,3 +245,8 @@ class _RoutedProxy:
             proxy = plugin.configure[handler]
             self._apply_config(proxy, options)
         return {"target": target, "updated": sorted(matches)}
+
+
+def is_routed_class(obj: Any) -> bool:
+    """Return True when ``obj`` is a RoutedClass instance."""
+    return isinstance(obj, RoutedClass)

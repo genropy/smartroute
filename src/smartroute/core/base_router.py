@@ -88,9 +88,9 @@ Children
 --------
 ``add_child(child, name=None)``
 
-- If ``child`` is a comma-separated string, each token is resolved as an
+- If ``child`` is a comma-separated string, each entry name is resolved as an
   attribute on ``owner``; explicit ``name`` cannot be combined with multiple
-  tokens (raises ``ValueError``). Missing attributes raise ``AttributeError``.
+  entries (raises ``ValueError``). Missing attributes raise ``AttributeError``.
 
 - Otherwise, routers are collected from the object (router instance, mapping
   with string keys as name hints, iterable with optional ``(name, router)``
@@ -98,6 +98,8 @@ Children
   found or ``TypeError`` is raised. Children are attached under ``name`` or
   inferred attribute/override name; collisions with a different router raise
   ``ValueError``. For each attached child, ``_on_attached_to_parent`` is called.
+  When the object provided to ``add_child`` is a ``RoutedClass`` instance, its
+  ``_routed_parent`` attribute is set to the parent router's owner instance.
 
 - ``get_child`` retrieves by name or raises ``KeyError`` with a descriptive
   message.
@@ -167,6 +169,7 @@ from collections.abc import Iterable, Mapping
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from smartseeds import SmartOptions
+from smartseeds.typeutils import safe_is_instance
 
 from smartroute.plugins._base_plugin import MethodEntry
 
@@ -445,42 +448,17 @@ class BaseRouter:
     def add_child(self, child: Any, name: Optional[str] = None) -> "BaseRouter":
         """Attach child router(s) discovered inside ``child``.
 
-        Accepts a Router, mapping/iterable of routers, or attribute name(s) on
-        the owner. Optional ``name`` overrides inferred names. Collisions raise
+        Accepts a Router, mapping/iterable of routers, or entry name(s) resolved
+        on the owner. Optional ``name`` overrides inferred names. Collisions raise
         ValueError. Returns the last attached router.
         """
-        if isinstance(child, str):
-            tokens = [token.strip() for token in child.split(",") if token.strip()]
-            if not tokens:
-                return self
-            if name and len(tokens) > 1:
-                raise ValueError("Explicit name cannot be combined with multiple attribute targets")
-            result: Optional[BaseRouter] = None
-            for token in tokens:
-                try:
-                    target = getattr(self.instance, token)
-                except AttributeError as exc:
-                    raise AttributeError(
-                        f"No attribute '{token}' on {type(self.instance).__name__}"
-                    ) from exc
-                result = self.add_child(target, name=name or token)
-            assert result is not None
-            return result
-
-        candidates = self._collect_child_routers(child)
-        if not candidates:
-            raise TypeError(f"Object {child!r} does not expose Router instances")
-
-        attached: Optional[BaseRouter] = None
-        for attr_name, router in candidates:
-            key = name or attr_name or router.name or "child"
-            if key in self._children and self._children[key] is not router:
-                raise ValueError(f"Child name collision: {key}")
-            self._children[key] = router
-            router._on_attached_to_parent(self)
-            attached = router
-        assert attached is not None
-        return attached
+        match child:
+            case str():
+                return self._add_child_entries(child, name=name)
+            case _ as routed if safe_is_instance(routed, "smartroute.core.routed.RoutedClass"):
+                return self._add_child_routed_class(routed, name=name)
+            case _:
+                return self._add_child_router(child, name=name)
 
     def get_child(self, name: str) -> "BaseRouter":
         try:
@@ -560,6 +538,52 @@ class BaseRouter:
                 continue
             if hasattr(obj, slot):
                 yield slot, getattr(obj, slot)
+
+    # ------------------------------------------------------------------
+    # Child helpers
+    # ------------------------------------------------------------------
+    def _add_child_entries(self, entries: str, name: Optional[str]) -> "BaseRouter":
+        entry_names = [chunk.strip() for chunk in entries.split(",") if chunk.strip()]
+        if not entry_names:
+            return self
+        if name and len(entry_names) > 1:
+            raise ValueError("Explicit name cannot be combined with multiple attribute targets")
+        result: Optional[BaseRouter] = None
+        for entry_name in entry_names:
+            try:
+                target = getattr(self.instance, entry_name)
+            except AttributeError as exc:
+                raise AttributeError(
+                    f"No entry '{entry_name}' on {type(self.instance).__name__}"
+                ) from exc
+            result = self.add_child(target, name=name or entry_name)
+        assert result is not None
+        return result
+
+    def _add_child_routed_class(self, routed_child: Any, name: Optional[str]) -> "BaseRouter":
+        object.__setattr__(routed_child, "_routed_parent", self.instance)
+        candidates = self._collect_child_routers(routed_child)
+        return self._attach_child_candidates(candidates, name=name, source=routed_child)
+
+    def _add_child_router(self, child: Any, name: Optional[str]) -> "BaseRouter":
+        candidates = self._collect_child_routers(child)
+        return self._attach_child_candidates(candidates, name=name, source=child)
+
+    def _attach_child_candidates(
+        self, candidates: List[Tuple[str, "BaseRouter"]], *, name: Optional[str], source: Any
+    ) -> "BaseRouter":
+        if not candidates:
+            raise TypeError(f"Object {source!r} does not expose Router instances")
+        attached: Optional[BaseRouter] = None
+        for attr_name, router in candidates:
+            key = name or attr_name or router.name or "child"
+            if key in self._children and self._children[key] is not router:
+                raise ValueError(f"Child name collision: {key}")
+            self._children[key] = router
+            router._on_attached_to_parent(self)
+            attached = router
+        assert attached is not None
+        return attached
 
     # ------------------------------------------------------------------
     # Routing helpers
