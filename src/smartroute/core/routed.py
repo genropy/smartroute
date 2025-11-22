@@ -148,6 +148,7 @@ class _RoutedProxy:
                 continue
             node = node.get_child(segment)
         return node
+
     def _parse_target(self, target: str) -> tuple[str, str, str]:
         if ":" not in target:
             raise ValueError("Target must include router:plugin")
