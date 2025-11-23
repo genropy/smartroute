@@ -129,8 +129,8 @@ pip install smartroute[pydantic]
 
 ## Core Concepts
 
-- **`Router`** – Runtime router bound directly to an object via `Router(self, name=\"api\")`
-- **`@route(\"name\")`** – Decorator that marks bound methods for the router with the matching name
+- **`Router`** – Runtime router bound directly to an object via `Router(self, name="api")`
+- **`@route("name")`** – Decorator that marks bound methods for the router with the matching name
 - **`RoutedClass`** – Mixin that tracks routers per instance and exposes the `routedclass` proxy
 - **`BasePlugin`** – Base class for creating plugins with `on_decore` and `wrap_handler` hooks
 - **`obj.routedclass`** – Proxy exposed by every RoutedClass that provides helpers like `get_router(...)` and `configure(...)` for managing routers/plugins without polluting the instance namespace.
