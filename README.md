@@ -187,7 +187,7 @@ smartroute/
 
 ## Project Status
 
-SmartRoute is currently in **beta** (v0.5.3). The core API is stable with complete documentation.
+SmartRoute is currently in **beta** (v0.6.0). The core API is stable with complete documentation.
 
 - **Test Coverage**: 93% (71 tests, 944 statements)
 - **Python Support**: 3.10, 3.11, 3.12
