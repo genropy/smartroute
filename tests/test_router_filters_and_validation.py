@@ -65,7 +65,7 @@ def test_should_include_entry_respects_filter_plugins():
     assert len(plugin.calls) == 2
 
 
-def test_describe_entry_extra_rejects_non_dict_from_plugin():
+def test_members_entry_extra_rejects_non_dict_from_plugin():
     Router.register_plugin("baddescribe", _BadDescribePlugin)
     router = _make_router().plug("baddescribe")
     entry = MethodEntry("demo", lambda: None, router, plugins=[])
@@ -74,7 +74,7 @@ def test_describe_entry_extra_rejects_non_dict_from_plugin():
         router._describe_entry_extra(entry, {})
 
 
-def test_describe_merges_plugin_contrib():
+def test_members_merges_plugin_contrib():
     Router.register_plugin("gooddescribe", _GoodDescribePlugin)
 
     class Service(RoutedClass):
@@ -86,8 +86,8 @@ def test_describe_merges_plugin_contrib():
             return "ok"
 
     svc = Service()
-    info = svc.api.describe()
-    assert info["methods"]["hello"]["extra"] == {"via": "gooddescribe"}
+    info = svc.api.members()
+    assert info["handlers"]["hello"]["extra"] == {"via": "gooddescribe"}
 
 
 def test_normalize_scope_filter_validation_paths():

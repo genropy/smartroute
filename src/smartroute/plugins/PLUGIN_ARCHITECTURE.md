@@ -6,7 +6,7 @@ documentation.
 
 ## Goals
 - Single authoritative store for plugin state/config on each router.
-- Uniform shape for router-level (global) and entry-level data.
+- Uniform shape for router-level and entry-level data (no hidden globals in plugins).
 - Introspection-friendly: easy to expose via CLI/HTTP/WS for live updates.
 - Plugins stay as stateless as possible (no hidden globals).
 
@@ -17,7 +17,7 @@ Each router owns a `plugin_info` mapping keyed by plugin code (the name used in
 ```python
 plugin_info = {
     "logging": {
-        "config": { ... },            # router-level (global) config for the plugin
+        "config": { ... },            # router-level defaults for the plugin
         "handlers": {                 # per-entry overrides
             "entry_name": { ... },
             ...
@@ -65,8 +65,8 @@ MethodEntry. Locals are *not* config: they are runtime data the plugin owns.
   closure, it must trigger a rebuild after config changes.
 
 ## Introspection for admin/CLI/UI
-`describe()`/`members()` should optionally include `plugin_info` for both
-routers and entries. This enables a tree-like JSON the UI/CLI can render:
+`members()` should optionally include `plugin_info` for both routers and entries.
+This enables a tree-like JSON the UI/CLI can render:
 - routers with their plugins and router-level config,
 - entries with their plugins, effective config, and locals.
 

@@ -282,24 +282,20 @@ class Inspectable(RoutedClass):
 
 insp = Inspectable()
 
-# Get metadata
-info = insp.api.describe()
+# Get metadata (single source: members)
+info = insp.api.members()
 assert "action" in info["handlers"]
 assert "sub" in info["children"]
 
 # Plugins can expose extra filters (e.g. scopes/channels from PublishPlugin)
-internal_info = insp.api.describe(scopes="internal", channel="CLI")
-
-# List all handlers
-members = insp.api.members()
-assert "action" in members["handlers"]
+internal_info = insp.api.members(scopes="internal", channel="CLI")
 
 # Filters likewise depend on plugin metadata
 internal = insp.api.members(scopes="internal")
 internal_cli = insp.api.members(scopes="internal", channel="CLI")
 ```
 
-**Use `describe()` and `members()` to**:
+**Use `members()` to**:
 
 - Generate API documentation
 - Debug routing issues

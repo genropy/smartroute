@@ -13,25 +13,38 @@ class SimplePlugin(BasePlugin):
 
 
 def test_plugin_config_proxy_updates_global_and_method_config():
-    plugin = SimplePlugin()
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
+
+    svc = Host()
+    plugin = svc.api._plugins_by_name["simple"]
+
     plugin.configure.flags = "enabled,,beta"
-    assert plugin.get_config()["enabled"] is True
+    assert svc.api.get_config("simple")["enabled"] is True
     plugin.configure.threshold = 5
-    assert plugin.get_config()["threshold"] == 5
+    assert svc.api.get_config("simple")["threshold"] == 5
     assert plugin.configure.threshold == 5
 
     method_proxy = plugin.configure["foo"]
     method_proxy.flags = "enabled:off"
-    assert plugin.get_config("foo")["enabled"] is False
+    assert svc.api.get_config("simple", "foo")["enabled"] is False
     method_proxy.mode = "strict"
-    assert plugin.get_config("foo")["mode"] == "strict"
+    assert svc.api.get_config("simple", "foo")["mode"] == "strict"
 
 
 def test_plugin_constructor_flags_and_method_config():
-    plugin = SimplePlugin(flags="beta:on,alpha:off", method_config={"foo": {"enabled": False}})
-    assert plugin.get_config()["beta"] is True
-    assert plugin.get_config()["alpha"] is False
-    assert plugin.get_config("foo")["enabled"] is False
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug(
+                "simple", flags="beta:on,alpha:off", method_config={"foo": {"enabled": False}}
+            )
+
+    svc = Host()
+    plugin = svc.api._plugins_by_name["simple"]
+    assert svc.api.get_config("simple")["beta"] is True
+    assert svc.api.get_config("simple")["alpha"] is False
+    assert svc.api.get_config("simple", "foo")["enabled"] is False
     with pytest.raises(AttributeError):
         _ = plugin.configure.nonexistent
 
@@ -42,6 +55,29 @@ def ensure_plugin(name: str, plugin_cls: type) -> None:
 
 
 ensure_plugin("simple", SimplePlugin)
+
+
+def test_unbound_plugin_config_guards_and_seed_noop():
+    plugin = SimplePlugin()
+    with pytest.raises(RuntimeError):
+        plugin.get_config()
+    with pytest.raises(RuntimeError):
+        plugin.set_config(flag=True)
+    with pytest.raises(RuntimeError):
+        plugin.set_method_config("x", enabled=False)
+    # _seed_store on an unbound plugin is a no-op
+    plugin._seed_store()
+
+
+def test_plugin_get_config_missing_bucket():
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
+
+    svc = Host()
+    plugin = svc.api._plugins_by_name["simple"]
+    svc.api._plugin_info.pop(plugin.name, None)
+    assert plugin.get_config() == {}
 
 
 def test_router_auto_registers_marked_methods_and_validates_plugins():
@@ -405,7 +441,31 @@ def test_register_plugin_validates():
         Router.register_plugin("custom_edge", OtherPlugin)
 
 
-def test_describe_exposes_metadata():
+def test_router_get_config_paths():
+    class CfgPlugin(BasePlugin):
+        pass
+
+    Router.register_plugin("cfgplug", CfgPlugin)
+
+    class Service(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug(
+                "cfgplug", mode="x", method_config={"hello": {"trace": True}}
+            )
+
+        @route("api")
+        def hello(self):
+            return "ok"
+
+    svc = Service()
+    assert svc.api.get_config("cfgplug")["mode"] == "x"
+    merged = svc.api.get_config("cfgplug", "hello")
+    assert merged["mode"] == "x" and merged["trace"] is True
+    with pytest.raises(AttributeError):
+        svc.api.get_config("missing")
+
+
+def test_members_expose_metadata():
     class Parent(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api").plug("simple")
@@ -415,15 +475,15 @@ def test_describe_exposes_metadata():
             """Run child handler."""
             return "ok"
 
-    info = Parent().api.describe()
+    info = Parent().api.members()
     assert info["name"] == "api"
-    run_info = info["methods"]["run"]
+    run_info = info["handlers"]["run"]
     assert run_info["doc"] == "Run child handler."
     assert run_info["parameters"] == {}
     assert run_info["return_type"] == "Any"
 
 
-def test_describe_includes_pydantic_validation():
+def test_members_include_pydantic_validation():
     class Validated(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api").plug("pydantic")
@@ -433,8 +493,8 @@ def test_describe_includes_pydantic_validation():
             """Greet someone."""
             return f"Hello {name}"
 
-    info = Validated().api.describe()
-    greet = info["methods"]["greet"]
+    info = Validated().api.members()
+    greet = info["handlers"]["greet"]
     assert greet["name"] == "greet"
     assert "Greet someone." in greet["doc"]
     assert greet["return_type"] == "str"

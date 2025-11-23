@@ -158,12 +158,24 @@ def test_inherit_plugins_branches():
     assert after > before
     child.api._on_attached_to_parent(parent.api)
     assert len(child.api._plugins) == after
+    # Force missing plugin bucket to exercise seed path
+    parent.api._plugin_info.pop("stamp_extra", None)
+    child.api._on_attached_to_parent(parent.api)
 
     orphan = ManualService()
     plain = ManualService()
     plain_before = len(orphan.api._plugins)
     orphan.api._on_attached_to_parent(plain.api)
     assert len(orphan.api._plugins) == plain_before
+
+
+def test_inherit_plugins_seed_from_empty_parent_bucket():
+    parent = ManualService()
+    parent.api.plug("stamp_extra")
+    parent.api._plugin_info.pop("stamp_extra", None)
+    child = ManualService()
+    child.api._on_attached_to_parent(parent.api)
+    assert child.api._plugin_info["stamp_extra"]["config"]["enabled"] is True
 
 
 def test_iter_child_routers_override_deduplicates():
@@ -276,8 +288,8 @@ def test_router_calling_members_handles_custom_pydantic_metadata():
         "enabled": True,
         "model": FakeModel(),
     }
-    info = svc.api.describe()
-    param = info["methods"]["first"]["parameters"]["text"]
+    info = svc.api.members()
+    param = info["handlers"]["first"]["parameters"]["text"]
     assert param["validation"]["metadata"] == ["tag"]
 
 

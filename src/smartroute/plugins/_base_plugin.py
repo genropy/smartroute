@@ -19,11 +19,8 @@ Objects
 ``BasePlugin``
     Abstract base class that every plugin *must* subclass. Responsibilities:
 
-    - store global configuration in ``self._global_config`` (default
-      ``{\"enabled\": True}``)
-    - allow per-handler overrides via ``self._handler_configs`` (dict of dicts)
-    - expose ``configure`` proxy so `RoutedClass.configure(...)` can set either
-      global or handler-specific settings
+    - offer config helpers that delegate to the owning router's ``plugin_info``
+      store (no hidden per-plugin globals)
     - provide optional hooks ``on_decore(router, func, entry)`` and
       ``wrap_handler(router, entry, call_next)`` used by the Router pipeline
 
@@ -34,27 +31,26 @@ Objects
     - ``name`` overrides the plugin name (defaults to class name lowercased)
     - ``description`` stored but never interpreted by the core
     - ``flags`` is a comma-separated string ``\"foo,bar:off\"`` parsed into a
-      dict of booleans and merged into the config
-    - ``method_config`` is a mapping of handler name → config dict applied
-      after the global config
-    - any extra ``**config`` entries land in ``self._global_config``
+      dict of booleans and merged into the initial config snapshot
+    - ``method_config`` is a mapping of handler name → config dict applied as
+      initial per-handler overrides
+    - any extra ``**config`` entries land in the initial router-level config
 
     Required public methods:
 
     ``get_config(method_name=None)``
-        returns the merged configuration dict for the plugin (global + optional
-        per-handler overrides)
+        returns merged configuration dict from the router's store
+        (router-level + optional per-handler override).
 
     ``set_config(flags=None, **config)`` and
     ``set_method_config(method_name, flags=None, **config)``
-        mutate the stored global/handler config respectively
+        mutate the router's ``plugin_info`` store (global/handler scopes).
 
     ``configure`` property
         returns a proxy that supports dotted assignment and item access:
-        ``plugin.configure.enabled = False`` sets the global flag,
+        ``plugin.configure.enabled = False`` sets the router-level flag,
         ``plugin.configure[\"foo\"].threshold = 5`` sets handler-specific values,
-        ``plugin.configure.flags = \"enabled:off\"`` is shorthand for toggling
-        boolean flags.
+        ``plugin.configure.flags = \"enabled:off\"`` toggles booleans.
 
     ``on_decore`` (default no-op)
         called once when the Router registers a handler. Plugins use this to
@@ -69,7 +65,7 @@ Objects
         when implemented, allows the plugin to decide if a handler should be
         exposed during introspection. It receives the router, the MethodEntry,
         and keyword filters (``scopes``, ``channel``, ...); returning ``False``
-        hides the handler from ``describe()``/``members()``.
+        hides the handler from ``members()``.
 
 Design constraints
 ~~~~~~~~~~~~~~~~~~
@@ -103,13 +99,7 @@ class MethodEntry:
 class BasePlugin:
     """Hook interface + configuration helpers for router plugins."""
 
-    __slots__ = (
-        "name",
-        "description",
-        "_global_config",
-        "_handler_configs",
-        "config",
-    )
+    __slots__ = ("name", "description", "_router", "_initial_config", "_initial_method_config")
 
     def __init__(
         self,
@@ -122,39 +112,50 @@ class BasePlugin:
     ):
         self.name = name or self.__class__.__name__.lower()
         self.description = description
-        self._global_config: Dict[str, Any] = {"enabled": True}
-        self._handler_configs: Dict[str, Dict[str, Any]] = {}
+        self._router: Any = None
+        self._initial_config: Dict[str, Any] = {"enabled": True}
         if flags:
-            self._global_config.update(self._parse_flags(flags))
-        self._global_config.update(config)
+            self._initial_config.update(self._parse_flags(flags))
+        self._initial_config.update(config)
+        self._initial_method_config: Dict[str, Dict[str, Any]] = {}
         if method_config:
             for method_name, settings in method_config.items():
-                self._handler_configs[method_name] = dict(settings)
-        # Backwards compat alias
-        self.config = self._global_config
+                self._initial_method_config[method_name] = dict(settings)
 
     @property
     def configure(self) -> "_PluginConfigProxy":
         return _PluginConfigProxy(self)
 
     def get_config(self, method_name: Optional[str] = None) -> Dict[str, Any]:
-        merged = dict(self._global_config)
-        if method_name and method_name in self._handler_configs:
-            merged.update(self._handler_configs[method_name])
+        store = self._get_store()
+        plugin_bucket = store.get(self.name)
+        if not plugin_bucket:
+            return {}
+        merged = dict(plugin_bucket.get("config", {}))
+        if method_name:
+            merged.update(plugin_bucket.get("handlers", {}).get(method_name, {}))
         return merged
 
     def set_config(self, flags: Optional[str] = None, **config: Any) -> None:
+        if self._router is None:
+            raise RuntimeError("Plugin is not bound to a Router")
         if flags:
             config.update(self._parse_flags(flags))
-        self._global_config.update(config)
+        store = self._get_store()
+        bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
+        bucket["config"].update(config)
 
     def set_method_config(
         self, method_name: str, *, flags: Optional[str] = None, **config: Any
     ) -> None:
+        if self._router is None:
+            raise RuntimeError("Plugin is not bound to a Router")
         if flags:
             config.update(self._parse_flags(flags))
-        bucket = self._handler_configs.setdefault(method_name, {})
-        bucket.update(config)
+        store = self._get_store()
+        plugin_bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
+        handler_bucket = plugin_bucket.setdefault("handlers", {}).setdefault(method_name, {})
+        handler_bucket.update(config)
 
     def _parse_flags(self, flags: str) -> Dict[str, bool]:
         mapping: Dict[str, bool] = {}
@@ -182,6 +183,24 @@ class BasePlugin:
     ) -> Callable:
         """Wrap handler invocation; default passthrough."""
         return call_next
+
+    # Binding ------------------------------------------------
+    def _bind_router(self, router: Any) -> None:
+        self._router = router
+
+    def _seed_store(self) -> None:
+        if self._router is None:
+            return
+        store = self._get_store()
+        bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
+        bucket["config"].update(self._initial_config)
+        for handler, cfg in self._initial_method_config.items():
+            bucket.setdefault("handlers", {}).setdefault(handler, {}).update(cfg)
+
+    def _get_store(self) -> Dict[str, Any]:
+        if self._router is None:
+            raise RuntimeError("Plugin is not bound to a Router")
+        return getattr(self._router, "_plugin_info")
 
 
 class _PluginConfigProxy:

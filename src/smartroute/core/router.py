@@ -171,6 +171,7 @@ class Router(BaseRouter):
         "_plugins_by_name",
         "_filter_plugins",
         "_inherited_from",
+        "_plugin_info",
     )
 
     def __init__(self, *args, **kwargs):
@@ -179,6 +180,7 @@ class Router(BaseRouter):
         self._plugins_by_name: Dict[str, BasePlugin] = {}
         self._filter_plugins: List[BasePlugin] = []
         self._inherited_from: set[int] = set()
+        self._plugin_info: Dict[str, Dict[str, Any]] = {}
         super().__init__(*args, **kwargs)
 
     # ------------------------------------------------------------------
@@ -211,9 +213,12 @@ class Router(BaseRouter):
             raise ValueError(
                 f"Unknown plugin '{plugin}'. Register it first. Available plugins: {available}"
             )
-        spec = _PluginSpec(plugin_class, dict(config), alias=plugin)
+        spec_kwargs = dict(config)
+        spec = _PluginSpec(plugin_class, spec_kwargs, alias=plugin)
         self._plugin_specs.append(spec)
         instance = spec.instantiate()
+        instance._bind_router(self)
+        instance._seed_store()
         self._plugins.append(instance)
         self._plugins_by_name[instance.name] = instance
         self._refresh_filter_plugins()
@@ -315,6 +320,17 @@ class Router(BaseRouter):
         self._plugins = new_plugins + self._plugins
         self._refresh_filter_plugins()
         for plugin in new_plugins:
+            plugin._bind_router(self)
+            parent_bucket = parent._plugin_info.get(plugin.name, {})
+            self._plugin_info[plugin.name] = {
+                "config": dict(parent_bucket.get("config", {})),
+                "handlers": {
+                    key: dict(cfg) for key, cfg in parent_bucket.get("handlers", {}).items()
+                },
+                "locals": {},
+            }
+            if not parent_bucket:
+                plugin._seed_store()
             self._plugins_by_name.setdefault(plugin.name, plugin)
             self._apply_plugin_to_entries(plugin)
         self._rebuild_handlers()

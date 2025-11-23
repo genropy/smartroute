@@ -113,28 +113,24 @@ attributes/slots on ``source`` for ``BaseRouter`` instances, returning
 
 Introspection
 -------------
-- ``describe(scopes=None, channel=None)`` builds a nested dict:
-  ``{"name", "prefix", "plugins", "methods", "children"}``.
-  Methods map logical name → info:
+- ``members(scopes=None, channel=None)`` builds a nested dict of routers and
+  handlers respecting filters. Each handler entry contains:
 
+    * ``callable`` (entry.func)
+    * ``metadata`` (MethodEntry.metadata)
     * ``doc`` (``inspect.getdoc`` or ``__doc__`` fallback)
-    * ``signature`` string of ``inspect.signature``; ``return_type`` formatted
-      via ``_format_annotation``
-    * ``plugins`` (MethodEntry.plugins), ``metadata_keys`` list
+    * ``signature`` string of ``inspect.signature``
+    * ``return_type`` via ``_format_annotation``
+    * ``plugins`` (MethodEntry.plugins)
+    * ``metadata_keys`` list
     * ``parameters``: name → ``{"type", "default", "required"}`` from signature
       annotations/defaults only.
+    * plus any subclass-provided extras via ``_describe_entry_extra``.
 
-  Subclasses can inject additional data per entry via
-  ``_describe_entry_extra(entry, base_description)``. The base router contributes
-  nothing beyond the signature-derived fields.
-
-- Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and
+  Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and
   ``_should_include_entry`` (base: always True) allow subclasses to hide
-  entries. Filters are applied both to ``methods`` and recursively to children.
-
-- ``members(scopes=None, channel=None)`` returns live objects instead of
-  strings: router, instance, handlers dict (callable + metadata), and children
-  respecting the same filters; empty children pruned only when filters active.
+  entries. Filters are applied both to methods and recursively to children.
+  Empty children are pruned only when filters are active.
 
 Hooks for subclasses
 --------------------
@@ -605,34 +601,20 @@ class BaseRouter:
     # ------------------------------------------------------------------
     # Introspection helpers
     # ------------------------------------------------------------------
-    def describe(
+    def members(
         self, scopes: Optional[Any] = None, channel: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Return a serialisable description of handlers and children.
-
-        Filters (``scopes``, ``channel``) are normalized by subclass hooks and
-        applied both to methods and child routers.
-        """
+        """Return a live tree of routers/handlers/metadata respecting filters."""
         filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
+        filter_active = bool(filter_args)
 
-        def describe_node(node: "BaseRouter") -> Dict[str, Any]:
-            return {
-                "name": node.name,
-                "prefix": node.prefix,
-                "plugins": [p.name for p in node.iter_plugins()],
-                "methods": {
-                    name: _build_method_description(node, entry)
-                    for name, entry in node._entries.items()
-                    if node._should_include_entry(entry, **filter_args)
-                },
-                "children": {key: describe_node(child) for key, child in node._children.items()},
-            }
-
-        def _build_method_description(node: "BaseRouter", entry: MethodEntry) -> Dict[str, Any]:
+        def build_method_description(node: "BaseRouter", entry: MethodEntry) -> Dict[str, Any]:
             func = entry.func
             signature = inspect.signature(func)
             method_info: Dict[str, Any] = {
                 "name": entry.name,
+                "callable": func,
+                "metadata": entry.metadata,
                 "doc": inspect.getdoc(func) or func.__doc__ or "",
                 "signature": str(signature),
                 "return_type": _format_annotation(signature.return_annotation),
@@ -658,24 +640,12 @@ class BaseRouter:
 
             return method_info
 
-        return describe_node(self)
-
-    def members(
-        self, scopes: Optional[Any] = None, channel: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Return a live tree of routers/handlers/metadata respecting filters."""
-        filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
-        filter_active = bool(filter_args)
-
         def capture(node: "BaseRouter") -> Dict[str, Any]:
             handlers = {}
             for name, entry in node._entries.items():
                 if not node._should_include_entry(entry, **filter_args):
                     continue
-                handlers[name] = {
-                    "callable": entry.func,
-                    "metadata": entry.metadata,
-                }
+                handlers[name] = build_method_description(node, entry)
 
             children = {}
             for child_name, child in node._children.items():
@@ -683,10 +653,20 @@ class BaseRouter:
                 if not filter_active or child_payload["handlers"] or child_payload["children"]:
                     children[child_name] = child_payload
 
+            plugin_info: Dict[str, Any] = {}
+            info_source = getattr(node, "_plugin_info", {}) or {}
+            for pname, pdata in info_source.items():
+                plugin_info[pname] = {
+                    "config": dict(pdata.get("config", {})),
+                    "handlers": {k: dict(v) for k, v in pdata.get("handlers", {}).items()},
+                    "locals": pdata.get("locals", {}),
+                }
+
             return {
                 "name": node.name,
                 "router": node,
                 "instance": node.instance,
+                "plugin_info": plugin_info,
                 "handlers": handlers,
                 "children": children,
             }
