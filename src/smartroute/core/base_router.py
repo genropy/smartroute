@@ -460,8 +460,9 @@ class BaseRouter:
 
         candidates = self._collect_child_routers(routed_child)
         if not candidates:
-            # pragma: no cover
-            raise TypeError(f"Object {routed_child!r} does not expose Router instances")
+            raise TypeError(
+                f"Object {routed_child!r} does not expose Router instances"
+            )  # pragma: no cover
 
         mapping: Dict[str, str] = {}
         tokens = [chunk.strip() for chunk in (name.split(",") if name else []) if chunk.strip()]
@@ -471,20 +472,18 @@ class BaseRouter:
         if len(candidates) == 1:
             # Single child router: alias optional unless parent has multiple routers.
             if parent_has_multiple and not tokens:
-                # pragma: no cover
                 raise ValueError(
                     "attach_instance() requires alias when parent has multiple routers"
-                )
+                )  # pragma: no cover
             alias = tokens[0] if tokens else name or candidates[0][0] or candidates[0][1].name
             orig_attr, _ = candidates[0]
             mapping[orig_attr] = alias
         else:
             # Multiple child routers.
             if parent_has_multiple and not tokens:
-                # pragma: no cover
                 raise ValueError(
                     "attach_instance() requires mapping when parent has multiple routers"
-                )
+                )  # pragma: no cover
             if not tokens:
                 # Auto-mapping: alias = child router name/attr
                 for orig_attr, router in candidates:
@@ -494,20 +493,20 @@ class BaseRouter:
                 candidate_names = {attr for attr, _ in candidates}
                 for token in tokens:
                     if ":" not in token:
-                        # pragma: no cover
                         raise ValueError(
                             "attach_instance() with multiple routers requires mapping 'child:alias'"
-                        )
+                        )  # pragma: no cover
                     orig, alias = [part.strip() for part in token.split(":", 1)]
                     if not orig or not alias:
-                        # pragma: no cover
-                        raise ValueError("attach_instance() mapping requires both child and alias")
+                        raise ValueError(
+                            "attach_instance() mapping requires both child and alias"
+                        )  # pragma: no cover
                     if orig not in candidate_names:
-                        # pragma: no cover
-                        raise ValueError(f"Unknown child router {orig!r} in mapping")
+                        raise ValueError(
+                            f"Unknown child router {orig!r} in mapping"
+                        )  # pragma: no cover
                     if orig in mapping:
-                        # pragma: no cover
-                        raise ValueError(f"Duplicate mapping for {orig!r}")
+                        raise ValueError(f"Duplicate mapping for {orig!r}")  # pragma: no cover
                     mapping[orig] = alias
                 # Unmapped child routers are simply not attached.
 
