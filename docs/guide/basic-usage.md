@@ -242,11 +242,11 @@ class SubService(RoutedClass):
 class RootAPI(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        users = SubService("users")
-        products = SubService("products")
+        self.users = SubService("users")
+        self.products = SubService("products")
 
-        self.api.add_child(users, name="users")
-        self.api.add_child(products, name="products")
+        self.api.attach_instance(self.users, name="users")
+        self.api.attach_instance(self.products, name="products")
 
 root = RootAPI()
 
@@ -273,8 +273,8 @@ Inspect router structure and registered handlers:
 class Inspectable(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        child_service = SubService("child")
-        self.api.add_child(child_service, name="sub")
+        self.child_service = SubService("child")
+        self.api.attach_instance(self.child_service, name="sub")
 
     @route("api")
     def action(self):

@@ -5,7 +5,7 @@ helpers; no router mutation happens at decoration time.
 
 ``route(router, *, name=None, alias=None, **kwargs)``
 
-- Returns a decorator storing metadata on the function under ``TARGET_ATTR`` as
+- Returns a decorator storing metadata on the function under ``TARGET_ATTR_NAME`` as
   a list of dicts. Each payload starts with ``{"name": router}``.
 
 - Explicit logical name: if ``name`` (or legacy ``alias``) is provided, the

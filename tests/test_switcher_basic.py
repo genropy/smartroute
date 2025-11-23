@@ -296,3 +296,24 @@ def test_plugin_enable_disable_runtime_data():
     svc.api.set_plugin_enabled("touch", "toggle", True)
     handler()
     assert svc.api.get_runtime_data("touch", "toggle", "last") is True
+
+
+def test_dotted_path_and_members_with_attached_child():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+        @route("api")
+        def ping(self):
+            return "pong"
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = Child()
+            self.api.attach_instance(self.child, name="child")
+
+    parent = Parent()
+    assert parent.api.get("child.ping")() == "pong"
+    tree = parent.api.members()
+    assert "child" in tree["children"]

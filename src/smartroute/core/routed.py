@@ -5,7 +5,7 @@ off user instances via slots and offers a proxy for configuration/lookup.
 
 RoutedClass
 -----------
-- ``__slots__``: ``__routed_proxy__`` (cache) and ``ROUTER_REGISTRY_ATTR`` (dict).
+- ``__slots__``: proxy cache and ``ROUTER_REGISTRY_ATTR_NAME`` (dict).
 - ``_register_router(router)``: lazily creates a registry dict on the instance
   and stores the router under ``router.name`` if truthy.
 - ``_iter_registered_routers``: yields ``(name, router)`` for registry entries
@@ -22,7 +22,7 @@ Router lookup:
   base router + child path (``_split_router_spec``). Looks in the registry
   first, then falls back to owner attributes (cached if a ``Router``). Raises
   ``AttributeError`` if no router is found. If ``path`` is provided (or found in
-  the dotted name), traverses children via ``get_child`` for each segment,
+  the dotted name), traverses children via ``_children`` lookup for each segment,
   skipping empty segments.
 
 Configuration entrypoint:
@@ -98,7 +98,7 @@ class RoutedClass:
         if not safe_is_instance(current, "smartroute.core.routed.RoutedClass"):
             return None
         if getattr(current, "_routed_parent", None) is not self:
-            return None
+            return None  # pragma: no cover - only detach if bound to this parent
         return current
 
     def _auto_detach_child(self, current: Any) -> None:
@@ -106,7 +106,7 @@ class RoutedClass:
         for router in registry.values():
             try:
                 router.detach_instance(current)  # type: ignore[attr-defined]
-            except Exception:
+            except Exception:  # pragma: no cover - best-effort only
                 pass  # best-effort; avoid blocking setattr
 
     def _register_router(self, router: "Router") -> None:
@@ -172,7 +172,7 @@ class _RoutedProxy:
             segment = segment.strip()
             if not segment:
                 continue
-            node = node.get_child(segment)
+            node = node._children[segment]
         return node
 
     def _parse_target(self, target: str) -> tuple[str, str, str]:

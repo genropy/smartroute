@@ -85,12 +85,13 @@ class RootAPI(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
 
-        users = SubService("users")
-        products = SubService("products")
+        # Store as attributes first
+        self.users = SubService("users")
+        self.products = SubService("products")
 
-        # Add children individually
-        self.api.add_child(users, name="users")
-        self.api.add_child(products, name="products")
+        # Attach to hierarchy
+        self.api.attach_instance(self.users, name="users")
+        self.api.attach_instance(self.products, name="products")
 
 # Usage
 root = RootAPI()
@@ -100,7 +101,7 @@ root.api.get("products.detail")(5)  # "products:detail:5"
 
 **Key Points:**
 
-- Use `add_child(obj, name="...")` for building hierarchies
+- Use `attach_instance(obj, name="...")` for building hierarchies
 - Access with dotted notation: `"parent.child.method"`
 - Each child maintains complete independence
 - Plugins from parent propagate to children automatically
@@ -109,40 +110,44 @@ root.api.get("products.detail")(5)  # "products:detail:5"
 
 ## Pattern 4: Bulk Child Registration
 
-**Use when:** Registering multiple children at once.
-
-<!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
+**Use when:** Registering multiple children.
 
 ```python
 class RootAPI(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
 
+        # Store children as attributes
         self.users = SubService("users")
         self.products = SubService("products")
 
-        # Register multiple children via dict
-        self.api.add_child({
-            "users": self.users,
-            "products": self.products
-        })
+        # Attach each instance explicitly
+        self.api.attach_instance(self.users, name="users")
+        self.api.attach_instance(self.products, name="products")
 
 root = RootAPI()
 root.api.get("users.list")()
 root.api.get("products.detail")(7)
 ```
 
-**Alternative:** Nested iterables for dynamic configuration.
-
-<!-- test: test_switcher_basic.py::test_add_child_handles_nested_iterables_and_pairs -->
+**Dynamic configuration pattern:**
 
 ```python
 # Load from configuration
-services_config = [
-    {"users": UsersService()},
-    [("products", ProductsService())],
-]
-root.api.add_child(services_config)
+services = {
+    "users": UsersService(),
+    "products": ProductsService(),
+    "orders": OrdersService()
+}
+
+class RootAPI(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+
+        # Dynamically attach from config
+        for name, service in services.items():
+            setattr(self, name, service)  # Store as attribute
+            self.api.attach_instance(service, name=name)
 ```
 
 **Key Points:**
@@ -227,14 +232,14 @@ class ChildService(RoutedClass):
 
 # Build hierarchy
 parent = ParentAPI()
-child = ChildService()
-parent.api.add_child(child, name="child")
+parent.child = ChildService()
+parent.api.attach_instance(parent.child, name="child")
 
 # Child router now has logging plugin from parent
-assert hasattr(child.routes, "logging")
+assert hasattr(parent.child.routes, "logging")
 
 # Plugin applies to child handlers automatically
-child.routes.get("action")()  # Logged
+parent.child.routes.get("action")()  # Logged
 ```
 
 **Key Points:**
@@ -398,18 +403,20 @@ class BranchService(RoutedClass):
         self.api = Router(self, name="api")
 
         # Add leaf services
-        leaf1 = LeafService("leaf1")
-        leaf2 = LeafService("leaf2")
-        self.api.add_child({"leaf1": leaf1, "leaf2": leaf2})
+        self.leaf1 = LeafService("leaf1")
+        self.leaf2 = LeafService("leaf2")
+        self.api.attach_instance(self.leaf1, name="leaf1")
+        self.api.attach_instance(self.leaf2, name="leaf2")
 
 class RootService(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
 
         # Add branch services
-        branch1 = BranchService("branch1")
-        branch2 = BranchService("branch2")
-        self.api.add_child({"branch1": branch1, "branch2": branch2})
+        self.branch1 = BranchService("branch1")
+        self.branch2 = BranchService("branch2")
+        self.api.attach_instance(self.branch1, name="branch1")
+        self.api.attach_instance(self.branch2, name="branch2")
 
 root = RootService()
 
@@ -660,8 +667,8 @@ def test_hierarchical_access():
     class Parent(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api")
-            child = Child()
-            self.api.add_child(child, name="child")
+            self.child = Child()
+            self.api.attach_instance(self.child, name="child")
 
     parent = Parent()
     result = parent.api.get("child.child_action")()

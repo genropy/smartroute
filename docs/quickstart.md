@@ -81,11 +81,11 @@ Create nested router structures:
 class RootAPI(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        users = SubService("users")
-        products = SubService("products")
+        self.users = SubService("users")
+        self.products = SubService("products")
 
-        self.api.add_child(users, name="users")
-        self.api.add_child(products, name="products")
+        self.api.attach_instance(self.users, name="users")
+        self.api.attach_instance(self.products, name="products")
 
 root = RootAPI()
 

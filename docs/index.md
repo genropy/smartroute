@@ -25,13 +25,13 @@ SmartRoute provides:
 ## Key Features
 
 - **Instance-scoped routers** - Every object gets an isolated router with its own plugin stack
-- **Hierarchical organization** - Build router trees with `add_child()` and dotted path traversal
+- **Hierarchical organization** - Build router trees with `attach_instance()` and dotted path traversal
 - **Composable plugins** - Hook into decoration and handler execution with `BasePlugin`
 - **Plugin inheritance** - Plugins propagate automatically from parent to child routers
 - **Flexible registration** - Use `@route` decorator with prefixes, metadata, and explicit names
 - **Runtime configuration** - Configure plugins with `routedclass.configure()` using target syntax
 - **SmartAsync support** - Optional integration with async execution
-- **99% test coverage** - Complete statement coverage with 74 comprehensive tests
+- **93% test coverage** - Comprehensive test suite with 71 tests covering 944 statements
 
 ## Quick Example
 
@@ -114,7 +114,7 @@ pip install -e ".[all]"
 
 SmartRoute is currently in **beta** (v0.5.3). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (75 tests, 852 statements)
+- **Test Coverage**: 93% (71 tests, 944 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

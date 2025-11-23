@@ -218,62 +218,76 @@ filtered = svc.api.describe(scopes="internal", channel="CLI")
 - `handlers` - List of handler names
 - `children` - Dict of child router descriptions (recursive)
 
-#### `add_child(child, *, name: str = None) -> Router`
+#### `attach_instance(child: RoutedClass, *, name: str = None) -> Router`
 
-Attach child router(s) for hierarchical organization. Plugins propagate automatically to children.
+Attach a RoutedClass instance to create parent-child hierarchy. Child must be stored as parent attribute first. Plugins propagate automatically.
 
-<!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
-<!-- test: test_switcher_basic.py::test_add_child_accepts_mapping_for_named_children -->
+<!-- test: test_router_edge_cases.py::test_attach_and_detach_instance_single_router_with_alias -->
 
-**Single child:**
+**Single router child:**
 
 ```python
-class RootAPI(RoutedClass):
+class Parent(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        child = ChildService()
-        self.api.add_child(child, name="child")
+        self.child = Child()  # Store first
+        self.api.attach_instance(self.child, name="child")
 
-root = RootAPI()
-root.api.get("child.method")()  # Dotted path access
+parent = Parent()
+parent.api.get("child.method")()  # Dotted path access
+assert parent.child._routed_parent is parent  # Parent tracked
 ```
 
-**Multiple children (dict):**
+**Multiple routers - auto-mapping:**
 
 ```python
-self.api.add_child({
-    "users": users_service,
-    "products": products_service
-})
+class MultiChild(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+        self.admin = Router(self, name="admin")
 
-# Access: self.api.get("users.list")
+parent.child = MultiChild()
+parent.api.attach_instance(parent.child)  # Auto-maps both routers
+# Access: parent.api.get("api.method"), parent.api.get("admin.method")
 ```
 
-**Nested iterables:**
+**Multiple routers - explicit mapping:**
 
 ```python
-registry = [
-    {"users": users_service},
-    [("products", products_service)]
-]
-self.api.add_child(registry)
+parent.api.attach_instance(parent.child, name="api:sales, admin:admin_panel")
+# Maps: child.api -> "sales", child.admin -> "admin_panel"
 ```
 
 **Plugin inheritance:**
-
-<!-- test: test_switcher_basic.py::test_parent_plugins_inherit_to_children -->
 
 ```python
 class Parent(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api").plug("logging")
+        self.child = Child()
+        self.api.attach_instance(self.child, name="child")
 
-parent = Parent()
-child = ChildService()
-parent.api.add_child(child, name="child")
+# Child router automatically has logging plugin
+```
 
-# Child router now has logging plugin automatically
-assert hasattr(child.routes, "logging")
+#### `detach_instance(child: RoutedClass) -> RoutedClass`
+
+Remove RoutedClass instance from hierarchy. Clears `_routed_parent` and removes all child routers.
+
+```python
+parent.api.detach_instance(parent.child)
+assert parent.child._routed_parent is None
+assert "child" not in parent.api._children
+```
+
+**Auto-detachment:** Replacing a child attribute automatically detaches the old instance:
+
+```python
+parent.child = OldChild()
+parent.api.attach_instance(parent.child, name="child")
+
+parent.child = NewChild()  # Auto-detaches OldChild
+# OldChild removed from hierarchy automatically
 ```
 
 #### `get_child(name: str) -> Router`
@@ -775,14 +789,14 @@ class Child(RoutedClass):
     def action(self): return "ok"
 
 parent = Parent()
-child = Child()
-parent.api.add_child(child, name="child")
+parent.child = Child()
+parent.api.attach_instance(parent.child, name="child")
 
 # Child router now has logging plugin from parent
-assert hasattr(child.routes, "logging")
+assert hasattr(parent.child.routes, "logging")
 
 # Plugin applies to child handlers
-child.routes.get("action")()  # Logged
+parent.child.routes.get("action")()  # Logged
 ```
 
 **Inheritance rules:**
@@ -821,15 +835,21 @@ class Service(RoutedClass):
 # ValueError: Handler 'action' already registered
 ```
 
-### Invalid add_child types
+### Invalid attach_instance usage
 
 ```python
-# TypeError: Cannot add Router class
-self.api.add_child(Router)  # ERROR!
+# TypeError: Requires RoutedClass instance
+self.api.attach_instance(object(), name="x")  # ERROR!
 
-# ValueError: Name already exists
-self.api.add_child(child1, name="child")
-self.api.add_child(child2, name="child")  # ERROR!
+# ValueError: Child must be stored as attribute first
+child = Child()
+self.api.attach_instance(child, name="child")  # ERROR! Not an attribute
+
+# ValueError: Name collision
+self.child1 = Child()
+self.child2 = Child()
+self.api.attach_instance(self.child1, name="child")
+self.api.attach_instance(self.child2, name="child")  # ERROR!
 
 # KeyError: Child not found
 self.api.get_child("missing")  # ERROR!
@@ -875,8 +895,8 @@ class Application(RoutedClass):
             .plug("pydantic")
 
         # Add child services
-        users = UsersService()
-        self.api.add_child(users, name="users")
+        self.users = UsersService()
+        self.api.attach_instance(self.users, name="users")
 
 app = Application()
 

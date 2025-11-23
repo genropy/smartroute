@@ -170,7 +170,7 @@ def test_iter_child_routers_override_deduplicates():
     root = ManualService()
     holder = MultiChild()
     results = root.api._collect_child_routers({"bundle": holder})
-    assert results and results[0][0] == "bundle"
+    assert results == []
 
 
 def test_iter_instance_attributes_skip_registry_and_slots():
@@ -322,9 +322,9 @@ def test_iter_child_routers_handles_repeated_objects():
             self.child = DummyChild()
 
     container = RepeatContainer()
-    # Provide same child twice via iterable to hit seen-guard branch
+    # Iterable inputs no longer scanned; expect empty result
     routes = container.api._collect_child_routers([container.child, container.child])
-    assert len(routes) == 1
+    assert routes == []
 
 
 def test_is_routed_class_helper():

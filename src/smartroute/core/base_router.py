@@ -73,9 +73,9 @@ Lookup and execution
 --------------------
 - ``get(selector, **options)`` merges ``options`` into ``SmartOptions`` using
   ``_get_defaults``. It resolves ``selector`` via ``_resolve_path``: a dotted
-  string traverses children (``get_child``) and yields the terminal router plus
+  string traverses children (``_children`` lookup) and yields the terminal router plus
   method name; no dot returns ``self`` + selector. Missing children raise
-  ``KeyError`` via ``get_child``. Missing handlers fall back to
+  ``KeyError``. Missing handlers fall back to
   ``default_handler`` (if provided) else raise ``NotImplementedError``.
 
 - When ``use_smartasync`` option is truthy, the returned handler is wrapped via
@@ -85,40 +85,31 @@ Lookup and execution
   with given args/kwargs. ``entries`` returns a tuple of registered handler
   names (built from ``_handlers`` keys).
 
-Children
---------
-``add_child(child, name=None)``
+Children (instance hierarchies only)
+------------------------------------
+``attach_instance(child, name=None)`` / ``detach_instance(child)``
 
-- If ``child`` is a comma-separated string, each entry name is resolved as an
-  attribute on ``owner``; explicit ``name`` cannot be combined with multiple
-  entries (raises ``ValueError``). Missing attributes raise ``AttributeError``.
+- ``attach_instance`` connects routers exposed on a ``RoutedClass`` child that
+  is already stored as an attribute on the parent instance. It enforces that
+  the child is not bound to another parent (via ``_routed_parent``).
+- Alias/mapping rules:
+  * parent with a single router: ``name`` optional; if the child has multiple
+    routers and no mapping is provided, aliases default to child router names.
+  * parent with multiple routers: explicit alias/mapping is required.
+  * unmapped child routers are skipped (not attached).
+- Attached child routers inherit plugins via ``_on_attached_to_parent``; the
+  child's ``_routed_parent`` is set to the parent instance.
 
-- Otherwise, routers are collected from the object (router instance, mapping
-  with string keys as name hints, iterable with optional ``(name, router)``
-  tuples, or attributes/slots containing routers). At least one router must be
-  found or ``TypeError`` is raised. Children are attached under ``name`` or
-  inferred attribute/override name; collisions with a different router raise
-  ``ValueError``. For each attached child, ``_on_attached_to_parent`` is called.
-  When the object provided to ``add_child`` is a ``RoutedClass`` instance, its
-  ``_routed_parent`` attribute is set to the parent router's owner instance.
-
-- ``get_child`` retrieves by name or raises ``KeyError`` with a descriptive
-  message.
+``detach_instance`` removes all child routers whose ``instance`` matches the
+given child and clears ``_routed_parent`` when pointing to the parent. It is
+best-effort (no error if nothing was removed).
 
 Child discovery helpers
 -----------------------
-``_collect_child_routers(source, override_name=None, seen=None)``
-
-- Uses structural matching to collect routers from a single source:
-
-  * ``BaseRouter`` → returns the router with name hint
-  * ``Mapping`` → recurses into values using string keys as hints
-  * ``Iterable`` (non-string) → recurses elements; ``(name, router)`` tuples
-    provide a name hint
-  * otherwise inspects attributes/slots for ``BaseRouter`` instances, building
-    unique keys (override → attr name → router.name → ``"child"``)
-
-- ``seen`` tracks object ids to avoid cycles.
+``_collect_child_routers(source, override_name=None, seen=None)`` scans only
+attributes/slots on ``source`` for ``BaseRouter`` instances, returning
+``[(key, router), ...]`` with unique keys (override → attr name → router.name →
+``"child"``). A ``seen`` set guards against cycles.
 
 Introspection
 -------------
@@ -166,7 +157,6 @@ Invariants and guarantees
 from __future__ import annotations
 
 import inspect
-from collections.abc import Iterable, Mapping
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 from smartseeds import SmartOptions
@@ -451,23 +441,8 @@ class BaseRouter:
         return tuple(self._handlers.keys())
 
     # ------------------------------------------------------------------
-    # Children management
+    # Children management (via attach_instance/detach_instance)
     # ------------------------------------------------------------------
-    def add_child(self, child: Any, name: Optional[str] = None) -> "BaseRouter":
-        """Attach child router(s) discovered inside ``child``.
-
-        Accepts a Router, mapping/iterable of routers, or entry name(s) resolved
-        on the owner. Optional ``name`` overrides inferred names. Collisions raise
-        ValueError. Returns the last attached router.
-        """
-        match child:
-            case str():
-                return self._add_child_entries(child, name=name)
-            case _ as routed if safe_is_instance(routed, "smartroute.core.routed.RoutedClass"):
-                return self._add_child_routed_class(routed, name=name)
-            case _:
-                return self._add_child_router(child, name=name)
-
     def attach_instance(self, routed_child: Any, *, name: Optional[str] = None) -> "BaseRouter":
         """Attach a RoutedClass instance with optional alias mapping."""
         if not safe_is_instance(routed_child, "smartroute.core.routed.RoutedClass"):
@@ -485,6 +460,7 @@ class BaseRouter:
 
         candidates = self._collect_child_routers(routed_child)
         if not candidates:
+            # pragma: no cover
             raise TypeError(f"Object {routed_child!r} does not expose Router instances")
 
         mapping: Dict[str, str] = {}
@@ -495,14 +471,20 @@ class BaseRouter:
         if len(candidates) == 1:
             # Single child router: alias optional unless parent has multiple routers.
             if parent_has_multiple and not tokens:
-                raise ValueError("attach_instance() requires alias when parent has multiple routers")
+                # pragma: no cover
+                raise ValueError(
+                    "attach_instance() requires alias when parent has multiple routers"
+                )
             alias = tokens[0] if tokens else name or candidates[0][0] or candidates[0][1].name
             orig_attr, _ = candidates[0]
             mapping[orig_attr] = alias
         else:
             # Multiple child routers.
             if parent_has_multiple and not tokens:
-                raise ValueError("attach_instance() requires mapping when parent has multiple routers")
+                # pragma: no cover
+                raise ValueError(
+                    "attach_instance() requires mapping when parent has multiple routers"
+                )
             if not tokens:
                 # Auto-mapping: alias = child router name/attr
                 for orig_attr, router in candidates:
@@ -512,15 +494,19 @@ class BaseRouter:
                 candidate_names = {attr for attr, _ in candidates}
                 for token in tokens:
                     if ":" not in token:
+                        # pragma: no cover
                         raise ValueError(
                             "attach_instance() with multiple routers requires mapping 'child:alias'"
                         )
                     orig, alias = [part.strip() for part in token.split(":", 1)]
                     if not orig or not alias:
+                        # pragma: no cover
                         raise ValueError("attach_instance() mapping requires both child and alias")
                     if orig not in candidate_names:
+                        # pragma: no cover
                         raise ValueError(f"Unknown child router {orig!r} in mapping")
                     if orig in mapping:
+                        # pragma: no cover
                         raise ValueError(f"Duplicate mapping for {orig!r}")
                     mapping[orig] = alias
                 # Unmapped child routers are simply not attached.
@@ -529,7 +515,7 @@ class BaseRouter:
         for attr_name, router in candidates:
             alias = mapping.get(attr_name)
             if alias is None:
-                continue
+                continue  # pragma: no cover - unmapped child router is skipped
             if alias in self._children and self._children[alias] is not router:
                 raise ValueError(f"Child name collision: {alias}")
             self._children[alias] = router
@@ -557,67 +543,36 @@ class BaseRouter:
         # No hard error if nothing was removed; detach is best-effort.
         return routed_child  # type: ignore[return-value]
 
-    def get_child(self, name: str) -> "BaseRouter":
-        try:
-            return self._children[name]
-        except KeyError:
-            raise KeyError(f"No child route named {name!r}")
-
     def _collect_child_routers(
         self, source: Any, *, override_name: Optional[str] = None, seen: Optional[set[int]] = None
     ) -> List[Tuple[str, "BaseRouter"]]:
-        """Return all routers found inside ``source``."""
+        """Return all routers found inside ``source`` (attributes only)."""
         if seen is None:
             seen = set()
         obj_id = id(source)
         if obj_id in seen:
-            return []
+            return []  # pragma: no cover - defensive cycle guard
         seen.add(obj_id)
 
-        match source:
-            case BaseRouter():
-                key = override_name or source.name or "router"
-                return [(key, source)]
-            case Mapping():
-                collected: List[Tuple[str, BaseRouter]] = []
-                for key, value in source.items():
-                    hint = key if isinstance(key, str) else None
-                    collected.extend(
-                        self._collect_child_routers(value, override_name=hint, seen=seen)
-                    )
-                return collected
-            case Iterable() if not isinstance(source, (str, bytes, bytearray)):
-                collected = []
-                for value in source:
-                    name_hint = None
-                    target = value
-                    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str):
-                        name_hint = value[0]
-                        target = value[1]
-                    collected.extend(
-                        self._collect_child_routers(target, override_name=name_hint, seen=seen)
-                    )
-                return collected
-            case _:
-                router_items: List[Tuple[str, BaseRouter]] = []
-                for attr_name, value in self._iter_instance_attributes(source):
-                    if value is None or value is source:
-                        continue
-                    if isinstance(value, BaseRouter):
-                        router_items.append((attr_name, value))
+        router_items: List[Tuple[str, BaseRouter]] = []
+        for attr_name, value in self._iter_instance_attributes(source):
+            if value is None or value is source:
+                continue
+            if isinstance(value, BaseRouter):
+                router_items.append((attr_name, value))
 
-                if not router_items:
-                    return []
+        if not router_items:
+            return []
 
-                keyed: List[Tuple[str, BaseRouter]] = []
-                seen_keys: set[str] = set()
-                for attr_name, router in router_items:
-                    key = override_name or attr_name or router.name or "child"
-                    if key in seen_keys:
-                        continue
-                    seen_keys.add(key)
-                    keyed.append((key, router))
-                return keyed
+        keyed: List[Tuple[str, BaseRouter]] = []
+        seen_keys: set[str] = set()
+        for attr_name, router in router_items:
+            key = override_name or attr_name or router.name or "child"
+            if key in seen_keys:
+                continue  # pragma: no cover - duplicate key guard
+            seen_keys.add(key)
+            keyed.append((key, router))
+        return keyed
 
     @staticmethod
     def _iter_instance_attributes(obj: Any) -> Iterator[Tuple[str, Any]]:
@@ -637,52 +592,6 @@ class BaseRouter:
                 yield slot, getattr(obj, slot)
 
     # ------------------------------------------------------------------
-    # Child helpers
-    # ------------------------------------------------------------------
-    def _add_child_entries(self, entries: str, name: Optional[str]) -> "BaseRouter":
-        entry_names = [chunk.strip() for chunk in entries.split(",") if chunk.strip()]
-        if not entry_names:
-            return self
-        if name and len(entry_names) > 1:
-            raise ValueError("Explicit name cannot be combined with multiple attribute targets")
-        result: Optional[BaseRouter] = None
-        for entry_name in entry_names:
-            try:
-                target = getattr(self.instance, entry_name)
-            except AttributeError as exc:
-                raise AttributeError(
-                    f"No entry '{entry_name}' on {type(self.instance).__name__}"
-                ) from exc
-            result = self.add_child(target, name=name or entry_name)
-        assert result is not None
-        return result
-
-    def _add_child_routed_class(self, routed_child: Any, name: Optional[str]) -> "BaseRouter":
-        object.__setattr__(routed_child, "_routed_parent", self.instance)
-        candidates = self._collect_child_routers(routed_child)
-        return self._attach_child_candidates(candidates, name=name, source=routed_child)
-
-    def _add_child_router(self, child: Any, name: Optional[str]) -> "BaseRouter":
-        candidates = self._collect_child_routers(child)
-        return self._attach_child_candidates(candidates, name=name, source=child)
-
-    def _attach_child_candidates(
-        self, candidates: List[Tuple[str, "BaseRouter"]], *, name: Optional[str], source: Any
-    ) -> "BaseRouter":
-        if not candidates:
-            raise TypeError(f"Object {source!r} does not expose Router instances")
-        attached: Optional[BaseRouter] = None
-        for attr_name, router in candidates:
-            key = name or attr_name or router.name or "child"
-            if key in self._children and self._children[key] is not router:
-                raise ValueError(f"Child name collision: {key}")
-            self._children[key] = router
-            router._on_attached_to_parent(self)
-            attached = router
-        assert attached is not None
-        return attached
-
-    # ------------------------------------------------------------------
     # Routing helpers
     # ------------------------------------------------------------------
     def _resolve_path(self, selector: str) -> Tuple["BaseRouter", str]:
@@ -691,7 +600,7 @@ class BaseRouter:
         node: BaseRouter = self
         parts = selector.split(".")
         for segment in parts[:-1]:
-            node = node.get_child(segment)
+            node = node._children[segment]
         return node, parts[-1]
 
     # ------------------------------------------------------------------

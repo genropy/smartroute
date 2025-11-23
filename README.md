@@ -26,7 +26,7 @@ SmartRoute provides a consistent, well-tested foundation for these patterns.
 
 1. **Instance-scoped routers** – Each object instantiates its own routers (`Router(self, ...)`) with isolated state.
 2. **Friendly registration** – `@route(...)` accepts explicit names, auto-strips prefixes, and supports custom metadata.
-3. **Simple hierarchies** – `add_child("child1, child2")` connects child routers with dotted path access (`parent.api.get("child.method")`).
+3. **Simple hierarchies** – `attach_instance(child, name="alias")` connects RoutedClass instances with dotted path access (`parent.api.get("child.method")`).
 4. **Plugin pipeline** – `BasePlugin` provides `on_decore`/`wrap_handler` hooks and plugins inherit from parents automatically.
 5. **Runtime configuration** – `routedclass.configure()` applies global or per-handler overrides with wildcards and returns reports (`"?"`).
 6. **Optional extras** – `logging`, `pydantic` plugins and SmartAsync wrapping are opt-in; the core has minimal dependencies. For scope/channel policies, use the ecosystem plugin (see *Publish-ready plugin*).
@@ -62,6 +62,35 @@ print(orders.api.get("retrieve")("42"))  # acme:42
 
 overview = orders.api.members()
 print(overview["handlers"].keys())      # dict_keys(['list', 'retrieve', 'create'])
+```
+
+## Hierarchical Routing
+
+Build nested service structures with dotted path access:
+
+```python
+class UsersAPI(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+
+    @route("api")
+    def list(self):
+        return ["alice", "bob"]
+
+class Application(RoutedClass):
+    def __init__(self):
+        self.api = Router(self, name="api")
+        self.users = UsersAPI()
+
+        # Attach child service
+        self.api.attach_instance(self.users, name="users")
+
+app = Application()
+print(app.api.get("users.list")())  # ["alice", "bob"]
+
+# Introspect hierarchy
+info = app.api.describe()
+print(info["children"].keys())  # dict_keys(['users'])
 ```
 
 ## Publish-ready plugin
@@ -109,8 +138,8 @@ pip install smartroute[pydantic]
 ## Pattern Highlights
 
 - **Explicit naming + prefixes** – `@route("api", name="detail")` and `Router(prefix="handle_")` separate method names from public route names ([`test_prefix_and_name_override`](tests/test_switcher_basic.py)).
-- **Attribute-level hierarchies** – `self.api.add_child("sales, finance")` connects child routers by discovering them from instance attributes ([`test_dashboard_hierarchy`](tests/test_switcher_basic.py)).
-- **Bulk registration** – Dictionaries or iterables allow connecting routers from external structures ([`test_add_child_accepts_mapping_for_named_children`](tests/test_switcher_basic.py)).
+- **Explicit instance hierarchies** – `self.api.attach_instance(self.child, name="alias")` connects RoutedClass instances with parent tracking and auto-detachment ([`test_attach_and_detach_instance_single_router_with_alias`](tests/test_router_edge_cases.py)).
+- **Branch routers** – `Router(branch=True, auto_discover=False)` creates pure organizational nodes without handlers ([`test_branch_router_blocks_auto_discover_and_entries`](tests/test_router_edge_cases.py)).
 - **Built-in and custom plugins** – `Router(...).plug("logging")`, `Router(...).plug("pydantic")`, or custom plugins (`llm-docs/PATTERNS.md#pattern-12-custom-plugin-development`). Scope/channel policies live in the SmartPublisher ecosystem plugin.
 - **Runtime configuration** – `routedclass.configure("api:logging/foo", enabled=False)` applies targeted overrides with wildcards or batch updates (see dedicated guide).
 - **Dynamic registration** – `router.add_entry(handler)` or `router.add_entry("*")` allow publishing handlers computed at runtime (`tests/test_router_runtime_extras.py`).
@@ -126,7 +155,7 @@ pip install smartroute[pydantic]
 
 ## Testing
 
-SmartRoute achieves 99% test coverage with 74 comprehensive tests:
+SmartRoute achieves 93% test coverage with 71 comprehensive tests (944 statements):
 
 ```bash
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
@@ -160,7 +189,7 @@ smartroute/
 
 SmartRoute is currently in **beta** (v0.5.3). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (75 tests, 852 statements)
+- **Test Coverage**: 93% (71 tests, 944 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

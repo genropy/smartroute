@@ -108,7 +108,7 @@ def test_attach_and_detach_instance_single_router_with_alias():
     attached = parent.api.attach_instance(parent.child, name="sales")
     assert attached is parent.child.api
     assert parent.child._routed_parent is parent
-    assert parent.api.get_child("sales") is parent.child.api
+    assert parent.api._children["sales"] is parent.child.api
 
     parent.api.detach_instance(parent.child)
     assert "sales" not in parent.api._children
@@ -130,10 +130,47 @@ def test_attach_instance_multiple_routers_requires_mapping():
     # Auto-mapping when parent has a single router attaches both routers
     parent.api.attach_instance(parent.child)
     assert set(parent.api._children) == {"api", "admin"}
+    assert parent.api._children["api"] is parent.child.api
+    assert parent.api._children["admin"] is parent.child.admin
+
+
+def test_attach_instance_single_child_requires_alias_when_parent_multi():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+            self.child = Child()
+
+    parent = Parent()
+    with pytest.raises(ValueError):
+        parent.api.attach_instance(parent.child)
+    parent.api.attach_instance(parent.child, name="child_alias")
+    assert "child_alias" in parent.api._children
+
+
+def test_attach_instance_allows_partial_mapping_and_skips_unmapped():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = Child()
+
+    parent = Parent()
+    parent.api.attach_instance(parent.child, name="api:only_api")
+    assert "only_api" in parent.api._children
+    assert "admin" not in parent.api._children
 
     parent.api.attach_instance(parent.child, name="api:sales, admin:reports")
-    assert parent.api.get_child("sales") is parent.child.api
-    assert parent.api.get_child("reports") is parent.child.admin
+    assert parent.api._children["sales"] is parent.child.api
+    assert parent.api._children["reports"] is parent.child.admin
     assert parent.child._routed_parent is parent
 
 

@@ -34,7 +34,7 @@ result = handler("value")  # Call it
 | `@route("name")` | Register method | Decorator on instance methods |
 | `get(name)` | Retrieve handler | `svc.api.get("method")` |
 | `call(name, *args)` | Direct invocation | `svc.api.call("method", arg)` |
-| `add_child(obj, name="...")` | Build hierarchy | `parent.api.add_child(child, name="child")` |
+| `attach_instance(obj, name="...")` | Build hierarchy | `parent.api.attach_instance(child, name="child")` |
 | `plug(name)` | Add plugin | `.plug("logging")` |
 | `routedclass.configure()` | Configure plugins | Runtime configuration |
 
@@ -82,8 +82,8 @@ class Service(RoutedClass):
 class Root(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        child = ChildService()
-        self.api.add_child(child, name="child")
+        self.child = ChildService()
+        self.api.attach_instance(self.child, name="child")
 
 root = Root()
 root.api.get("child.method")()  # Dotted path
@@ -103,15 +103,16 @@ class Service(RoutedClass):
         return "ok"
 ```
 
-### 6. Multiple Children (Dict)
+### 6. Multiple Children
 
 ```python
 class Root(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api")
-        users = UsersService()
-        products = ProductsService()
-        self.api.add_child({"users": users, "products": products})
+        self.users = UsersService()
+        self.products = ProductsService()
+        self.api.attach_instance(self.users, name="users")
+        self.api.attach_instance(self.products, name="products")
 ```
 
 ## Built-in Plugins
