@@ -225,6 +225,15 @@ class Router(BaseRouter):
         """Return attached plugin instances in application order."""
         return list(self._plugins)
 
+    def get_config(self, plugin_name: str, method_name: Optional[str] = None) -> Dict[str, Any]:
+        """Return plugin config (global + per-handler overrides) for an attached plugin."""
+        plugin = self._plugins_by_name.get(plugin_name)
+        if plugin is None:
+            raise AttributeError(
+                f"No plugin named '{plugin_name}' attached to router '{self.name}'"
+            )
+        return plugin.get_config(method_name)
+
     def __getattr__(self, name: str) -> Any:
         plugin = self._plugins_by_name.get(name)
         if plugin is None:
