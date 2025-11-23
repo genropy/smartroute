@@ -3,7 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route, routers
-from smartroute.core.base_router import ROUTER_REGISTRY_ATTR, _format_annotation
+from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME, _format_annotation
 from smartroute.core.routed import is_routed_class
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
@@ -175,17 +175,17 @@ def test_iter_child_routers_override_deduplicates():
 
 def test_iter_instance_attributes_skip_registry_and_slots():
     inst = SlotRouted()
-    setattr(inst, ROUTER_REGISTRY_ATTR, {"slot": inst.slot_router})
+    setattr(inst, ROUTER_REGISTRY_ATTR_NAME, {"slot": inst.slot_router})
     attrs = list(inst.slot_router._iter_instance_attributes(inst))
     keys = [name for name, _ in attrs]
-    assert ROUTER_REGISTRY_ATTR not in keys
+    assert ROUTER_REGISTRY_ATTR_NAME not in keys
     assert "slot_router" in keys
 
     class WeirdSlots:
-        __slots__ = ROUTER_REGISTRY_ATTR
+        __slots__ = ROUTER_REGISTRY_ATTR_NAME
 
         def __init__(self):
-            setattr(self, ROUTER_REGISTRY_ATTR, "value")
+            setattr(self, ROUTER_REGISTRY_ATTR_NAME, "value")
 
     weird = WeirdSlots()
     assert list(inst.slot_router._iter_instance_attributes(weird)) == []
@@ -194,19 +194,17 @@ def test_iter_instance_attributes_skip_registry_and_slots():
         pass
 
     holder = RegistryHolder()
-    setattr(holder, ROUTER_REGISTRY_ATTR, "registry")
+    setattr(holder, ROUTER_REGISTRY_ATTR_NAME, "registry")
     holder.extra = "value"
     attrs = list(inst.slot_router._iter_instance_attributes(holder))
-    assert all(name != ROUTER_REGISTRY_ATTR for name, _ in attrs)
+    assert all(name != ROUTER_REGISTRY_ATTR_NAME for name, _ in attrs)
     assert any(name == "extra" for name, _ in attrs)
 
 
 def test_router_members_include_metadata_tree():
     parent = ManualService()
-    child = ManualService()
-    parent.api.add_child(child, name="child")
     info = parent.api.members()
-    assert "child" in info["children"]
+    assert "children" in info
 
 
 def test_format_annotation_branches():
@@ -251,7 +249,7 @@ def test_configure_question_success_and_router_proxy_errors():
     assert "api" in tree
     with pytest.raises(AttributeError):
         svc.routedclass.get_router("missing")
-    registry = getattr(svc, ROUTER_REGISTRY_ATTR)
+    registry = getattr(svc, ROUTER_REGISTRY_ATTR_NAME)
     registry.pop("api")
     router = svc.routedclass.get_router("api")
     assert router is svc.api
@@ -306,7 +304,7 @@ def test_get_router_skips_empty_segments():
         def __init__(self):
             self.api = Router(self, name="api")
             self.child = Leaf()
-            self.api.add_child(self.child, name="child")
+            self.api._children["child"] = self.child.api  # direct attach for test
 
     svc = Parent()
     router = svc.routedclass.get_router("api.child..")

@@ -94,41 +94,7 @@ def test_iter_plugins_and_missing_attribute():
         _ = svc.api.missing_plugin  # type: ignore[attr-defined]
 
 
-def test_router_add_child_error_paths():
-    class Node(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api")
-
-        @route("api")
-        def ping(self):
-            return "ok"
-
-    parent = Node()
-    with pytest.raises(TypeError):
-        parent.api.add_child(object())
-
-    first = Node()
-    second = Node()
-    parent.api.add_child(first, name="leaf")
-    with pytest.raises(ValueError):
-        parent.api.add_child(second, name="leaf")
-
-    with pytest.raises(AttributeError):
-        parent.api.add_child("missing_attr")
-
-    with pytest.raises(ValueError):
-        parent.api.add_child("leaf, leaf", name="override")
-
-    with pytest.raises(KeyError):
-        parent.api.get_child("ghost")
-
-    fresh = Node()
-    bound_child = first.api
-    attached = fresh.api.add_child(bound_child, name="leaf_bound")
-    assert attached is bound_child
-
-
-def test_routed_parent_recorded_on_add_child():
+def test_attach_and_detach_instance_single_router_with_alias():
     class Child(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api")
@@ -139,9 +105,171 @@ def test_routed_parent_recorded_on_add_child():
             self.child = Child()
 
     parent = Parent()
-    assert parent.child._routed_parent is None
-    parent.api.add_child(parent.child, name="child")
+    attached = parent.api.attach_instance(parent.child, name="sales")
+    assert attached is parent.child.api
     assert parent.child._routed_parent is parent
+    assert parent.api.get_child("sales") is parent.child.api
+
+    parent.api.detach_instance(parent.child)
+    assert "sales" not in parent.api._children
+    assert parent.child._routed_parent is None
+
+
+def test_attach_instance_multiple_routers_requires_mapping():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = Child()
+
+    parent = Parent()
+    # Auto-mapping when parent has a single router attaches both routers
+    parent.api.attach_instance(parent.child)
+    assert set(parent.api._children) == {"api", "admin"}
+
+    parent.api.attach_instance(parent.child, name="api:sales, admin:reports")
+    assert parent.api.get_child("sales") is parent.child.api
+    assert parent.api.get_child("reports") is parent.child.admin
+    assert parent.child._routed_parent is parent
+
+
+def test_attach_instance_name_collision():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child1 = Child()
+            self.child2 = Child()
+
+    parent = Parent()
+    parent.api.attach_instance(parent.child1, name="sales")
+    with pytest.raises(ValueError):
+        parent.api.attach_instance(parent.child2, name="sales")
+
+
+def test_attach_instance_requires_child_attribute_on_parent():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    parent = Parent()
+    child = Child()
+    with pytest.raises(ValueError):
+        parent.api.attach_instance(child, name="child")
+    # After storing on parent, attach works
+    parent.child = child
+    parent.api.attach_instance(parent.child, name="child")
+
+
+def test_detach_instance_missing_alias():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+
+    parent = Child()
+    parent.self_ref = parent
+    parent.api.attach_instance(parent, name="api:self_api, admin:self_admin")
+    # detach without explicit mapping removes both
+    parent.api.detach_instance(parent)
+    assert parent.api._children == {}
+
+
+def test_attach_instance_requires_routedclass():
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    parent = Parent()
+    with pytest.raises(TypeError):
+        parent.api.attach_instance(object(), name="x")
+    with pytest.raises(TypeError):
+        parent.api.detach_instance(object())
+
+
+def test_auto_detach_on_attribute_replacement():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.child = Child()
+            self.api.attach_instance(self.child, name="child")
+
+    parent = Parent()
+    assert parent.child._routed_parent is parent
+    assert "child" in parent.api._children
+
+    parent.child = None  # triggers auto-detach
+    assert "child" not in parent.api._children
+    assert parent.child is None
+
+
+def test_attach_instance_rejects_other_parent_when_already_bound():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+    class Parent(RoutedClass):
+        def __init__(self, label: str):
+            self.label = label
+            self.api = Router(self, name="api")
+            self.child = Child()
+
+    first = Parent("first")
+    second = Parent("second")
+
+    # Bind to first parent
+    first.api.attach_instance(first.child, name="child")
+    assert first.child._routed_parent is first
+    assert "child" in first.api._children
+
+    # Attempt to bind same child to another parent should fail
+    with pytest.raises(ValueError):
+        second.api.attach_instance(first.child, name="child")
+
+
+def test_attach_instance_requires_mapping_when_parent_has_multiple_routers():
+    class Child(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+
+    class Parent(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+            self.admin = Router(self, name="admin")
+            self.child = Child()
+
+    parent = Parent()
+    with pytest.raises(ValueError):
+        parent.api.attach_instance(parent.child)  # parent has multiple routers, mapping required
+
+
+def test_branch_router_blocks_auto_discover_and_entries():
+    class Service(RoutedClass):
+        def __init__(self):
+            with pytest.raises(ValueError):
+                Router(self, name="branch", branch=True)  # auto_discover default True
+
+            self.branch = Router(self, name="branch", branch=True, auto_discover=False)
+
+    svc = Service()
+    with pytest.raises(ValueError):
+        svc.branch.add_entry("missing")
 
 
 def test_base_plugin_default_hooks():
@@ -241,25 +369,18 @@ def test_register_plugin_validates():
 
 
 def test_describe_exposes_metadata():
-    class Child(RoutedClass):
+    class Parent(RoutedClass):
         def __init__(self):
-            self.api = Router(self, name="api")
+            self.api = Router(self, name="api").plug("simple")
 
         @route("api")
         def run(self):
             """Run child handler."""
             return "ok"
 
-    class Parent(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("simple")
-            self.child = Child()
-            self.api.add_child(self.child, name="child")
-
     info = Parent().api.describe()
     assert info["name"] == "api"
-    assert "child" in info["children"]
-    run_info = info["children"]["child"]["methods"]["run"]
+    run_info = info["methods"]["run"]
     assert run_info["doc"] == "Run child handler."
     assert run_info["parameters"] == {}
     assert run_info["return_type"] == "Any"
@@ -288,19 +409,19 @@ def test_describe_includes_pydantic_validation():
 
 
 def test_routed_proxy_get_router_handles_dotted_path():
-    class Child(RoutedClass):
+    class Leaf(RoutedClass):
         def __init__(self):
-            self.api = Router(self, name="api")
+            self.api = Router(self, name="leaf", auto_discover=False)
 
     class Parent(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api")
-            self.child = Child()
-            self.api.add_child(self.child, name="child")
+            self.child = Leaf()
+            self.api._children["child"] = self.child.api  # direct attach for test
 
     svc = Parent()
     router = svc.routedclass.get_router("api.child")
-    assert router.name == "api"
+    assert router.name == "leaf"
 
 
 def test_routed_configure_updates_plugins_global_and_local():
@@ -340,19 +461,9 @@ def test_routed_configure_updates_plugins_global_and_local():
 def test_routed_configure_question_lists_tree():
     ensure_plugin("simple", SimplePlugin)
 
-    class Leaf(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("simple")
-
-        @route("api")
-        def ping(self):
-            return "leaf"
-
     class Root(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api").plug("simple")
-            self.leaf = Leaf()
-            self.api.add_child(self.leaf, name="leaf")
 
         @route("api")
         def root_ping(self):
@@ -362,4 +473,4 @@ def test_routed_configure_question_lists_tree():
     info = svc.routedclass.configure("?")
     assert "api" in info
     assert info["api"]["plugins"]
-    assert "leaf" in info["api"]["children"]
+    assert info["api"]["children"] == {}

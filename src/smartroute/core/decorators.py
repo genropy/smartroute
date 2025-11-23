@@ -34,7 +34,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional, Type
 
-from .base_router import TARGET_ATTR
+from .base_router import TARGET_ATTR_NAME
 from .routed import RoutedClass
 from .router import Router
 
@@ -53,7 +53,7 @@ def route(
     """
 
     def decorator(func: Callable) -> Callable:
-        markers = list(getattr(func, TARGET_ATTR, []))
+        markers = list(getattr(func, TARGET_ATTR_NAME, []))
         payload = {"name": router}
         entry_name = alias if name is None else name
         if entry_name is not None:
@@ -61,7 +61,7 @@ def route(
         for key, value in kwargs.items():
             payload[key] = value
         markers.append(payload)
-        setattr(func, TARGET_ATTR, markers)
+        setattr(func, TARGET_ATTR_NAME, markers)
         return func
 
     return decorator

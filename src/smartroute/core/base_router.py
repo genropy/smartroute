@@ -52,7 +52,8 @@ Registration and naming
 Marker discovery
 ----------------
 ``_iter_marked_methods`` walks the reversed MRO of ``type(owner)`` (child first
-wins), scans ``__dict__`` for plain functions carrying ``TARGET_ATTR`` markers.
+wins), scans ``__dict__`` for plain functions carrying ``TARGET_ATTR_NAME``
+markers.
 Duplicates (by function identity) are skipped. Only markers whose ``name``
 matches this router's ``name`` are used; the name key is removed from the
 payload before consumption. ``_register_marked`` binds each function to owner,
@@ -173,10 +174,10 @@ from smartseeds.typeutils import safe_is_instance
 
 from smartroute.plugins._base_plugin import MethodEntry
 
-__all__ = ["BaseRouter", "TARGET_ATTR", "ROUTER_REGISTRY_ATTR"]
+__all__ = ["BaseRouter", "TARGET_ATTR_NAME", "ROUTER_REGISTRY_ATTR_NAME"]
 
-TARGET_ATTR = "__smartroute_targets__"
-ROUTER_REGISTRY_ATTR = "__smartroute_router_registry__"
+TARGET_ATTR_NAME = "__smartroute_targets__"
+ROUTER_REGISTRY_ATTR_NAME = "__smartroute_router_registry__"
 
 
 class BaseRouter:
@@ -197,6 +198,7 @@ class BaseRouter:
         "_handlers",
         "_children",
         "_get_defaults",
+        "_is_branch",
     )
 
     def __init__(
@@ -208,6 +210,7 @@ class BaseRouter:
         get_default_handler: Optional[Callable] = None,
         get_use_smartasync: Optional[bool] = None,
         get_kwargs: Optional[Dict[str, Any]] = None,
+        branch: bool = False,
         auto_discover: bool = True,
         auto_selector: str = "*",
     ) -> None:
@@ -216,6 +219,7 @@ class BaseRouter:
         self.instance = owner
         self.name = name
         self.prefix = prefix or ""
+        self._is_branch = bool(branch)
         self._entries: Dict[str, MethodEntry] = {}
         self._handlers: Dict[str, Callable] = {}
         self._children: Dict[str, BaseRouter] = {}
@@ -226,6 +230,8 @@ class BaseRouter:
             defaults.setdefault("use_smartasync", get_use_smartasync)
         self._get_defaults: Dict[str, Any] = defaults
         self._register_with_owner()
+        if self._is_branch and auto_discover:
+            raise ValueError("Branch routers cannot auto-discover handlers")
         if auto_discover:
             self.add_entry(auto_selector)
 
@@ -265,6 +271,8 @@ class BaseRouter:
             AttributeError: when resolving missing attributes on owner.
             TypeError: on unsupported target type.
         """
+        if self._is_branch:
+            raise ValueError("Branch routers cannot register handlers")
         entry_name = name if name is not None else alias
         if isinstance(target, (list, tuple, set)):
             for entry in target:
@@ -369,7 +377,7 @@ class BaseRouter:
                 if func_id in seen:
                     continue
                 seen.add(func_id)
-                markers = getattr(value, TARGET_ATTR, None)
+                markers = getattr(value, TARGET_ATTR_NAME, None)
                 if not markers:
                     continue
                 for marker in markers:
@@ -460,6 +468,95 @@ class BaseRouter:
             case _:
                 return self._add_child_router(child, name=name)
 
+    def attach_instance(self, routed_child: Any, *, name: Optional[str] = None) -> "BaseRouter":
+        """Attach a RoutedClass instance with optional alias mapping."""
+        if not safe_is_instance(routed_child, "smartroute.core.routed.RoutedClass"):
+            raise TypeError("attach_instance() requires a RoutedClass instance")
+        existing_parent = getattr(routed_child, "_routed_parent", None)
+        if existing_parent is not None and existing_parent is not self.instance:
+            raise ValueError("attach_instance() rejected: child already bound to another parent")
+
+        # Require the parent to already reference the child via an attribute.
+        has_attr_reference = any(
+            value is routed_child for _, value in self._iter_instance_attributes(self.instance)
+        )
+        if not has_attr_reference:
+            raise ValueError("attach_instance() requires the child to be stored on the parent")
+
+        candidates = self._collect_child_routers(routed_child)
+        if not candidates:
+            raise TypeError(f"Object {routed_child!r} does not expose Router instances")
+
+        mapping: Dict[str, str] = {}
+        tokens = [chunk.strip() for chunk in (name.split(",") if name else []) if chunk.strip()]
+        parent_registry = getattr(self.instance, ROUTER_REGISTRY_ATTR_NAME, {}) or {}
+        parent_has_multiple = len(parent_registry) > 1
+
+        if len(candidates) == 1:
+            # Single child router: alias optional unless parent has multiple routers.
+            if parent_has_multiple and not tokens:
+                raise ValueError("attach_instance() requires alias when parent has multiple routers")
+            alias = tokens[0] if tokens else name or candidates[0][0] or candidates[0][1].name
+            orig_attr, _ = candidates[0]
+            mapping[orig_attr] = alias
+        else:
+            # Multiple child routers.
+            if parent_has_multiple and not tokens:
+                raise ValueError("attach_instance() requires mapping when parent has multiple routers")
+            if not tokens:
+                # Auto-mapping: alias = child router name/attr
+                for orig_attr, router in candidates:
+                    alias = router.name or orig_attr
+                    mapping[orig_attr] = alias
+            else:
+                candidate_names = {attr for attr, _ in candidates}
+                for token in tokens:
+                    if ":" not in token:
+                        raise ValueError(
+                            "attach_instance() with multiple routers requires mapping 'child:alias'"
+                        )
+                    orig, alias = [part.strip() for part in token.split(":", 1)]
+                    if not orig or not alias:
+                        raise ValueError("attach_instance() mapping requires both child and alias")
+                    if orig not in candidate_names:
+                        raise ValueError(f"Unknown child router {orig!r} in mapping")
+                    if orig in mapping:
+                        raise ValueError(f"Duplicate mapping for {orig!r}")
+                    mapping[orig] = alias
+                # Unmapped child routers are simply not attached.
+
+        attached: Optional[BaseRouter] = None
+        for attr_name, router in candidates:
+            alias = mapping.get(attr_name)
+            if alias is None:
+                continue
+            if alias in self._children and self._children[alias] is not router:
+                raise ValueError(f"Child name collision: {alias}")
+            self._children[alias] = router
+            router._on_attached_to_parent(self)
+            attached = router
+
+        if getattr(routed_child, "_routed_parent", None) is not self.instance:
+            object.__setattr__(routed_child, "_routed_parent", self.instance)
+        assert attached is not None
+        return attached
+
+    def detach_instance(self, routed_child: Any) -> "BaseRouter":
+        """Detach all routers belonging to a RoutedClass instance."""
+        if not safe_is_instance(routed_child, "smartroute.core.routed.RoutedClass"):
+            raise TypeError("detach_instance() requires a RoutedClass instance")
+        removed: List[str] = []
+        for alias, router in list(self._children.items()):
+            if router.instance is routed_child:
+                removed.append(alias)
+                self._children.pop(alias, None)
+
+        if getattr(routed_child, "_routed_parent", None) is self.instance:
+            object.__setattr__(routed_child, "_routed_parent", None)
+
+        # No hard error if nothing was removed; detach is best-effort.
+        return routed_child  # type: ignore[return-value]
+
     def get_child(self, name: str) -> "BaseRouter":
         try:
             return self._children[name]
@@ -527,14 +624,14 @@ class BaseRouter:
         inst_dict = getattr(obj, "__dict__", None)
         if inst_dict:
             for key, value in inst_dict.items():
-                if key == ROUTER_REGISTRY_ATTR:
+                if key == ROUTER_REGISTRY_ATTR_NAME:
                     continue
                 yield key, value
         slots = getattr(type(obj), "__slots__", ())
         if isinstance(slots, str):
             slots = (slots,)
         for slot in slots:
-            if slot == ROUTER_REGISTRY_ATTR:
+            if slot == ROUTER_REGISTRY_ATTR_NAME:
                 continue
             if hasattr(obj, slot):
                 yield slot, getattr(obj, slot)

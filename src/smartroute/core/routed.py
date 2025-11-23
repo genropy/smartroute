@@ -68,42 +68,68 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from smartseeds.typeutils import safe_is_instance
 
-from .base_router import ROUTER_REGISTRY_ATTR
+from .base_router import ROUTER_REGISTRY_ATTR_NAME
 
 if TYPE_CHECKING:  # pragma: no cover - import for typing only
     from .router import Router
 
 __all__ = ["RoutedClass", "is_routed_class"]
 
-_PROXY_ATTR = "__routed_proxy__"
+_PROXY_ATTR_NAME = "__routed_proxy__"
 
 
 class RoutedClass:
     """Mixin providing helper proxies for runtime routers."""
 
-    __slots__ = (_PROXY_ATTR, ROUTER_REGISTRY_ATTR, "_routed_parent")
+    __slots__ = (_PROXY_ATTR_NAME, ROUTER_REGISTRY_ATTR_NAME, "_routed_parent")
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        current = self._get_current_routed_attr(name)
+        if current is not None:
+            self._auto_detach_child(current)
+
+        object.__setattr__(self, name, value)
+
+    def _get_current_routed_attr(self, name: str) -> Any:
+        try:
+            current = object.__getattribute__(self, name)
+        except AttributeError:
+            return None
+        if not safe_is_instance(current, "smartroute.core.routed.RoutedClass"):
+            return None
+        if getattr(current, "_routed_parent", None) is not self:
+            return None
+        return current
+
+    def _auto_detach_child(self, current: Any) -> None:
+        registry = getattr(self, ROUTER_REGISTRY_ATTR_NAME, {}) or {}
+        for router in registry.values():
+            try:
+                router.detach_instance(current)  # type: ignore[attr-defined]
+            except Exception:
+                pass  # best-effort; avoid blocking setattr
 
     def _register_router(self, router: "Router") -> None:
-        registry = getattr(self, ROUTER_REGISTRY_ATTR, None)
+        registry = getattr(self, ROUTER_REGISTRY_ATTR_NAME, None)
         if registry is None:
             registry = {}
-            setattr(self, ROUTER_REGISTRY_ATTR, registry)
+            setattr(self, ROUTER_REGISTRY_ATTR_NAME, registry)
         if not hasattr(self, "_routed_parent"):
             object.__setattr__(self, "_routed_parent", None)
         if router.name:
             registry[router.name] = router
 
     def _iter_registered_routers(self):
-        registry = getattr(self, ROUTER_REGISTRY_ATTR, None) or {}
+        registry = getattr(self, ROUTER_REGISTRY_ATTR_NAME, None) or {}
         for name, router in registry.items():
             yield name, router
 
     @property
     def routedclass(self) -> "_RoutedProxy":
-        proxy = getattr(self, _PROXY_ATTR, None)
+        proxy = getattr(self, _PROXY_ATTR_NAME, None)
         if proxy is None:
             proxy = _RoutedProxy(self)
-            setattr(self, _PROXY_ATTR, proxy)
+            setattr(self, _PROXY_ATTR_NAME, proxy)
         return proxy
 
 
@@ -122,7 +148,7 @@ class _RoutedProxy:
         return self._navigate_router(router, extra_path)
 
     def _lookup_router(self, owner: RoutedClass, name: str) -> Optional["Router"]:
-        registry = getattr(owner, ROUTER_REGISTRY_ATTR, None) or {}
+        registry = getattr(owner, ROUTER_REGISTRY_ATTR_NAME, None) or {}
         router = registry.get(name)
         if router:
             return router
@@ -183,7 +209,7 @@ class _RoutedProxy:
     def _describe_all(self) -> Dict[str, Any]:
         owner = self._owner
         result: Dict[str, Any] = {}
-        registry = getattr(owner, ROUTER_REGISTRY_ATTR, None) or {}
+        registry = getattr(owner, ROUTER_REGISTRY_ATTR_NAME, None) or {}
         for attr_name, router in registry.items():
             result[attr_name] = self._describe_router(router)
         return result
@@ -250,4 +276,4 @@ class _RoutedProxy:
 
 def is_routed_class(obj: Any) -> bool:
     """Return True when ``obj`` is a RoutedClass instance."""
-    return isinstance(obj, RoutedClass)
+    return safe_is_instance(obj, "smartroute.core.routed.RoutedClass")
