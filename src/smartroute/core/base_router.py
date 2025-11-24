@@ -221,6 +221,13 @@ class BaseRouter:
         if auto_discover:
             self.add_entry(auto_selector)
 
+    def _is_known_plugin(self, prefix: str) -> bool:
+        try:
+            from smartroute.core.router import Router  # type: ignore
+        except Exception:  # pragma: no cover - import safety
+            return False
+        return prefix in Router.available_plugins()
+
     # ------------------------------------------------------------------
     # Registration helpers
     # ------------------------------------------------------------------
@@ -260,6 +267,17 @@ class BaseRouter:
         if self._is_branch:
             raise ValueError("Branch routers cannot register handlers")
         entry_name = name if name is not None else alias
+        # Split plugin-scoped options (<plugin>_<key>) from core options
+        plugin_options: Dict[str, Dict[str, Any]] = {}
+        core_options: Dict[str, Any] = {}
+        for key, value in options.items():
+            if "_" in key:
+                plugin_name, plug_key = key.split("_", 1)
+                if plugin_name and plug_key and self._is_known_plugin(plugin_name):
+                    plugin_options.setdefault(plugin_name, {})[plug_key] = value
+                    continue
+            core_options[key] = value
+
         if isinstance(target, (list, tuple, set)):
             for entry in target:
                 self.add_entry(
@@ -267,7 +285,7 @@ class BaseRouter:
                     name=entry_name,
                     metadata=dict(metadata or {}),
                     replace=replace,
-                    **options,
+                    **core_options,
                 )
             return self
 
@@ -277,7 +295,11 @@ class BaseRouter:
                 return self
             if target in {"*", "_all_", "__all__"}:
                 self._register_marked(
-                    name=entry_name, metadata=metadata, replace=replace, extra=options
+                    name=entry_name,
+                    metadata=metadata,
+                    replace=replace,
+                    extra=core_options,
+                    plugin_options=plugin_options,
                 )
                 return self
             if "," in target:
@@ -289,7 +311,7 @@ class BaseRouter:
                             name=entry_name,
                             metadata=dict(metadata or {}),
                             replace=replace,
-                            **options,
+                            **core_options,
                         )
                 return self
             bound = getattr(self.instance, target)
@@ -303,8 +325,14 @@ class BaseRouter:
             raise TypeError(f"Unsupported add_entry target: {target!r}")
 
         entry_meta = dict(metadata or {})
-        entry_meta.update(options)
-        self._register_callable(bound, name=entry_name, metadata=entry_meta, replace=replace)
+        entry_meta.update(core_options)
+        self._register_callable(
+            bound,
+            name=entry_name,
+            metadata=entry_meta,
+            replace=replace,
+            plugin_options=plugin_options,
+        )
         return self
 
     def _register_callable(
@@ -314,6 +342,7 @@ class BaseRouter:
         name: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         replace: bool = False,
+        plugin_options: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
         logical_name = self._resolve_name(bound.__name__, alias=name)
         if logical_name in self._entries and not replace:
@@ -325,6 +354,9 @@ class BaseRouter:
             plugins=[],
             metadata=dict(metadata or {}),
         )
+        # Attach plugin-scoped config to metadata for later consumption by plugin-enabled routers.
+        if plugin_options:
+            entry.metadata["plugin_config"] = plugin_options
         self._entries[logical_name] = entry
         self._after_entry_registered(entry)
         self._rebuild_handlers()
@@ -336,6 +368,7 @@ class BaseRouter:
         metadata: Optional[Dict[str, Any]],
         replace: bool,
         extra: Dict[str, Any],
+        plugin_options: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
         for func, marker in self._iter_marked_methods():
             entry_override = marker.pop("entry_name", None) or marker.pop("alias", None)
@@ -343,12 +376,29 @@ class BaseRouter:
             entry_meta = dict(metadata or {})
             entry_meta.update(marker)
             entry_meta.update(extra)
+            # Split plugin-scoped options from marker payload as well
+            marker_plugin_opts: Dict[str, Dict[str, Any]] = {}
+            core_marker: Dict[str, Any] = {}
+            for key, value in entry_meta.items():
+                if "_" in key:
+                    plugin_name, plug_key = key.split("_", 1)
+                    if plugin_name and plug_key and self._is_known_plugin(plugin_name):
+                        marker_plugin_opts.setdefault(plugin_name, {})[plug_key] = value
+                        continue
+                core_marker[key] = value
+            entry_meta = core_marker
+            merged_plugin_opts: Dict[str, Dict[str, Any]] = {}
+            if plugin_options:
+                merged_plugin_opts.update(plugin_options)
+            for pname, pdata in marker_plugin_opts.items():
+                merged_plugin_opts.setdefault(pname, {}).update(pdata)
             bound = func.__get__(self.instance, type(self.instance))
             self._register_callable(
                 bound,
                 name=entry_name,
                 metadata=entry_meta,
                 replace=replace,
+                plugin_options=merged_plugin_opts or None,
             )
 
     def _iter_marked_methods(self) -> Iterator[Tuple[Callable, Dict[str, Any]]]:
@@ -657,9 +707,11 @@ class BaseRouter:
             info_source = getattr(node, "_plugin_info", {}) or {}
             for pname, pdata in info_source.items():
                 plugin_info[pname] = {
-                    "config": dict(pdata.get("config", {})),
-                    "handlers": {k: dict(v) for k, v in pdata.get("handlers", {}).items()},
-                    "locals": pdata.get("locals", {}),
+                    key: {
+                        "config": dict(slot.get("config", {})),
+                        "locals": dict(slot.get("locals", {})),
+                    }
+                    for key, slot in pdata.items()
                 }
 
             return {

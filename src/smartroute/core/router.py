@@ -2,7 +2,7 @@
 
 If this module disappeared, rebuild it exactly as described. ``Router`` extends
 ``BaseRouter`` with a global plugin registry, per-router plugin instances,
-middleware wrapping, and runtime config storage in contextvars.
+middleware wrapping, and plugin state stored on the router instance.
 
 Internal state
 --------------
@@ -12,6 +12,7 @@ Internal state
 - ``_filter_plugins``: plugins exposing ``filter_entry`` callable.
 - ``_inherited_from``: set of parent ids already inherited to avoid double
   cloning when the same child is attached multiple times.
+- ``_plugin_info``: per-plugin state store on the router.
 
 Global registry
 ---------------
@@ -33,14 +34,11 @@ ensuring ``entry.plugins`` lists the plugin), rebuilds handlers, and returns
 
 Runtime flags and data
 ----------------------
-Contextvars keep per-instance/plugin/handler state using key
-``(id(instance), method_name, plugin_name)``:
-
-- ``set_plugin_enabled``/``is_plugin_enabled`` toggle middleware activation
-  (default True when no flag stored).
-
-- ``set_runtime_data``/``get_runtime_data`` store arbitrary dict values per
-  plugin/handler.
+Stored on the router under ``_plugin_info[plugin_code]`` using a reserved
+``"--base--"`` bucket for router-level defaults and one bucket per handler
+name, each with ``config`` and ``locals``. ``set_plugin_enabled`` /
+``is_plugin_enabled`` and ``set_runtime_data`` / ``get_runtime_data`` read/write
+these buckets (no contextvars).
 
 Wrapping pipeline
 -----------------
@@ -111,39 +109,16 @@ Router Invariants
 
 from __future__ import annotations
 
-import contextvars
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type
 
 from smartroute.core.base_router import BaseRouter
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 __all__ = ["Router"]
 
-_ACTIVATION_CTX: contextvars.ContextVar[Dict[Tuple[int, str, str], bool] | None] = (
-    contextvars.ContextVar("smartroute_activation", default=None)
-)
-_RUNTIME_CTX: contextvars.ContextVar[Dict[Tuple[int, str, str], Dict[str, Any]] | None] = (
-    contextvars.ContextVar("smartroute_runtime", default=None)
-)
 _PLUGIN_REGISTRY: Dict[str, Type[BasePlugin]] = {}
-
-
-def _get_activation_map() -> Dict[Tuple[int, str, str], bool]:
-    mapping = _ACTIVATION_CTX.get()
-    if mapping is None:
-        mapping = {}
-        _ACTIVATION_CTX.set(mapping)
-    return mapping
-
-
-def _get_runtime_map() -> Dict[Tuple[int, str, str], Dict[str, Any]]:
-    mapping = _RUNTIME_CTX.get()
-    if mapping is None:
-        mapping = {}
-        _RUNTIME_CTX.set(mapping)
-    return mapping
 
 
 @dataclass
@@ -245,37 +220,60 @@ class Router(BaseRouter):
             raise AttributeError(f"No plugin named '{name}' attached to router '{self.name}'")
         return plugin
 
-    # ------------------------------------------------------------------
-    # Runtime helpers
-    # ------------------------------------------------------------------
-    def _activation_key(self, method_name: str, plugin_name: str) -> Tuple[int, str, str]:
-        return (id(self.instance), method_name, plugin_name)
+    def _get_plugin_bucket(
+        self, plugin_name: str, create: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        bucket = self._plugin_info.get(plugin_name)
+        if bucket is None and create:
+            bucket = {"--base--": {"config": {}, "locals": {}}}
+            self._plugin_info[plugin_name] = bucket
+        if bucket is not None and "--base--" not in bucket:
+            bucket["--base--"] = {"config": {}, "locals": {}}
+        return bucket
 
+    # ------------------------------------------------------------------
+    # Runtime helpers (state stored on plugin_info)
+    # ------------------------------------------------------------------
     def set_plugin_enabled(self, method_name: str, plugin_name: str, enabled: bool = True) -> None:
-        mapping = _get_activation_map()
-        mapping[self._activation_key(method_name, plugin_name)] = bool(enabled)
+        bucket = self._get_plugin_bucket(plugin_name, create=False)
+        if bucket is None:
+            raise AttributeError(
+                f"No plugin named '{plugin_name}' attached to router '{self.name}'"
+            )
+        entry = bucket.setdefault(method_name, {"config": {}, "locals": {}})
+        entry.setdefault("locals", {})["enabled"] = bool(enabled)
 
     def is_plugin_enabled(self, method_name: str, plugin_name: str) -> bool:
-        mapping = _get_activation_map()
-        value = mapping.get(self._activation_key(method_name, plugin_name))
-        if value is None:
-            return True
-        return bool(value)
-
-    def _runtime_key(self, method_name: str, plugin_name: str) -> Tuple[int, str, str]:
-        return (id(self.instance), method_name, plugin_name)
+        bucket = self._get_plugin_bucket(plugin_name, create=False)
+        if bucket is None:
+            raise AttributeError(
+                f"No plugin named '{plugin_name}' attached to router '{self.name}'"
+            )
+        entry_locals = bucket.get(method_name, {}).get("locals", {})
+        if "enabled" in entry_locals:
+            return bool(entry_locals["enabled"])
+        base_locals = bucket.get("--base--", {}).get("locals", {})
+        return bool(base_locals.get("enabled", True))
 
     def set_runtime_data(self, method_name: str, plugin_name: str, key: str, value: Any) -> None:
-        mapping = _get_runtime_map()
-        slot = mapping.setdefault(self._runtime_key(method_name, plugin_name), {})
-        slot[key] = value
+        bucket = self._get_plugin_bucket(plugin_name, create=False)
+        if bucket is None:
+            raise AttributeError(
+                f"No plugin named '{plugin_name}' attached to router '{self.name}'"
+            )
+        entry = bucket.setdefault(method_name, {"config": {}, "locals": {}})
+        entry.setdefault("locals", {})[key] = value
 
     def get_runtime_data(
         self, method_name: str, plugin_name: str, key: str, default: Any = None
     ) -> Any:
-        mapping = _get_runtime_map()
-        slot = mapping.get(self._runtime_key(method_name, plugin_name), {})
-        return slot.get(key, default)
+        bucket = self._get_plugin_bucket(plugin_name, create=False)
+        if bucket is None:
+            raise AttributeError(
+                f"No plugin named '{plugin_name}' attached to router '{self.name}'"
+            )
+        entry_locals = bucket.get(method_name, {}).get("locals", {})
+        return entry_locals.get(key, default)
 
     # ------------------------------------------------------------------
     # Overrides/hooks
@@ -322,20 +320,26 @@ class Router(BaseRouter):
         for plugin in new_plugins:
             plugin._bind_router(self)
             parent_bucket = parent._plugin_info.get(plugin.name, {})
-            self._plugin_info[plugin.name] = {
-                "config": dict(parent_bucket.get("config", {})),
-                "handlers": {
-                    key: dict(cfg) for key, cfg in parent_bucket.get("handlers", {}).items()
-                },
-                "locals": {},
-            }
-            if not parent_bucket:
+            if parent_bucket:
+                cloned: Dict[str, Any] = {}
+                for key, pdata in parent_bucket.items():
+                    cloned[key] = {"config": dict(pdata.get("config", {})), "locals": {}}
+                self._plugin_info[plugin.name] = cloned
+            else:
                 plugin._seed_store()
             self._plugins_by_name.setdefault(plugin.name, plugin)
             self._apply_plugin_to_entries(plugin)
         self._rebuild_handlers()
 
     def _after_entry_registered(self, entry: MethodEntry) -> None:  # type: ignore[override]
+        plugin_options = entry.metadata.get("plugin_config", {})
+        if plugin_options:
+            for pname, cfg in plugin_options.items():
+                bucket = self._plugin_info.setdefault(
+                    pname, {"--base--": {"config": {}, "locals": {}}}
+                )
+                entry_bucket = bucket.setdefault(entry.name, {"config": {}, "locals": {}})
+                entry_bucket["config"].update(cfg)
         for plugin in self._plugins:
             if plugin.name not in entry.plugins:
                 entry.plugins.append(plugin.name)

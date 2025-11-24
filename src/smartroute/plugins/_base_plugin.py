@@ -131,9 +131,11 @@ class BasePlugin:
         plugin_bucket = store.get(self.name)
         if not plugin_bucket:
             return {}
-        merged = dict(plugin_bucket.get("config", {}))
+        base_bucket = plugin_bucket.get("--base--", {})
+        merged = dict(base_bucket.get("config", {}))
         if method_name:
-            merged.update(plugin_bucket.get("handlers", {}).get(method_name, {}))
+            entry_bucket = plugin_bucket.get(method_name, {})
+            merged.update(entry_bucket.get("config", {}))
         return merged
 
     def set_config(self, flags: Optional[str] = None, **config: Any) -> None:
@@ -142,8 +144,9 @@ class BasePlugin:
         if flags:
             config.update(self._parse_flags(flags))
         store = self._get_store()
-        bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
-        bucket["config"].update(config)
+        bucket = store.setdefault(self.name, {})
+        base_bucket = bucket.setdefault("--base--", {"config": {}, "locals": {}})
+        base_bucket["config"].update(config)
 
     def set_method_config(
         self, method_name: str, *, flags: Optional[str] = None, **config: Any
@@ -153,9 +156,9 @@ class BasePlugin:
         if flags:
             config.update(self._parse_flags(flags))
         store = self._get_store()
-        plugin_bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
-        handler_bucket = plugin_bucket.setdefault("handlers", {}).setdefault(method_name, {})
-        handler_bucket.update(config)
+        plugin_bucket = store.setdefault(self.name, {})
+        entry_bucket = plugin_bucket.setdefault(method_name, {"config": {}, "locals": {}})
+        entry_bucket["config"].update(config)
 
     def _parse_flags(self, flags: str) -> Dict[str, bool]:
         mapping: Dict[str, bool] = {}
@@ -192,10 +195,12 @@ class BasePlugin:
         if self._router is None:
             return
         store = self._get_store()
-        bucket = store.setdefault(self.name, {"config": {}, "handlers": {}, "locals": {}})
-        bucket["config"].update(self._initial_config)
+        bucket = store.setdefault(self.name, {})
+        base_bucket = bucket.setdefault("--base--", {"config": {}, "locals": {}})
+        base_bucket["config"].update(self._initial_config)
         for handler, cfg in self._initial_method_config.items():
-            bucket.setdefault("handlers", {}).setdefault(handler, {}).update(cfg)
+            entry_bucket = bucket.setdefault(handler, {"config": {}, "locals": {}})
+            entry_bucket["config"].update(cfg)
 
     def _get_store(self) -> Dict[str, Any]:
         if self._router is None:

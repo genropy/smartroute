@@ -80,6 +80,83 @@ def test_plugin_get_config_missing_bucket():
     assert plugin.get_config() == {}
 
 
+def test_plugin_bucket_guards_and_base_autofill():
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
+
+    svc = Host()
+    # Private helper with create=True should provision base bucket
+    bucket = svc.api._get_plugin_bucket("missing", create=True)
+    assert bucket["--base--"]["config"] == {}
+    # Missing plugin still triggers AttributeError on public setters/getters
+    with pytest.raises(AttributeError):
+        svc.api.set_plugin_enabled("foo", "ghost", True)
+    with pytest.raises(AttributeError):
+        svc.api.get_runtime_data("foo", "ghost", "k")
+    with pytest.raises(AttributeError):
+        svc.api.set_runtime_data("foo", "ghost", "k", 1)
+    with pytest.raises(AttributeError):
+        svc.api.is_plugin_enabled("foo", "ghost")
+    # If base key is removed, accessing will recreate it
+    svc.api._plugin_info["simple"].pop("--base--", None)
+    assert svc.api.is_plugin_enabled("demo", "simple") is True
+
+
+def test_route_decorator_plugin_options_apply_to_entry():
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("simple")
+
+        @route("api", simple_flag=True, simple_mode="x", core_meta="keep")
+        def run(self):
+            return "ok"
+
+    svc = Host()
+    entry = svc.api._entries["run"]
+    plugin_cfg = entry.metadata.get("plugin_config", {})
+    assert plugin_cfg["simple"]["flag"] is True
+    assert plugin_cfg["simple"]["mode"] == "x"
+    assert entry.metadata["core_meta"] == "keep"
+    # Stored on plugin_info for that entry
+    assert svc.api._plugin_info["simple"]["run"]["config"]["flag"] is True
+    assert svc.api._plugin_info["simple"]["run"]["config"]["mode"] == "x"
+
+
+def test_add_entry_star_with_plugin_options_merges_marker_and_options():
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api", auto_discover=False).plug("simple")
+            # Apply options via add_entry("*")
+            self.api.add_entry("*", simple_opt="via_add_entry")
+
+        @route("api", simple_flag=True)
+        def hello(self):
+            return "hi"
+
+    svc = Host()
+    entry = svc.api._entries["hello"]
+    plugin_cfg = entry.metadata.get("plugin_config", {})
+    # Options from marker
+    assert plugin_cfg["simple"]["flag"] is True
+    # Options from add_entry call
+    assert svc.api._plugin_info["simple"]["hello"]["config"]["opt"] == "via_add_entry"
+
+
+def test_add_entry_core_options_preserved():
+    class Host(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api", auto_discover=False)
+
+        def hello(self):
+            return "hi"
+
+    svc = Host()
+    svc.api.add_entry(svc.hello, core_value=123)
+    entry = svc.api._entries["hello"]
+    assert entry.metadata["core_value"] == 123
+
+
 def test_router_auto_registers_marked_methods_and_validates_plugins():
     class Demo(RoutedClass):
         def __init__(self):
