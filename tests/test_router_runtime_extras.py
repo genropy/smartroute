@@ -175,7 +175,7 @@ def test_inherit_plugins_seed_from_empty_parent_bucket():
     parent.api._plugin_info.pop("stamp_extra", None)
     child = ManualService()
     child.api._on_attached_to_parent(parent.api)
-    assert child.api._plugin_info["stamp_extra"]["config"]["enabled"] is True
+    assert child.api._plugin_info["stamp_extra"]["--base--"]["config"]["enabled"] is True
 
 
 def test_iter_child_routers_override_deduplicates():

@@ -31,7 +31,7 @@ SmartRoute provides:
 - **Flexible registration** - Use `@route` decorator with prefixes, metadata, and explicit names
 - **Runtime configuration** - Configure plugins with `routedclass.configure()` using target syntax
 - **SmartAsync support** - Optional integration with async execution
-- **100% test coverage** - Comprehensive test suite with 78 tests covering 900 statements
+- **100% test coverage** - Comprehensive test suite with 82 tests covering 943 statements
 
 ## Quick Example
 
@@ -114,7 +114,7 @@ pip install -e ".[all]"
 
 SmartRoute is currently in **beta** (v0.6.1). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (78 tests, 900 statements)
+- **Test Coverage**: 100% (82 tests, 943 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

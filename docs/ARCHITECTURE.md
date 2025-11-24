@@ -41,15 +41,20 @@ classDiagram
   Router --> "1" PluginInfo : plugin code key
 ```
 
-Shape:
-```json
-{
-  "plugin_code": {
-    "config": { "enabled": true, ... },   // router-level defaults
-    "handlers": { "entry_name": { ... }}, // per-entry overrides
-    "locals": { ... }                     // optional live data owned by plugin
-  }
-}
+Shape (chiave riservata `--base--` per il livello router; ogni blocco ha `config` + `locals`):
+
+```
+plugin_info
+└── "<plugin_code>"
+    ├── --base--
+    │   ├── config   # router-level defaults
+    │   └── locals   # runtime plugin-level
+    ├── entry_name_1
+    │   ├── config   # override per entry
+    │   └── locals   # runtime per entry
+    └── entry_name_2
+        ├── config
+        └── locals
 ```
 
 ### Plugin lifecycle
