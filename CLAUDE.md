@@ -6,7 +6,7 @@
 
 ### Current Status
 - **Development Status**: Beta (`Development Status :: 4 - Beta`)
-- **Version**: 0.6.1
+- **Version**: 0.7.0
 - **Has Implementation**: Yes (core complete with 100% test coverage)
 - **Coverage**: 100% (82 comprehensive tests, 943 statements)
 - **Plugin System**: Built-in registry with LoggingPlugin and PydanticPlugin; scope/channel via SmartPublisher's PublishPlugin
@@ -168,7 +168,7 @@ sphinx-autobuild docs docs/_build/html
 
 ## Project Status
 
-**v0.6.1 Beta** - Published on PyPI
+**v0.7.0 Beta** - Ready for release
 
 ### Completed
 - [x] Core router implementation with 100% test coverage
