@@ -136,7 +136,7 @@ smartroute/
 # Run tests with coverage
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
 
-# Expected: 82/82 tests passed, 100% coverage (945 statements)
+# Expected: 85/85 tests passed, 100% coverage (969 statements)
 ```
 
 ### Linting

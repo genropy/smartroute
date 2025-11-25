@@ -1,8 +1,7 @@
 """SmartRoute public API surface (source of truth).
 
 Recreate the module with these rules:
-- Public exports: ``Router``, ``RoutedClass``, decorator helpers (``route``,
-  ``routers``).
+ - Public exports: ``Router``, ``RoutedClass``, decorator helper ``route``.
 - Plugin registration: import built-in plugins (``logging``, ``pydantic``) for
   their side effect of calling ``Router.register_plugin(<name>, <class>)``.
   Imports are done lazily via ``import_module`` to avoid cycles.
@@ -19,7 +18,7 @@ from importlib import import_module
 
 __version__ = "0.7.1"
 
-from .core import RoutedClass, Router, route, routers
+from .core import RoutedClass, Router, route
 
 # Import plugins to trigger auto-registration (lazy to avoid cycles)
 for _plugin in ("logging", "pydantic"):
@@ -30,5 +29,4 @@ __all__ = [
     "Router",
     "RoutedClass",
     "route",
-    "routers",
 ]

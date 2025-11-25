@@ -442,6 +442,25 @@ def test_logging_plugin_emit_without_handlers(capsys):
     plugin._logger = DummyLogger()  # type: ignore[attr-defined]
     plugin._emit("hello")
     captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_logging_plugin_emit_falls_back_to_print_when_log_enabled(capsys):
+    plugin = LoggingPlugin()
+
+    class DummyLogger:
+        def has_handlers(self):
+            return False
+
+        # Compatibility alias
+        hasHandlers = has_handlers  # noqa: N815
+
+        def info(self, message):
+            raise AssertionError("Should not be called")
+
+    plugin._logger = DummyLogger()  # type: ignore[attr-defined]
+    plugin._emit("hello", cfg={"log": True, "print": False})
+    captured = capsys.readouterr()
     assert "hello" in captured.out
 
 

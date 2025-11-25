@@ -29,7 +29,7 @@ Constructor signature::
 
 Registration and naming
 -----------------------
-``add_entry(target, *, name=None, alias=None, metadata=None, replace=False, **options)``
+``add_entry(target, *, name=None, metadata=None, replace=False, **options)``
 
 - Accepts a callable or string/iterable of attribute names. Comma-separated
   strings are split and each processed. Empty/whitespace-only strings are
@@ -47,7 +47,7 @@ Registration and naming
   metadata.
 
 - ``_resolve_name`` strips ``prefix`` from ``func.__name__`` when present; an
-  explicit ``name``/``alias`` always overrides.
+  explicit ``name`` always overrides.
 
 Marker discovery
 ----------------
@@ -241,7 +241,6 @@ class BaseRouter:
         target: Any,
         *,
         name: Optional[str] = None,
-        alias: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         replace: bool = False,
         **options: Any,
@@ -251,7 +250,6 @@ class BaseRouter:
         Args:
             target: Callable, attribute name(s), comma-separated string, or wildcard marker.
             name: Logical name override for this entry.
-            alias: Deprecated alias for ``name``.
             metadata: Extra metadata stored on the MethodEntry.
             replace: Allow overwriting an existing logical name.
             options: Extra metadata merged into entry metadata.
@@ -266,7 +264,7 @@ class BaseRouter:
         """
         if self._is_branch:
             raise ValueError("Branch routers cannot register handlers")
-        entry_name = name if name is not None else alias
+        entry_name = name
         # Split plugin-scoped options (<plugin>_<key>) from core options
         plugin_options: Dict[str, Dict[str, Any]] = {}
         core_options: Dict[str, Any] = {}
@@ -344,7 +342,7 @@ class BaseRouter:
         replace: bool = False,
         plugin_options: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
-        logical_name = self._resolve_name(bound.__name__, alias=name)
+        logical_name = self._resolve_name(bound.__name__, name_override=name)
         if logical_name in self._entries and not replace:
             raise ValueError(f"Handler name collision: {logical_name}")
         entry = MethodEntry(
@@ -371,7 +369,7 @@ class BaseRouter:
         plugin_options: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
         for func, marker in self._iter_marked_methods():
-            entry_override = marker.pop("entry_name", None) or marker.pop("alias", None)
+            entry_override = marker.pop("entry_name", None)
             entry_name = name if name is not None else entry_override
             entry_meta = dict(metadata or {})
             entry_meta.update(marker)
@@ -423,9 +421,9 @@ class BaseRouter:
                     payload.pop("name", None)
                     yield value, payload
 
-    def _resolve_name(self, func_name: str, *, alias: Optional[str]) -> str:
-        if alias:
-            return alias
+    def _resolve_name(self, func_name: str, *, name_override: Optional[str]) -> str:
+        if name_override:
+            return name_override
         if self.prefix and func_name.startswith(self.prefix):
             return func_name[len(self.prefix) :]
         return func_name

@@ -2,7 +2,7 @@
 
 import pytest
 
-from smartroute import RoutedClass, Router, route, routers
+from smartroute import RoutedClass, Router, route
 from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME, _format_annotation
 from smartroute.core.routed import is_routed_class
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
@@ -291,15 +291,6 @@ def test_router_calling_members_handles_custom_pydantic_metadata():
     info = svc.api.members()
     param = info["handlers"]["first"]["parameters"]["text"]
     assert param["validation"]["metadata"] == ["tag"]
-
-
-def test_router_descriptor_placeholder():
-    class Dummy:
-        pass
-
-    decorated = routers()(Dummy)
-    assert decorated is Dummy
-
 
 def test_iter_registered_routers_lists_entries():
     svc = ManualService()

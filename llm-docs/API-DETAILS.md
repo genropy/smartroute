@@ -80,6 +80,32 @@ class Service(RoutedClass):
         self.api = Router(self, name="api").plug("custom")
 ```
 
+**Built-in logging plugin configuration:**
+
+- Keys: `enabled`, `before`, `after`, `log`, `print`
+- Per-handler via decorator kwargs:
+
+```python
+@route("api", logging_enabled=False, logging_before=True, logging_print=True)
+def hello(...):
+    ...
+```
+
+- Per-handler via flags:
+
+```python
+@route("api", logging_flags="enabled:off,before:on,after:on,log:on,print:off")
+def hello(...):
+    ...
+```
+
+- Runtime (router-level or per-handler):
+
+```python
+svc.api.logging.configure.flags = "enabled:off"
+svc.api.logging.configure["hello"].after = False
+```
+
 #### `Router.register_plugin(name: str, plugin_class: Type[BasePlugin]) -> None`
 
 **Class method.** Register a plugin globally by name for use with `.plug()`.
@@ -495,27 +521,11 @@ class Service(RoutedClass):
 
 - `router_name` (str): Name of router to register with (matches `Router(self, name="...")`)
 - `name` (str, optional): Explicit handler name (overrides method name/prefix logic)
-- `alias` (str, optional, deprecated): Backwards-compatible synonym for `name`
 - `**kwargs`: Additional metadata stored in `MethodEntry.metadata`
 
-### @routers(*router_names: str)
+### @routers
 
-**Legacy decorator.** No longer required with new architecture.
-
-```python
-# Old style (no longer needed):
-@routers("api", "admin")
-class Service(RoutedClass):
-    pass
-
-# New style (automatic):
-class Service(RoutedClass):
-    def __init__(self):
-        self.api = Router(self, name="api")
-        self.admin = Router(self, name="admin")
-```
-
-With new architecture, routers are registered automatically when instantiated in `__init__`. The `@routers` decorator is kept for backwards compatibility but has no effect.
+Removed. Instantiate `Router` objects explicitly in `__init__`; no decorator is needed or available.
 
 ---
 
