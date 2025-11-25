@@ -106,6 +106,7 @@ Router Invariants
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from functools import wraps
 from typing import Any, Callable, Dict, Iterable, List, Optional, Type
@@ -139,6 +140,7 @@ class Router(BaseRouter):
         "_plugins_by_name",
         "_inherited_from",
         "_plugin_info",
+        "_plugin_children",
     )
 
     def __init__(self, *args, **kwargs):
@@ -147,6 +149,7 @@ class Router(BaseRouter):
         self._plugins_by_name: Dict[str, BasePlugin] = {}
         self._inherited_from: set[int] = set()
         self._plugin_info: Dict[str, Dict[str, Any]] = {}
+        self._plugin_children: Dict[str, List["Router"]] = {}  # plugin_name -> [child routers]
         super().__init__(*args, **kwargs)
 
     # ------------------------------------------------------------------
@@ -314,14 +317,24 @@ class Router(BaseRouter):
             return
         self._inherited_from.add(parent_id)
         # For plugins in parent that child doesn't have:
-        # - Add reference to parent's plugin for attribute access
-        # - Apply on_decore to child's entries
+        # - Create new plugin instance on child
+        # - Copy parent's config as initial config
+        # - Register child for parent config change notifications
         inherited_plugins = []
         for parent_plugin in parent._plugins:
             if parent_plugin.name not in self._plugins_by_name:
-                # Child doesn't have this plugin - inherit from parent
-                self._plugins_by_name[parent_plugin.name] = parent_plugin
-                inherited_plugins.append(parent_plugin)
+                # Child doesn't have this plugin - create new instance
+                child_plugin = parent_plugin.__class__(self)
+                # Copy parent's config to child
+                parent_config = parent._plugin_info.get(parent_plugin.name, {})
+                if parent_config:
+                    self._plugin_info[parent_plugin.name] = copy.deepcopy(parent_config)
+                # Register child in parent's notification list
+                parent._plugin_children.setdefault(parent_plugin.name, []).append(self)
+                # Add to child's plugin registry
+                self._plugins_by_name[parent_plugin.name] = child_plugin
+                self._plugins.append(child_plugin)
+                inherited_plugins.append(child_plugin)
         # Apply on_decore for inherited plugins to child's entries
         for plugin in inherited_plugins:
             for entry in self._entries.values():

@@ -173,6 +173,8 @@ class BasePlugin:
         plugin_bucket = store.setdefault(self.name, {})
         bucket = plugin_bucket.setdefault(target, {"config": {}, "locals": {}})
         bucket["config"].update(config)
+        # Notify children about config change
+        self._notify_children(config)
 
     def configuration(self, method_name: Optional[str] = None) -> Dict[str, Any]:
         """Read merged configuration (base + optional per-handler override)."""
@@ -212,6 +214,15 @@ class BasePlugin:
 
     def _get_store(self) -> Dict[str, Any]:
         return getattr(self._router, "_plugin_info")
+
+    def _notify_children(self, new_config: Dict[str, Any]) -> None:
+        """Notify child routers about config change for this plugin."""
+        plugin_children = getattr(self._router, "_plugin_children", {})
+        child_routers = plugin_children.get(self.name, [])
+        for child_router in child_routers:
+            child_plugin = child_router._plugins_by_name.get(self.name)
+            if child_plugin:
+                child_plugin.on_parent_config_changed(new_config)
 
     # =========================================================================
     # METHODS TO OVERRIDE IN CUSTOM PLUGINS
@@ -343,3 +354,29 @@ class BasePlugin:
             Dict of plugin-specific metadata for this handler.
         """
         return {}
+
+    def on_parent_config_changed(
+        self, new_config: Dict[str, Any]
+    ) -> None:  # pragma: no cover - optional hook
+        """Override to react when parent router's plugin config changes.
+
+        Called when the parent router modifies its configuration for this
+        plugin type. The child plugin can decide how to handle the change:
+        - Ignore it (default behavior)
+        - Apply it by calling self.configure(**new_config)
+        - Merge it with existing config
+        - Log it for debugging
+
+        If you call self.configure(), your own children will be notified
+        automatically, creating a cascading update down the router tree.
+
+        Example::
+
+            def on_parent_config_changed(self, new_config):
+                # Follow parent's config for this plugin
+                self.configure(**new_config)
+
+        Args:
+            new_config: The new configuration dict from the parent plugin.
+        """
+        pass

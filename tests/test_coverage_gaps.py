@@ -355,3 +355,279 @@ def test_pydantic_entry_metadata_with_meta():
     assert "model" in result
     assert "hints" in result
     assert result["hints"] == {"text": str, "num": int}
+
+
+# --- Plugin inheritance: clone + config copy ---
+
+
+def test_inherited_plugin_is_separate_instance():
+    """Test that inherited plugin is a new instance, not shared with parent."""
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("logging")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+    parent.api.attach_instance(parent.child, name="child")
+
+    # Plugin instances should be DIFFERENT objects
+    parent_plugin = parent.api._plugins_by_name["logging"]
+    child_plugin = parent.child.api._plugins_by_name["logging"]
+
+    assert parent_plugin is not child_plugin
+    assert parent_plugin._router is parent.api
+    assert child_plugin._router is parent.child.api
+
+
+def test_inherited_plugin_copies_parent_config():
+    """Test that child inherits a copy of parent's config at attach time."""
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("logging")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+
+    # Configure parent BEFORE attach
+    parent.api.logging.configure(before=False, after=True)
+
+    # Attach child - should copy config
+    parent.api.attach_instance(parent.child, name="child")
+
+    # Child should have same config values
+    child_cfg = parent.child.api.logging.configuration()
+    assert child_cfg.get("before") is False
+    assert child_cfg.get("after") is True
+
+
+def test_child_config_independent_from_parent():
+    """Test that after attach, child's config is independent from parent."""
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api")
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api").plug("logging")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+    parent.api.logging.configure(before=True, after=False)
+    parent.api.attach_instance(parent.child, name="child")
+
+    # Child modifies its own config
+    parent.child.api.logging.configure(before=False, after=True)
+
+    # Configs should be different
+    parent_cfg = parent.api.logging.configuration()
+    child_cfg = parent.child.api.logging.configuration()
+
+    assert parent_cfg.get("before") is True
+    assert parent_cfg.get("after") is False
+    assert child_cfg.get("before") is False
+    assert child_cfg.get("after") is True
+
+
+# --- on_parent_config_changed notification ---
+
+
+def test_parent_config_change_notifies_children():
+    """Test that changing parent config calls on_parent_config_changed on children."""
+    notifications = []
+
+    class TrackingPlugin(BasePlugin):
+        plugin_code = "tracking"
+        plugin_description = "Tracks parent config changes"
+
+        def configure(self, value: int = 0):
+            pass
+
+        def on_parent_config_changed(self, new_config):
+            notifications.append({"router": self._router.name, "config": new_config})
+
+    Router.register_plugin(TrackingPlugin)
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="child_api")
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="parent_api").plug("tracking")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+    parent.api.attach_instance(parent.child, name="child")
+
+    # Clear any notifications from __init__
+    notifications.clear()
+
+    # Change parent config
+    parent.api.tracking.configure(value=42)
+
+    # Child should have been notified
+    assert len(notifications) == 1
+    assert notifications[0]["router"] == "child_api"
+    assert notifications[0]["config"] == {"value": 42}
+
+
+def test_cascading_notifications():
+    """Test that if child applies config, its children are also notified."""
+    notifications = []
+
+    class CascadePlugin(BasePlugin):
+        plugin_code = "cascade"
+        plugin_description = "Cascades config to children"
+
+        def configure(self, level: int = 0):
+            pass
+
+        def on_parent_config_changed(self, new_config):
+            notifications.append({"router": self._router.name, "config": new_config})
+            # Apply the config - this should cascade to our children
+            self.configure(**new_config)
+
+    Router.register_plugin(CascadePlugin)
+
+    class GrandchildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="grandchild_api")
+
+        @route("api")
+        def grandchild_handler(self):
+            return "grandchild"
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="child_api")
+            self.grandchild = GrandchildSvc()
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="parent_api").plug("cascade")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+    parent.api.attach_instance(parent.child, name="child")
+    parent.child.api.attach_instance(parent.child.grandchild, name="grandchild")
+
+    # Clear notifications
+    notifications.clear()
+
+    # Change parent config
+    parent.api.cascade.configure(level=99)
+
+    # Both child and grandchild should have been notified
+    assert len(notifications) == 2
+    routers_notified = [n["router"] for n in notifications]
+    assert "child_api" in routers_notified
+    assert "grandchild_api" in routers_notified
+
+
+def test_child_ignores_parent_config_no_cascade():
+    """Test that if child ignores parent config, grandchildren are NOT notified."""
+    notifications = []
+
+    class IgnorePlugin(BasePlugin):
+        plugin_code = "ignore"
+        plugin_description = "Ignores parent config changes"
+
+        def configure(self, value: int = 0):
+            pass
+
+        def on_parent_config_changed(self, new_config):
+            notifications.append({"router": self._router.name, "config": new_config})
+            # Do NOT call configure - stop the cascade
+
+    Router.register_plugin(IgnorePlugin)
+
+    class GrandchildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="grandchild_api")
+
+        @route("api")
+        def grandchild_handler(self):
+            return "grandchild"
+
+    class ChildSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="child_api")
+            self.grandchild = GrandchildSvc()
+
+        @route("api")
+        def child_handler(self):
+            return "child"
+
+    class ParentSvc(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="parent_api").plug("ignore")
+            self.child = ChildSvc()
+
+        @route("api")
+        def parent_handler(self):
+            return "parent"
+
+    parent = ParentSvc()
+    parent.api.attach_instance(parent.child, name="child")
+    parent.child.api.attach_instance(parent.child.grandchild, name="grandchild")
+
+    # Clear notifications
+    notifications.clear()
+
+    # Change parent config
+    parent.api.ignore.configure(value=77)
+
+    # Only child should be notified (grandchild NOT because child ignores)
+    assert len(notifications) == 1
+    assert notifications[0]["router"] == "child_api"
