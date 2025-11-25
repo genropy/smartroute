@@ -63,11 +63,17 @@ Objects
         the router, the MethodEntry, and the next callable; they must return a
         callable with the same signature.
 
-    ``filter_entry`` (optional)
+    ``filter_entry`` (optional, default returns None)
         when implemented, allows the plugin to decide if a handler should be
         exposed during introspection. It receives the router, the MethodEntry,
         and keyword filters (``scopes``, ``channel``, ...); returning ``False``
-        hides the handler from ``members()``.
+        hides the handler from ``members()``, ``True`` includes it, ``None``
+        defers to other plugins.
+
+    ``describe_entry`` (optional, default returns {})
+        when implemented, enriches handler descriptions in ``router.describe()``.
+        Receives router, entry, and base_description dict; can mutate the dict
+        or return additional fields to merge.
 
 Design constraints
 ~~~~~~~~~~~~~~~~~~
@@ -284,3 +290,56 @@ class BasePlugin:
             A callable with the same signature as call_next.
         """
         return call_next
+
+    def filter_entry(
+        self, router: Any, entry: MethodEntry, **filters: Any
+    ) -> Optional[bool]:  # pragma: no cover - optional hook
+        """Override to filter handlers during introspection.
+
+        Called by ``router.members()`` to decide if a handler should be
+        included in results. Return False to hide the handler, True to
+        include it, or None to defer to other plugins.
+
+        Example::
+
+            def filter_entry(self, router, entry, scopes=None, **filters):
+                if scopes and "admin" in scopes:
+                    return entry.metadata.get("requires_admin", False)
+                return None  # defer to other plugins
+
+        Args:
+            router: The Router instance.
+            entry: MethodEntry being filtered.
+            **filters: Filter criteria (scopes, channel, etc.)
+
+        Returns:
+            True to include, False to exclude, None to defer.
+        """
+        return None
+
+    def describe_entry(
+        self, router: Any, entry: MethodEntry, base_description: Dict[str, Any]
+    ) -> Dict[str, Any]:  # pragma: no cover - optional hook
+        """Override to enrich handler descriptions.
+
+        Called by ``router.describe()`` to add plugin-specific information
+        to handler descriptions. Can mutate ``base_description`` in place
+        or return additional fields to merge.
+
+        Example::
+
+            def describe_entry(self, router, entry, base_description):
+                meta = entry.metadata.get("my_plugin", {})
+                if meta.get("cached"):
+                    return {"cache_ttl": meta.get("ttl", 60)}
+                return {}
+
+        Args:
+            router: The Router instance.
+            entry: MethodEntry being described.
+            base_description: Current description dict (can be mutated).
+
+        Returns:
+            Dict of additional fields to merge into description.
+        """
+        return {}
