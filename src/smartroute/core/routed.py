@@ -226,8 +226,8 @@ class _RoutedProxy:
                 }
                 for plugin in router.iter_plugins()
             ],
-            "handlers": list(router._entries.keys()),
-            "children": {
+            "entries": list(router._entries.keys()),
+            "routers": {
                 child_name: self._describe_router(child)
                 for child_name, child in router._children.items()
             },

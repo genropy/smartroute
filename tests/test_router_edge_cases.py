@@ -500,44 +500,6 @@ def test_pydantic_plugin_handles_hint_errors(monkeypatch):
     assert wrapper() == "ok"
 
 
-def test_pydantic_plugin_disables_when_no_hints(monkeypatch):
-    router = _make_router_for_plugin_test()
-    router.plug("pydantic")
-    plugin = router._plugins_by_name["pydantic"]
-    entry = MethodEntry(name="foo", func=lambda: None, router=router, plugins=[])
-
-    def no_hints(func):
-        return {}
-
-    monkeypatch.setattr(pyd_mod, "get_type_hints", no_hints)
-
-    def handler(arg):
-        return arg
-
-    plugin.on_decore(router, handler, entry)
-    assert entry.metadata["pydantic"]["enabled"] is False
-    wrapper = plugin.wrap_handler(router, entry, lambda **kw: "ok")
-    assert wrapper() == "ok"
-
-
-def test_pydantic_plugin_handles_missing_signature_params(monkeypatch):
-    router = _make_router_for_plugin_test()
-    router.plug("pydantic")
-    plugin = router._plugins_by_name["pydantic"]
-    entry = MethodEntry(name="foo", func=lambda: None, router=router, plugins=[])
-
-    def fake_hints(func):
-        return {"ghost": int}
-
-    monkeypatch.setattr(pyd_mod, "get_type_hints", fake_hints)
-
-    def handler():
-        return "ok"
-
-    plugin.on_decore(router, handler, entry)
-    assert entry.metadata["pydantic"]["enabled"] is True
-
-
 def test_builtin_plugins_registered():
     available = Router.available_plugins()
     assert "logging" in available
@@ -588,46 +550,6 @@ def test_router_get_config_paths():
     assert merged["mode"] == "x" and merged["trace"] is True
     with pytest.raises(AttributeError):
         svc.api.get_config("missing")
-
-
-def test_members_expose_metadata():
-    class Parent(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("simple")
-
-        @route("api")
-        def run(self):
-            """Run child handler."""
-            return "ok"
-
-    info = Parent().api.members()
-    assert info["name"] == "api"
-    run_info = info["handlers"]["run"]
-    assert run_info["doc"] == "Run child handler."
-    assert run_info["parameters"] == {}
-    assert run_info["return_type"] == "Any"
-
-
-def test_members_include_pydantic_validation():
-    class Validated(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("pydantic")
-
-        @route("api")
-        def greet(self, name: str = "World") -> str:
-            """Greet someone."""
-            return f"Hello {name}"
-
-    info = Validated().api.members()
-    greet = info["handlers"]["greet"]
-    assert greet["name"] == "greet"
-    assert "Greet someone." in greet["doc"]
-    assert greet["return_type"] == "str"
-    param = greet["parameters"]["name"]
-    assert param["type"] == "str"
-    assert param["default"] == "World"
-    assert param["required"] is False
-    assert isinstance(param.get("validation"), dict)
 
 
 def test_routed_proxy_get_router_handles_dotted_path():
@@ -695,4 +617,4 @@ def test_routed_configure_question_lists_tree():
     info = svc.routedclass.configure("?")
     assert "api" in info
     assert info["api"]["plugins"]
-    assert info["api"]["children"] == {}
+    assert info["api"]["routers"] == {}

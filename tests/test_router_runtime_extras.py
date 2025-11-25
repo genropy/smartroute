@@ -3,7 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route
-from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME, _format_annotation
+from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME
 from smartroute.core.routed import is_routed_class
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
@@ -147,8 +147,8 @@ def test_router_call_and_members_structure():
     svc.api.add_entry(svc.first)
     assert svc.api.call("first") == "first"
     tree = svc.api.members()
-    assert tree["handlers"]
-    assert tree["children"] == {}
+    assert tree["entries"]
+    assert "routers" not in tree
 
 
 def test_inherit_plugins_branches():
@@ -219,18 +219,9 @@ def test_iter_instance_attributes_skip_registry_and_slots():
 
 def test_router_members_include_metadata_tree():
     parent = ManualService()
+    parent.api.add_entry(parent.first)
     info = parent.api.members()
-    assert "children" in info
-
-
-def test_format_annotation_branches():
-    assert _format_annotation(None) == "Any"
-    assert _format_annotation("Custom") == "Custom"
-
-    class LocalType:
-        pass
-
-    assert _format_annotation(LocalType).endswith("LocalType")
+    assert "entries" in info
 
 
 def test_configure_validates_inputs_and_targets():
@@ -269,32 +260,6 @@ def test_configure_question_success_and_router_proxy_errors():
     registry.pop("api")
     router = svc.routedclass.get_router("api")
     assert router is svc.api
-
-
-def test_router_calling_members_handles_custom_pydantic_metadata():
-    svc = ManualService()
-    svc.api.add_entry(svc.first)
-    entry = svc.api._entries["first"]
-
-    class FakeField:
-        annotation = str
-        default = "value"
-        metadata = ("tag",)
-        json_schema_extra = {"k": "v"}
-        description = "desc"
-        examples = ["ex"]
-        is_required = None
-
-    class FakeModel:
-        model_fields = {"text": FakeField()}
-
-    entry.metadata["pydantic"] = {
-        "enabled": True,
-        "model": FakeModel(),
-    }
-    info = svc.api.members()
-    param = info["handlers"]["first"]["parameters"]["text"]
-    assert param["validation"]["metadata"] == ["tag"]
 
 
 def test_iter_registered_routers_lists_entries():

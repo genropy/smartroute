@@ -30,7 +30,7 @@ def test_orders_quick_example():
     assert orders.api.get("list")() == ["order-1", "order-2"]
     assert orders.api.get("retrieve")("42") == "acme:42"
     overview = orders.api.members()
-    assert set(overview["handlers"].keys()) == {"list", "retrieve", "create"}
+    assert set(overview["entries"].keys()) == {"list", "retrieve", "create"}
 
 
 class Service(RoutedClass):
@@ -322,4 +322,4 @@ def test_dotted_path_and_members_with_attached_child():
     parent = Parent()
     assert parent.api.get("child.ping")() == "pong"
     tree = parent.api.members()
-    assert "child" in tree["children"]
+    assert "child" in tree["routers"]
