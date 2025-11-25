@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>smartroute.core.routed &mdash; SmartRoute 0.5.2 documentation</title>
+  <title>smartroute.core.routed &mdash; SmartRoute 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../../../_static/documentation_options.js?v=486e5634"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
@@ -155,16 +155,29 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#publish-ready-plugin-ecosystem">Publish-ready plugin (ecosystem)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#creating-custom-plugins">Creating Custom Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#creating-custom-plugins">Creating Custom Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#basic-plugin-structure">Basic Plugin Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#constructor-signature">Constructor Signature</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-hooks">Plugin Hooks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#configure-kwargs">configure(**kwargs)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#on-decore-router-func-entry">on_decore(router, func, entry)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#wrap-handler-router-entry-call-next">wrap_handler(router, entry, call_next)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#allow-entry-router-entry-filters">allow_entry(router, entry, **filters)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#entry-metadata-router-entry">entry_metadata(router, entry)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-registration">Plugin Registration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#per-instance-state">Per-Instance State</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#runtime-data">Runtime Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-configuration">Plugin Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#plugin-configuration">Plugin Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#defining-configuration">Defining Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#reading-configuration">Reading Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#configuring-at-runtime">Configuring at Runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#the-target-parameter">The <code class="docutils literal notranslate"><span class="pre">_target</span></code> Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/plugins.html#the-flags-parameter">The <code class="docutils literal notranslate"><span class="pre">flags</span></code> Parameter</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#complete-example-authorization-plugin">Complete Example: Authorization Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#best-practices">Best Practices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/plugins.html#next-steps">Next Steps</a></li>
@@ -184,14 +197,38 @@ window.addEventListener("load", () => mermaid.run());
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../guide/hierarchies.html">Hierarchical Routers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#basic-hierarchy">Basic Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#dictionary-registration">Dictionary Registration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#flexible-registration-patterns">Flexible Registration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#managing-hierarchies">Managing Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#basic-instance-attachment">Basic Instance Attachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#multiple-routers-auto-mapping">Multiple Routers: Auto-Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#multiple-routers-explicit-mapping">Multiple Routers: Explicit Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#parent-with-multiple-routers">Parent with Multiple Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#branch-routers">Branch Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#auto-detachment">Auto-Detachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#parent-tracking">Parent Tracking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#plugin-inheritance">Plugin Inheritance</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#dotted-path-navigation">Dotted Path Navigation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#introspection">Introspection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#real-world-example">Real-World Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#real-world-examples">Real-World Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#microservice-style-organization">Microservice-Style Organization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#multi-level-organization-with-branches">Multi-Level Organization with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#dynamic-service-replacement">Dynamic Service Replacement</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#logical-grouping-with-branches">Logical Grouping with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#shared-plugins-at-root">Shared Plugins at Root</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#deep-hierarchies">Deep Hierarchies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#store-before-attach">Store Before Attach</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#explicit-detachment">Explicit Detachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#prevent-name-collisions">Prevent Name Collisions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#parent-aware-children">Parent-Aware Children</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#conditional-attachment">Conditional Attachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../guide/hierarchies.html#multi-router-services">Multi-Router Services</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../../guide/hierarchies.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
@@ -205,7 +242,7 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#marker-discovery">Marker discovery</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#handler-table-and-wrapping">Handler table and wrapping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#lookup-and-execution">Lookup and execution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#children">Children</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#children-instance-hierarchies-only">Children (instance hierarchies only)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#child-discovery-helpers">Child discovery helpers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#introspection">Introspection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#hooks-for-subclasses">Hooks for subclasses</a></li>
@@ -220,9 +257,8 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__getitem__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.call"><code class="docutils literal notranslate"><span class="pre">BaseRouter.call()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.entries"><code class="docutils literal notranslate"><span class="pre">BaseRouter.entries()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.add_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.get_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.describe"><code class="docutils literal notranslate"><span class="pre">BaseRouter.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.attach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.attach_instance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.detach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.detach_instance()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.members"><code class="docutils literal notranslate"><span class="pre">BaseRouter.members()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.base_router.BaseRouter.iter_plugins"><code class="docutils literal notranslate"><span class="pre">BaseRouter.iter_plugins()</span></code></a></li>
 </ul>
@@ -244,6 +280,7 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.router.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
@@ -255,9 +292,24 @@ window.addEventListener("load", () => mermaid.run());
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#re-exports">Re-exports</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.route"><code class="docutils literal notranslate"><span class="pre">route()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.routers"><code class="docutils literal notranslate"><span class="pre">routers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.RoutedClass"><code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.RoutedClass.routedclass"><code class="docutils literal notranslate"><span class="pre">RoutedClass.routedclass</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router"><code class="docutils literal notranslate"><span class="pre">Router</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.instance"><code class="docutils literal notranslate"><span class="pre">Router.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.name"><code class="docutils literal notranslate"><span class="pre">Router.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.prefix"><code class="docutils literal notranslate"><span class="pre">Router.prefix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.__init__"><code class="docutils literal notranslate"><span class="pre">Router.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.get_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.get_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.register_plugin"><code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/reference.html#smartroute.core.decorators.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -265,14 +317,15 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l1"><a class="reference internal" href="../../../api/plugins.html">Plugin API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api/plugins.html#module-smartroute.plugins.logging">Auto-Generated Plugin API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#responsibilities">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#configuration">Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#behaviour-and-api">Behaviour and API</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#registration">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.configure"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.wrap_handler()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.name"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.config"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.config</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#id1">Responsibilities</a></li>
@@ -280,13 +333,15 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#behaviour-and-data">Behaviour and data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#id2">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.configure"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.on_decore"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.on_decore()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.get_model"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.get_model()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.name"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.config"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.describe_entry"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.describe_entry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.entry_metadata"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.entry_metadata()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -327,7 +382,7 @@ window.addEventListener("load", () => mermaid.run());
 
 <span class="sd">RoutedClass</span>
 <span class="sd">-----------</span>
-<span class="sd">- ``__slots__``: ``__routed_proxy__`` (cache) and ``ROUTER_REGISTRY_ATTR`` (dict).</span>
+<span class="sd">- ``__slots__``: proxy cache and ``ROUTER_REGISTRY_ATTR_NAME`` (dict).</span>
 <span class="sd">- ``_register_router(router)``: lazily creates a registry dict on the instance</span>
 <span class="sd">  and stores the router under ``router.name`` if truthy.</span>
 <span class="sd">- ``_iter_registered_routers``: yields ``(name, router)`` for registry entries</span>
@@ -344,7 +399,7 @@ window.addEventListener("load", () => mermaid.run());
 <span class="sd">  base router + child path (``_split_router_spec``). Looks in the registry</span>
 <span class="sd">  first, then falls back to owner attributes (cached if a ``Router``). Raises</span>
 <span class="sd">  ``AttributeError`` if no router is found. If ``path`` is provided (or found in</span>
-<span class="sd">  the dotted name), traverses children via ``get_child`` for each segment,</span>
+<span class="sd">  the dotted name), traverses children via ``_children`` lookup for each segment,</span>
 <span class="sd">  skipping empty segments.</span>
 
 <span class="sd">Configuration entrypoint:</span>
@@ -361,11 +416,10 @@ window.addEventListener("load", () => mermaid.run());
 <span class="sd">  strings must be non-empty; channel/scope semantics are left to plugins.</span>
 <span class="sd">- Handler matching: ``_match_handlers`` fnmatch-es selectors (comma-separated)</span>
 <span class="sd">  against router ``_entries`` keys, returning a set.</span>
-<span class="sd">- Application: for ``&quot;_all_&quot;`` selector, applies options to ``plugin.configure``</span>
+<span class="sd">- Application: for ``&quot;_all_&quot;`` selector, calls ``plugin.configure(_target=&quot;--base--&quot;, **options)``</span>
 <span class="sd">  (global config) and returns ``{&quot;target&quot;: target, &quot;updated&quot;: [&quot;_all_&quot;]}``.</span>
-<span class="sd">  Otherwise for each matched handler, uses ``plugin.configure[handler]`` proxy,</span>
-<span class="sd">  sets attributes via ``_apply_config``, and returns ``{&quot;target&quot;: target,</span>
-<span class="sd">  &quot;updated&quot;: sorted(matches)}``.</span>
+<span class="sd">  Otherwise for each matched handler, calls ``plugin.configure(_target=handler, **options)``</span>
+<span class="sd">  and returns ``{&quot;target&quot;: target, &quot;updated&quot;: sorted(matches)}``.</span>
 <span class="sd">- ``&quot;?&quot;`` shortcut returns ``_describe_all()``.</span>
 
 <span class="sd">Describe helpers:</span>
@@ -386,14 +440,18 @@ window.addEventListener("load", () => mermaid.run());
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fnmatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">fnmatchcase</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.base_router</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROUTER_REGISTRY_ATTR</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">Router</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">smartseeds.typeutils</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_is_instance</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RoutedClass&quot;</span><span class="p">]</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base_router</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span>
 
-<span class="n">_PROXY_ATTR</span> <span class="o">=</span> <span class="s2">&quot;__routed_proxy__&quot;</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover - import for typing only</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">Router</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RoutedClass&quot;</span><span class="p">,</span> <span class="s2">&quot;is_routed_class&quot;</span><span class="p">]</span>
+
+<span class="n">_PROXY_ATTR_NAME</span> <span class="o">=</span> <span class="s2">&quot;__routed_proxy__&quot;</span>
 
 
 <div class="viewcode-block" id="RoutedClass">
@@ -401,27 +459,55 @@ window.addEventListener("load", () => mermaid.run());
 <span class="k">class</span><span class="w"> </span><span class="nc">RoutedClass</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin providing helper proxies for runtime routers.&quot;&quot;&quot;</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="n">_PROXY_ATTR</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="n">_PROXY_ATTR_NAME</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="s2">&quot;_routed_parent&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_register_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">:</span> <span class="n">Router</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_current_routed_attr</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_auto_detach_child</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_current_routed_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">safe_is_instance</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="s2">&quot;smartroute.core.routed.RoutedClass&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="s2">&quot;_routed_parent&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># pragma: no cover - only detach if bound to this parent</span>
+        <span class="k">return</span> <span class="n">current</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_auto_detach_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">router</span><span class="o">.</span><span class="n">detach_instance</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - best-effort only</span>
+                <span class="k">pass</span>  <span class="c1"># best-effort; avoid blocking setattr</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">:</span> <span class="s2">&quot;Router&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">registry</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_routed_parent&quot;</span><span class="p">):</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_routed_parent&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">router</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
             <span class="n">registry</span><span class="p">[</span><span class="n">router</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">router</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_iter_registered_routers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">yield</span> <span class="n">name</span><span class="p">,</span> <span class="n">router</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">routedclass</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_RoutedProxy&quot;</span><span class="p">:</span>
-        <span class="n">proxy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_PROXY_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_PROXY_ATTR_NAME</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">proxy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">proxy</span> <span class="o">=</span> <span class="n">_RoutedProxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_PROXY_ATTR</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_PROXY_ATTR_NAME</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">proxy</span></div>
 
 
@@ -440,13 +526,13 @@ window.addEventListener("load", () => mermaid.run());
             <span class="k">return</span> <span class="n">router</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_navigate_router</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="n">extra_path</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_lookup_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Router</span><span class="p">]:</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lookup_router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Router&quot;</span><span class="p">]:</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">router</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">router</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">router</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">Router</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">safe_is_instance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="s2">&quot;smartroute.core.base_router.BaseRouter&quot;</span><span class="p">):</span>
             <span class="n">registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate</span>
             <span class="k">return</span> <span class="n">candidate</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -465,7 +551,7 @@ window.addEventListener("load", () => mermaid.run());
             <span class="n">segment</span> <span class="o">=</span> <span class="n">segment</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">segment</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">segment</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -495,14 +581,13 @@ window.addEventListener("load", () => mermaid.run());
                     <span class="n">matched</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">handler_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">matched</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="n">proxy</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">_target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_describe_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span>
         <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">ROUTER_REGISTRY_ATTR_NAME</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">router</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">result</span><span class="p">[</span><span class="n">attr_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_describe_router</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
@@ -514,15 +599,15 @@ window.addEventListener("load", () => mermaid.run());
                 <span class="p">{</span>
                     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">plugin</span><span class="o">.</span><span class="n">get_config</span><span class="p">(),</span>
+                    <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">plugin</span><span class="o">.</span><span class="n">configuration</span><span class="p">(),</span>
                     <span class="s2">&quot;overrides&quot;</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="n">handler</span><span class="p">:</span> <span class="n">plugin</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span> <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">router</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="n">handler</span><span class="p">:</span> <span class="n">plugin</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span> <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">router</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
                     <span class="p">},</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">router</span><span class="o">.</span><span class="n">iter_plugins</span><span class="p">()</span>
             <span class="p">],</span>
-            <span class="s2">&quot;handlers&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-            <span class="s2">&quot;children&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;entries&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">_entries</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="s2">&quot;routers&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="n">child_name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_describe_router</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">router</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">},</span>
@@ -556,15 +641,19 @@ window.addEventListener("load", () => mermaid.run());
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No configuration options provided&quot;</span><span class="p">)</span>
         <span class="n">selector</span> <span class="o">=</span> <span class="n">selector</span> <span class="ow">or</span> <span class="s2">&quot;_all_&quot;</span>
         <span class="k">if</span> <span class="n">selector</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;_all_&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">&quot;--base--&quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span> <span class="s2">&quot;updated&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;_all_&quot;</span><span class="p">]}</span>
         <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match_handlers</span><span class="p">(</span><span class="n">bound_router</span><span class="p">,</span> <span class="n">selector</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No handlers matching &#39;</span><span class="si">{</span><span class="n">selector</span><span class="si">}</span><span class="s2">&#39; on router &#39;</span><span class="si">{</span><span class="n">router_spec</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="n">proxy</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">[</span><span class="n">handler</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">proxy</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span> <span class="s2">&quot;updated&quot;</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">)}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_routed_class</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True when ``obj`` is a RoutedClass instance.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">safe_is_instance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;smartroute.core.routed.RoutedClass&quot;</span><span class="p">)</span>
 </pre></div>
 
            </div>

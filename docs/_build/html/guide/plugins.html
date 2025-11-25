@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plugin Development &mdash; SmartRoute 0.5.2 documentation</title>
+  <title>Plugin Development &mdash; SmartRoute 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../_static/documentation_options.js?v=486e5634"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
@@ -150,16 +150,29 @@
 <li class="toctree-l3"><a class="reference internal" href="#publish-ready-plugin-ecosystem">Publish-ready plugin (ecosystem)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-custom-plugins">Creating Custom Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-custom-plugins">Creating Custom Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-plugin-structure">Basic Plugin Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#constructor-signature">Constructor Signature</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#plugin-hooks">Plugin Hooks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#configure-kwargs">configure(**kwargs)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#on-decore-router-func-entry">on_decore(router, func, entry)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#wrap-handler-router-entry-call-next">wrap_handler(router, entry, call_next)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#allow-entry-router-entry-filters">allow_entry(router, entry, **filters)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#entry-metadata-router-entry">entry_metadata(router, entry)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#plugin-registration">Plugin Registration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#per-instance-state">Per-Instance State</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#runtime-data">Runtime Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#plugin-configuration">Plugin Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-configuration">Plugin Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-configuration">Defining Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reading-configuration">Reading Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-at-runtime">Configuring at Runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-target-parameter">The <code class="docutils literal notranslate"><span class="pre">_target</span></code> Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-flags-parameter">The <code class="docutils literal notranslate"><span class="pre">flags</span></code> Parameter</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#complete-example-authorization-plugin">Complete Example: Authorization Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
@@ -179,14 +192,38 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hierarchies.html">Hierarchical Routers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hierarchies.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#basic-hierarchy">Basic Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#dictionary-registration">Dictionary Registration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#flexible-registration-patterns">Flexible Registration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#managing-hierarchies">Managing Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#basic-instance-attachment">Basic Instance Attachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#multiple-routers-auto-mapping">Multiple Routers: Auto-Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#multiple-routers-explicit-mapping">Multiple Routers: Explicit Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#parent-with-multiple-routers">Parent with Multiple Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#branch-routers">Branch Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#auto-detachment">Auto-Detachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#parent-tracking">Parent Tracking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hierarchies.html#plugin-inheritance">Plugin Inheritance</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hierarchies.html#dotted-path-navigation">Dotted Path Navigation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hierarchies.html#introspection">Introspection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#real-world-example">Real-World Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#real-world-examples">Real-World Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#microservice-style-organization">Microservice-Style Organization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#multi-level-organization-with-branches">Multi-Level Organization with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#dynamic-service-replacement">Dynamic Service Replacement</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#logical-grouping-with-branches">Logical Grouping with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#shared-plugins-at-root">Shared Plugins at Root</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#deep-hierarchies">Deep Hierarchies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#store-before-attach">Store Before Attach</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#explicit-detachment">Explicit Detachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#prevent-name-collisions">Prevent Name Collisions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hierarchies.html#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#parent-aware-children">Parent-Aware Children</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#conditional-attachment">Conditional Attachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hierarchies.html#multi-router-services">Multi-Router Services</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="hierarchies.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
@@ -200,7 +237,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#marker-discovery">Marker discovery</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#handler-table-and-wrapping">Handler table and wrapping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#lookup-and-execution">Lookup and execution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#children">Children</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#children-instance-hierarchies-only">Children (instance hierarchies only)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#child-discovery-helpers">Child discovery helpers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#introspection">Introspection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#hooks-for-subclasses">Hooks for subclasses</a></li>
@@ -215,9 +252,8 @@
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__getitem__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.call"><code class="docutils literal notranslate"><span class="pre">BaseRouter.call()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.entries"><code class="docutils literal notranslate"><span class="pre">BaseRouter.entries()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.add_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.get_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.describe"><code class="docutils literal notranslate"><span class="pre">BaseRouter.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.attach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.attach_instance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.detach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.detach_instance()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.members"><code class="docutils literal notranslate"><span class="pre">BaseRouter.members()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.base_router.BaseRouter.iter_plugins"><code class="docutils literal notranslate"><span class="pre">BaseRouter.iter_plugins()</span></code></a></li>
 </ul>
@@ -239,6 +275,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.router.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
@@ -250,9 +287,24 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#re-exports">Re-exports</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.route"><code class="docutils literal notranslate"><span class="pre">route()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.routers"><code class="docutils literal notranslate"><span class="pre">routers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.RoutedClass"><code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.RoutedClass.routedclass"><code class="docutils literal notranslate"><span class="pre">RoutedClass.routedclass</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router"><code class="docutils literal notranslate"><span class="pre">Router</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.instance"><code class="docutils literal notranslate"><span class="pre">Router.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.name"><code class="docutils literal notranslate"><span class="pre">Router.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.prefix"><code class="docutils literal notranslate"><span class="pre">Router.prefix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.__init__"><code class="docutils literal notranslate"><span class="pre">Router.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.get_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.get_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.register_plugin"><code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/reference.html#smartroute.core.decorators.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -260,14 +312,15 @@
 <li class="toctree-l1"><a class="reference internal" href="../api/plugins.html">Plugin API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/plugins.html#module-smartroute.plugins.logging">Auto-Generated Plugin API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#responsibilities">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#configuration">Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#behaviour-and-api">Behaviour and API</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#registration">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.configure"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.wrap_handler()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.name"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.config"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.config</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#id1">Responsibilities</a></li>
@@ -275,13 +328,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#behaviour-and-data">Behaviour and data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#id2">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.configure"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.on_decore"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.on_decore()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.get_model"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.get_model()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.name"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.config"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.describe_entry"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.describe_entry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/plugins.html#smartroute.plugins.pydantic.PydanticPlugin.entry_metadata"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.entry_metadata()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -376,58 +431,143 @@
 </section>
 <section id="creating-custom-plugins">
 <h2>Creating Custom Plugins<a class="headerlink" href="#creating-custom-plugins" title="Link to this heading"></a></h2>
-<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L41-L69">From test</a></p>
-<p>Extend <code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code> and implement hooks:</p>
+<p>Extend <code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code> and implement hooks. Every plugin <strong>must</strong> define two class attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin_code</span></code> - unique identifier used for registration (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;logging&quot;</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin_description</span></code> - human-readable description</p></li>
+</ul>
+<section id="basic-plugin-structure">
+<h3>Basic Plugin Structure<a class="headerlink" href="#basic-plugin-structure" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePlugin</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">route</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CapturePlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;capture&quot;</span><span class="p">)</span>
+    <span class="c1"># Required class attributes</span>
+    <span class="n">plugin_code</span> <span class="o">=</span> <span class="s2">&quot;capture&quot;</span>
+    <span class="n">plugin_description</span> <span class="o">=</span> <span class="s2">&quot;Captures handler calls for testing&quot;</span>
+
+    <span class="c1"># Optional: custom instance state (use __slots__ for efficiency)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;calls&quot;</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calls</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define accepted configuration parameters.</span>
+
+<span class="sd">        The method body can be empty - the wrapper handles storage.</span>
+<span class="sd">        Parameters become the configuration schema validated by Pydantic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_decore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called when handler is registered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called once when handler is registered.&quot;&quot;&quot;</span>
         <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;capture&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">wrap_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called when handler is invoked.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Called to build middleware chain.&quot;&quot;&quot;</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wrapper</span>
 
 <span class="c1"># Register plugin globally</span>
-<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="s2">&quot;capture&quot;</span><span class="p">,</span> <span class="n">CapturePlugin</span><span class="p">)</span>
+<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">CapturePlugin</span><span class="p">)</span>
 
 <span class="c1"># Use in service</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PluginService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">touched</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;capture&quot;</span><span class="p">)</span>
 
     <span class="nd">@route</span><span class="p">(</span><span class="s2">&quot;api&quot;</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">do_work</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">touched</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="s2">&quot;ok&quot;</span>
 
 <span class="n">svc</span> <span class="o">=</span> <span class="n">PluginService</span><span class="p">()</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;do_work&quot;</span><span class="p">)()</span>
-<span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">&quot;ok&quot;</span>
-<span class="k">assert</span> <span class="n">svc</span><span class="o">.</span><span class="n">touched</span> <span class="ow">is</span> <span class="kc">True</span>
-<span class="k">assert</span> <span class="n">svc</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">capture</span><span class="o">.</span><span class="n">calls</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;wrap&quot;</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">svc</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">capture</span><span class="o">.</span><span class="n">calls</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;do_work&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p><strong>Key points</strong>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">BasePlugin.__init__(name=&quot;...&quot;)</span></code> sets plugin name</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">on_decore()</span></code> modifies handler metadata at registration time</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">wrap_handler()</span></code> intercepts handler execution</p></li>
-<li><p>Each router instance gets independent plugin state</p></li>
-</ul>
+</section>
+<section id="constructor-signature">
+<h3>Constructor Signature<a class="headerlink" href="#constructor-signature" title="Link to this heading"></a></h3>
+<p>The constructor <strong>must</strong> accept <code class="docutils literal notranslate"><span class="pre">router</span></code> as first argument and <code class="docutils literal notranslate"><span class="pre">**config</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
+    <span class="c1"># 1. Initialize your own state FIRST</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">my_state</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># 2. Call super().__init__ which:</span>
+    <span class="c1">#    - Sets self.name = self.plugin_code</span>
+    <span class="c1">#    - Stores self._router = router</span>
+    <span class="c1">#    - Initializes the config store</span>
+    <span class="c1">#    - Calls self.configure(**config)</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Important</strong>: Initialize your state <em>before</em> calling <code class="docutils literal notranslate"><span class="pre">super().__init__()</span></code> because the parent constructor calls <code class="docutils literal notranslate"><span class="pre">configure()</span></code> which might need your state.</p>
+</section>
 </section>
 <section id="plugin-hooks">
 <h2>Plugin Hooks<a class="headerlink" href="#plugin-hooks" title="Link to this heading"></a></h2>
+<p>SmartRoute plugins can override these methods:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Hook</p></th>
+<th class="head"><p>When Called</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Required</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">configure()</span></code></p></td>
+<td><p>At plugin init and runtime</p></td>
+<td><p>Define configuration schema</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">on_decore()</span></code></p></td>
+<td><p>Handler registration</p></td>
+<td><p>Add metadata, validate signatures</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">wrap_handler()</span></code></p></td>
+<td><p>Handler invocation</p></td>
+<td><p>Middleware (logging, auth, etc.)</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">allow_entry()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">members()</span></code> introspection</p></td>
+<td><p>Filter visible handlers</p></td>
+<td><p>No</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">entry_metadata()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">members()</span></code> introspection</p></td>
+<td><p>Add plugin metadata to output</p></td>
+<td><p>No</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>All hooks are optional.</strong> Override only what you need. A minimal plugin can have just <code class="docutils literal notranslate"><span class="pre">plugin_code</span></code> and <code class="docutils literal notranslate"><span class="pre">plugin_description</span></code> with no hooks.</p>
+<section id="configure-kwargs">
+<h3>configure(**kwargs)<a class="headerlink" href="#configure-kwargs" title="Link to this heading"></a></h3>
+<p>Define accepted configuration parameters. The method signature becomes the configuration schema, validated by Pydantic.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Body can be empty - the wrapper handles storage.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>The wrapper added by <code class="docutils literal notranslate"><span class="pre">__init_subclass__</span></code> automatically:</p>
+<ul class="simple">
+<li><p>Parses <code class="docutils literal notranslate"><span class="pre">flags</span></code> string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;enabled,before:off&quot;</span></code>) into booleans</p></li>
+<li><p>Routes to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;--base--&quot;</span></code> for router-level, <code class="docutils literal notranslate"><span class="pre">&quot;handler_name&quot;</span></code> for per-handler)</p></li>
+<li><p>Validates parameters via Pydantic’s <code class="docutils literal notranslate"><span class="pre">&#64;validate_call</span></code></p></li>
+<li><p>Writes config to the router’s store</p></li>
+</ul>
+</section>
 <section id="on-decore-router-func-entry">
 <h3>on_decore(router, func, entry)<a class="headerlink" href="#on-decore-router-func-entry" title="Link to this heading"></a></h3>
 <p>Called once when a handler is registered.</p>
@@ -435,14 +575,14 @@
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">router</span></code> - The Router instance</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">func</span></code> - The original method</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry with <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">func</span></code>, <code class="docutils literal notranslate"><span class="pre">metadata</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry with <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">func</span></code>, <code class="docutils literal notranslate"><span class="pre">router</span></code>, <code class="docutils literal notranslate"><span class="pre">plugins</span></code>, <code class="docutils literal notranslate"><span class="pre">metadata</span></code></p></li>
 </ul>
 <p><strong>Use for</strong>:</p>
 <ul class="simple">
 <li><p>Adding metadata to handlers</p></li>
 <li><p>Validating handler signatures</p></li>
 <li><p>Building handler indexes</p></li>
-<li><p>Pre-computing handler information</p></li>
+<li><p>Pre-computing handler information (e.g., Pydantic models)</p></li>
 </ul>
 <p><strong>Example</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">on_decore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
@@ -458,14 +598,14 @@
 </section>
 <section id="wrap-handler-router-entry-call-next">
 <h3>wrap_handler(router, entry, call_next)<a class="headerlink" href="#wrap-handler-router-entry-call-next" title="Link to this heading"></a></h3>
-<p>Called every time a handler is invoked.</p>
+<p>Called to build the middleware chain. Return a callable that wraps <code class="docutils literal notranslate"><span class="pre">call_next</span></code>.</p>
 <p><strong>Parameters</strong>:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">router</span></code> - The Router instance</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry for the handler</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">call_next</span></code> - Callable to invoke next plugin or handler</p></li>
 </ul>
-<p><strong>Returns</strong>: Wrapper function that will be called instead of handler</p>
+<p><strong>Returns</strong>: Wrapper function with same signature as <code class="docutils literal notranslate"><span class="pre">call_next</span></code></p>
 <p><strong>Use for</strong>:</p>
 <ul class="simple">
 <li><p>Logging and monitoring</p></li>
@@ -486,29 +626,85 @@
 
             <span class="c1"># After handler</span>
             <span class="n">duration</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> took </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> took </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
 
     <span class="k">return</span> <span class="n">wrapper</span>
 </pre></div>
 </div>
 </section>
+<section id="allow-entry-router-entry-filters">
+<h3>allow_entry(router, entry, **filters)<a class="headerlink" href="#allow-entry-router-entry-filters" title="Link to this heading"></a></h3>
+<p>Control handler visibility during introspection (<code class="docutils literal notranslate"><span class="pre">members()</span></code>).</p>
+<p><strong>Parameters</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">router</span></code> - The Router instance</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry being checked</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">**filters</span></code> - Filter criteria passed to <code class="docutils literal notranslate"><span class="pre">members()</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">scopes</span></code>, <code class="docutils literal notranslate"><span class="pre">channel</span></code>)</p></li>
+</ul>
+<p><strong>Returns</strong>: <code class="docutils literal notranslate"><span class="pre">True</span></code> to include, <code class="docutils literal notranslate"><span class="pre">False</span></code> to exclude, <code class="docutils literal notranslate"><span class="pre">None</span></code> to defer to other plugins</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">allow_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">scopes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+    <span class="c1"># Only show admin handlers to admin scope</span>
+    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;admin_only&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scopes</span> <span class="ow">and</span> <span class="s2">&quot;admin&quot;</span> <span class="ow">in</span> <span class="n">scopes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># defer to other plugins</span>
+</pre></div>
+</div>
+</section>
+<section id="entry-metadata-router-entry">
+<h3>entry_metadata(router, entry)<a class="headerlink" href="#entry-metadata-router-entry" title="Link to this heading"></a></h3>
+<p>Provide plugin-specific metadata for <code class="docutils literal notranslate"><span class="pre">members()</span></code> output.</p>
+<p><strong>Parameters</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">router</span></code> - The Router instance</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry being described</p></li>
+</ul>
+<p><strong>Returns</strong>: Dict stored in <code class="docutils literal notranslate"><span class="pre">plugins[plugin_name][&quot;metadata&quot;]</span></code></p>
+<p><strong>Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">entry_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>The result appears in <code class="docutils literal notranslate"><span class="pre">members()</span></code> output:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;entries&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;handler_name&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;my_plugin&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+                    <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="plugin-registration">
 <h2>Plugin Registration<a class="headerlink" href="#plugin-registration" title="Link to this heading"></a></h2>
-<!-- test: test_router_edge_cases.py::test_register_plugin_validates -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L205-L218">From test</a></p>
 <p>Register plugins globally with <code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">)</span>
+    <span class="n">plugin_code</span> <span class="o">=</span> <span class="s2">&quot;custom&quot;</span>
+    <span class="n">plugin_description</span> <span class="o">=</span> <span class="s2">&quot;My custom plugin&quot;</span>
 
-<span class="c1"># Register once, use everywhere</span>
-<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="n">CustomPlugin</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+<span class="c1"># Register once - uses plugin_code as the name</span>
+<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">CustomPlugin</span><span class="p">)</span>
 
 <span class="c1"># Now available in all routers</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Service</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
@@ -518,8 +714,8 @@
 </div>
 <p><strong>Registration rules</strong>:</p>
 <ul class="simple">
-<li><p>Name must be non-empty string</p></li>
 <li><p>Plugin class must extend <code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code></p></li>
+<li><p>Plugin class must define <code class="docutils literal notranslate"><span class="pre">plugin_code</span></code> (used as registration name)</p></li>
 <li><p>Cannot re-register same name with different class</p></li>
 <li><p>Registration is global across all routers</p></li>
 </ul>
@@ -534,13 +730,16 @@
 </section>
 <section id="per-instance-state">
 <h2>Per-Instance State<a class="headerlink" href="#per-instance-state" title="Link to this heading"></a></h2>
-<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208">From test</a></p>
 <p>Each router instance gets independent plugin state:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CapturePlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;capture&quot;</span><span class="p">)</span>
+    <span class="n">plugin_code</span> <span class="o">=</span> <span class="s2">&quot;capture&quot;</span>
+    <span class="n">plugin_description</span> <span class="o">=</span> <span class="s2">&quot;Captures handler calls&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;calls&quot;</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">calls</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Per-instance state</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">wrap_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -548,7 +747,7 @@
             <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wrapper</span>
 
-<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="s2">&quot;capture&quot;</span><span class="p">,</span> <span class="n">CapturePlugin</span><span class="p">)</span>
+<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">CapturePlugin</span><span class="p">)</span>
 
 <span class="c1"># Each instance is isolated</span>
 <span class="n">svc1</span> <span class="o">=</span> <span class="n">PluginService</span><span class="p">()</span>
@@ -567,75 +766,114 @@
 <li><p>Easy testing with isolated state</p></li>
 </ul>
 </section>
-<section id="runtime-data">
-<h2>Runtime Data<a class="headerlink" href="#runtime-data" title="Link to this heading"></a></h2>
-<!-- test: test_switcher_basic.py::test_plugin_enable_disable_runtime_data -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L348-L362">From test</a></p>
-<p>Store temporary data during handler execution:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TogglePlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;toggle&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">wrap_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="c1"># Store runtime data</span>
-            <span class="n">router</span><span class="o">.</span><span class="n">set_runtime_data</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;invoked&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">wrapper</span>
-
-<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="s2">&quot;toggle&quot;</span><span class="p">,</span> <span class="n">TogglePlugin</span><span class="p">)</span>
-
-<span class="n">svc</span> <span class="o">=</span> <span class="n">ToggleService</span><span class="p">()</span>
-<span class="n">svc</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;handler&quot;</span><span class="p">)()</span>
-
-<span class="c1"># Check runtime data</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">get_runtime_data</span><span class="p">(</span><span class="s2">&quot;handler&quot;</span><span class="p">,</span> <span class="s2">&quot;toggle&quot;</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;invoked&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span>
-</pre></div>
-</div>
-<p><strong>Use cases</strong>:</p>
-<ul class="simple">
-<li><p>Track invocation counts</p></li>
-<li><p>Store request context</p></li>
-<li><p>Capture timing information</p></li>
-<li><p>Debug plugin behavior</p></li>
-</ul>
-</section>
 <section id="plugin-configuration">
 <h2>Plugin Configuration<a class="headerlink" href="#plugin-configuration" title="Link to this heading"></a></h2>
-<p>Plugins support runtime configuration. See <a class="reference internal" href="plugin-configuration.html"><span class="std std-doc">Plugin Configuration</span></a> for complete guide.</p>
-<p><strong>Quick example</strong>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ConfigurablePlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;configurable&quot;</span><span class="p">)</span>
-        <span class="c1"># Default configuration</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">)</span>
+<p>Plugins define their configuration schema via the <code class="docutils literal notranslate"><span class="pre">configure()</span></code> method. The configuration system provides:</p>
+<ul class="simple">
+<li><p><strong>Router-level defaults</strong>: Apply to all handlers</p></li>
+<li><p><strong>Per-handler overrides</strong>: Target specific handlers</p></li>
+<li><p><strong>Flags shorthand</strong>: Boolean options as comma-separated string</p></li>
+<li><p><strong>Pydantic validation</strong>: Type checking on all parameters</p></li>
+</ul>
+<section id="defining-configuration">
+<h3>Defining Configuration<a class="headerlink" href="#defining-configuration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
+    <span class="n">plugin_code</span> <span class="o">=</span> <span class="s2">&quot;my_plugin&quot;</span>
+    <span class="n">plugin_description</span> <span class="o">=</span> <span class="s2">&quot;Example plugin with configuration&quot;</span>
 
-<span class="n">svc</span> <span class="o">=</span> <span class="n">MyService</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
 
-<span class="c1"># Configure globally</span>
-<span class="n">svc</span><span class="o">.</span><span class="n">routedclass</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="s2">&quot;api:configurable/_all_&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
-
-<span class="c1"># Configure per handler</span>
-<span class="n">svc</span><span class="o">.</span><span class="n">routedclass</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="s2">&quot;api:configurable/critical_*&quot;</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define accepted parameters. Body can be empty.&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
 </pre></div>
 </div>
+</section>
+<section id="reading-configuration">
+<h3>Reading Configuration<a class="headerlink" href="#reading-configuration" title="Link to this heading"></a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">configuration(method_name)</span></code> to read merged config (base + per-handler):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">wrap_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get merged config for this handler</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">level</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;level&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="c1"># ... use configuration</span>
+        <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+</pre></div>
+</div>
+</section>
+<section id="configuring-at-runtime">
+<h3>Configuring at Runtime<a class="headerlink" href="#configuring-at-runtime" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># At plugin attachment (initial config)</span>
+<span class="n">router</span><span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;my_plugin&quot;</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>
+
+<span class="c1"># Or via the plugin instance</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Per-handler config</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">_target</span><span class="o">=</span><span class="s2">&quot;critical_handler&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">)</span>
+
+<span class="c1"># Multiple handlers</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">_target</span><span class="o">=</span><span class="s2">&quot;handler1,handler2&quot;</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Using flags shorthand</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">flags</span><span class="o">=</span><span class="s2">&quot;enabled,log:off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="the-target-parameter">
+<h3>The <code class="docutils literal notranslate"><span class="pre">_target</span></code> Parameter<a class="headerlink" href="#the-target-parameter" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;--base--&quot;</span></code> (default): Router-level config, applies to all handlers</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;handler_name&quot;</span></code>: Config for specific handler only</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;h1,h2,h3&quot;</span></code>: Apply same config to multiple handlers</p></li>
+</ul>
+</section>
+<section id="the-flags-parameter">
+<h3>The <code class="docutils literal notranslate"><span class="pre">flags</span></code> Parameter<a class="headerlink" href="#the-flags-parameter" title="Link to this heading"></a></h3>
+<p>Shorthand for boolean options:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># These are equivalent:</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">after</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">router</span><span class="o">.</span><span class="n">my_plugin</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">flags</span><span class="o">=</span><span class="s2">&quot;enabled,before,after:off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Format: <code class="docutils literal notranslate"><span class="pre">&quot;flag1,flag2:off,flag3:on&quot;</span></code> - bare names are <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">:off</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</section>
 </section>
 <section id="complete-example-authorization-plugin">
 <h2>Complete Example: Authorization Plugin<a class="headerlink" href="#complete-example-authorization-plugin" title="Link to this heading"></a></h2>
 <p>Real-world plugin with configuration and state:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AuthPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;auth&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span>
-            <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">roles</span><span class="o">=</span><span class="p">[]</span>
-        <span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePlugin</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">route</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AuthPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
+    <span class="n">plugin_code</span> <span class="o">=</span> <span class="s2">&quot;auth&quot;</span>
+    <span class="n">plugin_description</span> <span class="o">=</span> <span class="s2">&quot;Authentication and authorization plugin&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">router</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">required</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure auth requirements.&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">on_decore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract required roles from docstring or decorator.&quot;&quot;&quot;</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract required roles from docstring.&quot;&quot;&quot;</span>
         <span class="n">doc</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getdoc</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;@roles:&quot;</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
             <span class="n">roles</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@roles:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
@@ -643,9 +881,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">wrap_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
             <span class="c1"># Extract user from first arg (assuming request object)</span>
@@ -653,7 +891,7 @@
             <span class="n">user</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
             <span class="c1"># Check authentication</span>
-            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">PermissionError</span><span class="p">(</span><span class="s2">&quot;Authentication required&quot;</span><span class="p">)</span>
 
             <span class="c1"># Check authorization</span>
@@ -667,9 +905,19 @@
 
         <span class="k">return</span> <span class="n">wrapper</span>
 
-<span class="c1"># Register and use</span>
-<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span> <span class="n">AuthPlugin</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entry_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Expose auth config in members() output.&quot;&quot;&quot;</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="s2">&quot;roles&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required_roles&quot;</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="p">}</span>
 
+<span class="c1"># Register plugin</span>
+<span class="n">Router</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">AuthPlugin</span><span class="p">)</span>
+
+<span class="c1"># Use in service</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">API</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">Router</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;api&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">plug</span><span class="p">(</span><span class="s2">&quot;auth&quot;</span><span class="p">)</span>
@@ -686,8 +934,8 @@
 
 <span class="n">api</span> <span class="o">=</span> <span class="n">API</span><span class="p">()</span>
 
-<span class="c1"># Configure: disable auth for public endpoints</span>
-<span class="n">api</span><span class="o">.</span><span class="n">routedclass</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="s2">&quot;api:auth/public_*&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># Configure: disable auth requirement for public endpoints</span>
+<span class="n">api</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">_target</span><span class="o">=</span><span class="s2">&quot;public_endpoint&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -716,14 +964,14 @@
 </pre></div>
 </div>
 <p><strong>Configuration defaults</strong>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ Good: Sensible defaults</span>
-<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_plugin&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span>
-        <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Enabled by default</span>
-        <span class="n">level</span><span class="o">=</span><span class="s2">&quot;info&quot;</span><span class="p">,</span>  <span class="c1"># Reasonable default</span>
-        <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>   <span class="c1"># Permissive by default</span>
-    <span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ Good: Sensible defaults in configure() signature</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>      <span class="c1"># Enabled by default</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span>       <span class="c1"># Reasonable default</span>
+    <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>       <span class="c1"># Permissive by default</span>
+<span class="p">):</span>
+    <span class="k">pass</span>
 </pre></div>
 </div>
 <p><strong>Error handling</strong>:</p>
@@ -733,8 +981,8 @@
             <span class="k">return</span> <span class="n">call_next</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># Log error but don&#39;t suppress unless configured</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log_error</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;suppress_errors&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;suppress_errors&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">raise</span>
     <span class="k">return</span> <span class="n">wrapper</span>

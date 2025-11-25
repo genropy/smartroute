@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plugin API Reference &mdash; SmartRoute 0.5.2 documentation</title>
+  <title>Plugin API Reference &mdash; SmartRoute 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../_static/documentation_options.js?v=486e5634"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
@@ -149,16 +149,29 @@
 <li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#publish-ready-plugin-ecosystem">Publish-ready plugin (ecosystem)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#creating-custom-plugins">Creating Custom Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#creating-custom-plugins">Creating Custom Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#basic-plugin-structure">Basic Plugin Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#constructor-signature">Constructor Signature</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#plugin-hooks">Plugin Hooks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#configure-kwargs">configure(**kwargs)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#on-decore-router-func-entry">on_decore(router, func, entry)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#wrap-handler-router-entry-call-next">wrap_handler(router, entry, call_next)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#allow-entry-router-entry-filters">allow_entry(router, entry, **filters)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#entry-metadata-router-entry">entry_metadata(router, entry)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#plugin-registration">Plugin Registration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#per-instance-state">Per-Instance State</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#runtime-data">Runtime Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#plugin-configuration">Plugin Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#plugin-configuration">Plugin Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#defining-configuration">Defining Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#reading-configuration">Reading Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#configuring-at-runtime">Configuring at Runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#the-target-parameter">The <code class="docutils literal notranslate"><span class="pre">_target</span></code> Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/plugins.html#the-flags-parameter">The <code class="docutils literal notranslate"><span class="pre">flags</span></code> Parameter</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#complete-example-authorization-plugin">Complete Example: Authorization Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#best-practices">Best Practices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/plugins.html#next-steps">Next Steps</a></li>
@@ -178,14 +191,38 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../guide/hierarchies.html">Hierarchical Routers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#basic-hierarchy">Basic Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#dictionary-registration">Dictionary Registration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#flexible-registration-patterns">Flexible Registration Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#managing-hierarchies">Managing Hierarchies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#basic-instance-attachment">Basic Instance Attachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#multiple-routers-auto-mapping">Multiple Routers: Auto-Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#multiple-routers-explicit-mapping">Multiple Routers: Explicit Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#parent-with-multiple-routers">Parent with Multiple Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#branch-routers">Branch Routers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#auto-detachment">Auto-Detachment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#parent-tracking">Parent Tracking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#plugin-inheritance">Plugin Inheritance</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#dotted-path-navigation">Dotted Path Navigation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#introspection">Introspection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#real-world-example">Real-World Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#best-practices">Best Practices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#real-world-examples">Real-World Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#microservice-style-organization">Microservice-Style Organization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#multi-level-organization-with-branches">Multi-Level Organization with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#dynamic-service-replacement">Dynamic Service Replacement</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#logical-grouping-with-branches">Logical Grouping with Branches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#shared-plugins-at-root">Shared Plugins at Root</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#deep-hierarchies">Deep Hierarchies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#store-before-attach">Store Before Attach</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#explicit-detachment">Explicit Detachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#prevent-name-collisions">Prevent Name Collisions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#parent-aware-children">Parent-Aware Children</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#conditional-attachment">Conditional Attachment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/hierarchies.html#multi-router-services">Multi-Router Services</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/hierarchies.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
@@ -199,7 +236,7 @@
 <li class="toctree-l2"><a class="reference internal" href="reference.html#marker-discovery">Marker discovery</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#handler-table-and-wrapping">Handler table and wrapping</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#lookup-and-execution">Lookup and execution</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference.html#children">Children</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#children-instance-hierarchies-only">Children (instance hierarchies only)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#child-discovery-helpers">Child discovery helpers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#introspection">Introspection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#hooks-for-subclasses">Hooks for subclasses</a></li>
@@ -214,9 +251,8 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.__getitem__"><code class="docutils literal notranslate"><span class="pre">BaseRouter.__getitem__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.call"><code class="docutils literal notranslate"><span class="pre">BaseRouter.call()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.entries"><code class="docutils literal notranslate"><span class="pre">BaseRouter.entries()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.add_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.add_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.get_child"><code class="docutils literal notranslate"><span class="pre">BaseRouter.get_child()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.describe"><code class="docutils literal notranslate"><span class="pre">BaseRouter.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.attach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.attach_instance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.detach_instance"><code class="docutils literal notranslate"><span class="pre">BaseRouter.detach_instance()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.members"><code class="docutils literal notranslate"><span class="pre">BaseRouter.members()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.base_router.BaseRouter.iter_plugins"><code class="docutils literal notranslate"><span class="pre">BaseRouter.iter_plugins()</span></code></a></li>
 </ul>
@@ -238,6 +274,7 @@
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.router.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
@@ -249,9 +286,24 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#re-exports">Re-exports</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#smartroute.core.decorators.route"><code class="docutils literal notranslate"><span class="pre">route()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference.html#smartroute.core.decorators.routers"><code class="docutils literal notranslate"><span class="pre">routers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="reference.html#smartroute.core.decorators.RoutedClass"><code class="docutils literal notranslate"><span class="pre">RoutedClass</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.RoutedClass.routedclass"><code class="docutils literal notranslate"><span class="pre">RoutedClass.routedclass</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router"><code class="docutils literal notranslate"><span class="pre">Router</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.instance"><code class="docutils literal notranslate"><span class="pre">Router.instance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.name"><code class="docutils literal notranslate"><span class="pre">Router.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.prefix"><code class="docutils literal notranslate"><span class="pre">Router.prefix</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.__init__"><code class="docutils literal notranslate"><span class="pre">Router.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.available_plugins"><code class="docutils literal notranslate"><span class="pre">Router.available_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.get_config"><code class="docutils literal notranslate"><span class="pre">Router.get_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.get_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.get_runtime_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.is_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.is_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.iter_plugins"><code class="docutils literal notranslate"><span class="pre">Router.iter_plugins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.plug"><code class="docutils literal notranslate"><span class="pre">Router.plug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.register_plugin"><code class="docutils literal notranslate"><span class="pre">Router.register_plugin()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.set_plugin_enabled"><code class="docutils literal notranslate"><span class="pre">Router.set_plugin_enabled()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference.html#smartroute.core.decorators.Router.set_runtime_data"><code class="docutils literal notranslate"><span class="pre">Router.set_runtime_data()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -259,14 +311,15 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Plugin API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-smartroute.plugins.logging">Auto-Generated Plugin API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#responsibilities">Responsibilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#behaviour-and-api">Behaviour and API</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#registration">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.configure"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.wrap_handler()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.name"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.description"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.logging.LoggingPlugin.config"><code class="docutils literal notranslate"><span class="pre">LoggingPlugin.config</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#id1">Responsibilities</a></li>
@@ -274,13 +327,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#behaviour-and-data">Behaviour and data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">Registration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.plugin_code"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_code</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.plugin_description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.plugin_description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.__init__"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.configure"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.configure()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.on_decore"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.on_decore()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.wrap_handler"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.wrap_handler()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.get_model"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.get_model()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.name"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.description"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.config"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.describe_entry"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.describe_entry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smartroute.plugins.pydantic.PydanticPlugin.entry_metadata"><code class="docutils literal notranslate"><span class="pre">PydanticPlugin.entry_metadata()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -330,64 +385,103 @@
 <section id="responsibilities">
 <h3>Responsibilities<a class="headerlink" href="#responsibilities" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p>Wrap each handler call and emit two messages: <code class="docutils literal notranslate"><span class="pre">&quot;{entry.name}</span> <span class="pre">start&quot;</span></code> before
-execution, <code class="docutils literal notranslate"><span class="pre">&quot;{entry.name}</span> <span class="pre">end</span> <span class="pre">(&lt;ms&gt;</span> <span class="pre">ms)&quot;</span></code> after. Elapsed time is in
-milliseconds with <code class="docutils literal notranslate"><span class="pre">{elapsed:.2f}</span></code> formatting.</p></li>
-<li><p>Use a provided <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code> (default <code class="docutils literal notranslate"><span class="pre">logging.getLogger(&quot;smartroute&quot;)</span></code>).
-If the logger reports no handlers via <code class="docutils literal notranslate"><span class="pre">hasHandlers()</span></code>, fall back to <code class="docutils literal notranslate"><span class="pre">print</span></code>
-to avoid dropping output.</p></li>
+<li><p>Wrap each handler call and emit configurable messages:
+<code class="docutils literal notranslate"><span class="pre">before</span></code> (default True) logs <code class="docutils literal notranslate"><span class="pre">&quot;{entry.name}</span> <span class="pre">start&quot;</span></code>;
+<code class="docutils literal notranslate"><span class="pre">after</span></code> (default True) logs <code class="docutils literal notranslate"><span class="pre">&quot;{entry.name}</span> <span class="pre">end</span> <span class="pre">(&lt;ms&gt;</span> <span class="pre">ms)&quot;</span></code> with elapsed time.</p></li>
+<li><p>Sinks: when <code class="docutils literal notranslate"><span class="pre">print</span></code> is true, always use <code class="docutils literal notranslate"><span class="pre">print(message)</span></code>;
+when <code class="docutils literal notranslate"><span class="pre">log</span></code> is true, use <code class="docutils literal notranslate"><span class="pre">logger.info(message)</span></code> if the logger reports
+handlers via <code class="docutils literal notranslate"><span class="pre">hasHandlers()</span></code>, otherwise fall back to <code class="docutils literal notranslate"><span class="pre">print(message)</span></code>;
+else no output.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">enabled</span></code> gates the plugin entirely (default True).</p></li>
+<li><p>Use a provided <code class="docutils literal notranslate"><span class="pre">logging.Logger</span></code> (default <code class="docutils literal notranslate"><span class="pre">logging.getLogger(&quot;smartroute&quot;)</span></code>).</p></li>
+</ul>
+</section>
+<section id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Accepted keys (router-level or per-handler): <code class="docutils literal notranslate"><span class="pre">enabled</span></code>, <code class="docutils literal notranslate"><span class="pre">before</span></code>,
+<code class="docutils literal notranslate"><span class="pre">after</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, <code class="docutils literal notranslate"><span class="pre">print</span></code>. They can be provided as individual kwargs
+(e.g. <code class="docutils literal notranslate"><span class="pre">logging_after=False</span></code>) or in <code class="docutils literal notranslate"><span class="pre">logging_flags</span></code> (e.g.
+<code class="docutils literal notranslate"><span class="pre">&quot;enabled:off,before:on,after:on,log:on,print:off&quot;</span></code>).</p></li>
+<li><p>Runtime: <code class="docutils literal notranslate"><span class="pre">router.logging.configure</span></code> mirrors the same options, plus
+per-handler via <code class="docutils literal notranslate"><span class="pre">configure[&quot;handler&quot;].before</span> <span class="pre">=</span> <span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flags</span></code> string values are parsed like other plugins via <code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code>.</p></li>
 </ul>
 </section>
 <section id="behaviour-and-api">
 <h3>Behaviour and API<a class="headerlink" href="#behaviour-and-api" title="Link to this heading"></a></h3>
-<ul>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">LoggingPlugin(name=None,</span> <span class="pre">logger=None,</span> <span class="pre">**cfg)</span></code> delegates to <code class="docutils literal notranslate"><span class="pre">BasePlugin</span></code>;
 if <code class="docutils literal notranslate"><span class="pre">name</span></code> is falsy it sets <code class="docutils literal notranslate"><span class="pre">&quot;logger&quot;</span></code> as the plugin name. <code class="docutils literal notranslate"><span class="pre">logger</span></code> is
-stored in <code class="docutils literal notranslate"><span class="pre">self._logger</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_emit(message)</span></code> writes to <code class="docutils literal notranslate"><span class="pre">self._logger.info</span></code> when handlers exist, else
-<code class="docutils literal notranslate"><span class="pre">print(message)</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">wrap_handler(route,</span> <span class="pre">entry,</span> <span class="pre">call_next)</span></code> returns <code class="docutils literal notranslate"><span class="pre">logged</span></code> callable:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>records <code class="docutils literal notranslate"><span class="pre">start</span></code> via <code class="docutils literal notranslate"><span class="pre">time.perf_counter()</span></code></p></li>
-<li><p>emits start message</p></li>
-<li><p>calls <code class="docutils literal notranslate"><span class="pre">call_next(*args,</span> <span class="pre">**kwargs)</span></code></p></li>
-<li><p>emits end message with elapsed time in ms</p></li>
-<li><p>propagates the return value</p></li>
-</ul>
-</div></blockquote>
-<p>Exceptions from <code class="docutils literal notranslate"><span class="pre">call_next</span></code> propagate; the end message is not emitted when
-an exception is raised.</p>
-</li>
+stored in <code class="docutils literal notranslate"><span class="pre">self._logger</span></code>; additional <code class="docutils literal notranslate"><span class="pre">**cfg</span></code> seeds initial config.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_emit(message,</span> <span class="pre">cfg)</span></code> chooses sink based on <code class="docutils literal notranslate"><span class="pre">cfg</span></code> as described above.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wrap_handler(route,</span> <span class="pre">entry,</span> <span class="pre">call_next)</span></code> applies the configuration on each
+call. Exceptions propagate; the end message is skipped when an exception is
+raised.</p></li>
 </ul>
 </section>
 <section id="registration">
 <h3>Registration<a class="headerlink" href="#registration" title="Link to this heading"></a></h3>
 <p>At module import, the plugin registers itself globally as <code class="docutils literal notranslate"><span class="pre">&quot;logging&quot;</span></code> via
-<code class="docutils literal notranslate"><span class="pre">Router.register_plugin(&quot;logging&quot;,</span> <span class="pre">LoggingPlugin)</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">Router.register_plugin(LoggingPlugin)</span></code>.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">smartroute.plugins.logging.</span></span><span class="sig-name descname"><span class="pre">LoggingPlugin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/logging.html#LoggingPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">smartroute.plugins.logging.</span></span><span class="sig-name descname"><span class="pre">LoggingPlugin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/logging.html#LoggingPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></p>
 <p>Simplified logging plugin for SmartRoute.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>)</p></li>
-<li><p><strong>logger</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code>]</span>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>logger</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code>]</span>)</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.plugin_code">
+<span class="sig-name descname"><span class="pre">plugin_code</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'logging'</span></em><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.plugin_code" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.plugin_description">
+<span class="sig-name descname"><span class="pre">plugin_description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Logs</span> <span class="pre">handler</span> <span class="pre">calls</span> <span class="pre">with</span> <span class="pre">timing'</span></em><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.plugin_description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/logging.html#LoggingPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/logging.html#LoggingPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>logger</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code>]</span>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'--base--'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.configure" title="Link to this definition"></a></dt>
+<dd><p>Override to define accepted configuration parameters.</p>
+<p>Define your plugin’s configuration options as method parameters.
+The wrapper added by __init_subclass__ handles:
+- Parsing <code class="docutils literal notranslate"><span class="pre">flags</span></code> (e.g. “enabled,before:off”) into booleans
+- Routing to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (”–base–”, handler name, or comma-separated)
+- Pydantic validation via &#64;validate_call
+- Writing to the router’s config store</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+    <span class="k">pass</span>  <span class="c1"># Storage is handled by the wrapper</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>)</p></li>
-<li><p><strong>logger</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code>]</span>)</p></li>
+<li><p><strong>_target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Where to write config. “–base–” for router-level,
+“handler_name” for per-handler, or “h1,h2” for multiple.</p></li>
+<li><p><strong>flags</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – String like “enabled,before:off” parsed into booleans.</p></li>
+<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></span>)</p></li>
+<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -405,21 +499,6 @@ an exception is raised.</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.name">
-<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.name" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.description">
-<span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.description" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.config">
-<span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.config" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -442,8 +521,7 @@ title <code class="docutils literal notranslate"><span class="pre">&quot;Validat
 <li><p>Importing this module requires <code class="docutils literal notranslate"><span class="pre">pydantic</span></code>; otherwise an ImportError is
 raised with install guidance. Under TYPE_CHECKING it hints <code class="docutils literal notranslate"><span class="pre">Router</span></code> import.</p></li>
 <li><p>If type hint resolution fails or no usable hints remain after dropping the
-return annotation, <code class="docutils literal notranslate"><span class="pre">entry.metadata[&quot;pydantic&quot;]</span></code> is set to
-<code class="docutils literal notranslate"><span class="pre">{&quot;enabled&quot;:</span> <span class="pre">False}</span></code> and wrapping becomes a passthrough.</p></li>
+return annotation, no model is created and wrapping becomes a passthrough.</p></li>
 </ul>
 </section>
 <section id="behaviour-and-data">
@@ -453,7 +531,7 @@ return annotation, <code class="docutils literal notranslate"><span class="pre">
 name is <code class="docutils literal notranslate"><span class="pre">&quot;pydantic&quot;</span></code>.</p></li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">on_decore(route,</span> <span class="pre">func,</span> <span class="pre">entry)</span></code>:</dt><dd><ul>
-<li><p>resolves type hints via <code class="docutils literal notranslate"><span class="pre">get_type_hints(func)</span></code>; exceptions mark disabled.</p></li>
+<li><p>resolves type hints via <code class="docutils literal notranslate"><span class="pre">get_type_hints(func)</span></code>; exceptions skip model.</p></li>
 <li><p>removes <code class="docutils literal notranslate"><span class="pre">return</span></code> hint if present.</p></li>
 <li><dl class="simple">
 <dt>builds a fields dict from function signature:</dt><dd><ul>
@@ -465,14 +543,15 @@ name is <code class="docutils literal notranslate"><span class="pre">&quot;pydan
 </li>
 <li><p>creates a model <code class="docutils literal notranslate"><span class="pre">&lt;func.__name__&gt;_Model</span></code> via <code class="docutils literal notranslate"><span class="pre">create_model</span></code>.</p></li>
 <li><p>stores metadata in <code class="docutils literal notranslate"><span class="pre">entry.metadata[&quot;pydantic&quot;]</span></code>:
-<code class="docutils literal notranslate"><span class="pre">{&quot;enabled&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;model&quot;:</span> <span class="pre">model,</span> <span class="pre">&quot;hints&quot;:</span> <span class="pre">hints,</span> <span class="pre">&quot;signature&quot;:</span> <span class="pre">sig}</span></code>.</p></li>
+<code class="docutils literal notranslate"><span class="pre">{&quot;model&quot;:</span> <span class="pre">model,</span> <span class="pre">&quot;hints&quot;:</span> <span class="pre">hints,</span> <span class="pre">&quot;signature&quot;:</span> <span class="pre">sig}</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">wrap_handler(route,</span> <span class="pre">entry,</span> <span class="pre">call_next)</span></code>:</dt><dd><ul>
-<li><p>if metadata missing or <code class="docutils literal notranslate"><span class="pre">enabled</span></code> is false, returns <code class="docutils literal notranslate"><span class="pre">call_next</span></code>.</p></li>
+<li><p>calls <code class="docutils literal notranslate"><span class="pre">get_model()</span></code> to check if validation is disabled or no model exists.</p></li>
+<li><p>if <code class="docutils literal notranslate"><span class="pre">get_model()</span></code> returns None, returns <code class="docutils literal notranslate"><span class="pre">call_next</span></code> (passthrough).</p></li>
 <li><p>binds incoming args/kwargs with the captured <code class="docutils literal notranslate"><span class="pre">signature</span></code> (<code class="docutils literal notranslate"><span class="pre">sig.bind</span></code>)
 and applies defaults.</p></li>
 <li><p>splits bound arguments into two dicts: annotated (validated) and
@@ -486,39 +565,72 @@ calls <code class="docutils literal notranslate"><span class="pre">call_next(**f
 </dd>
 </dl>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">describe_entry(router,</span> <span class="pre">entry,</span> <span class="pre">base_description)</span></code>: enriches the entry
-description parameters using stored Pydantic metadata (types/defaults/
-required/validation keys) and returns an empty dict after mutating
-<code class="docutils literal notranslate"><span class="pre">base_description[&quot;parameters&quot;]</span></code> in place.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_model(entry)</span></code>: returns the Pydantic model unless config <code class="docutils literal notranslate"><span class="pre">disabled</span></code>
+is truthy or no model exists.</p></li>
 </ul>
 </section>
 <section id="id2">
 <h3>Registration<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <p>Registers itself globally as <code class="docutils literal notranslate"><span class="pre">&quot;pydantic&quot;</span></code> during module import via
-<code class="docutils literal notranslate"><span class="pre">Router.register_plugin(&quot;pydantic&quot;,</span> <span class="pre">PydanticPlugin)</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">Router.register_plugin(PydanticPlugin)</span></code>.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">smartroute.plugins.pydantic.</span></span><span class="sig-name descname"><span class="pre">PydanticPlugin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">smartroute.plugins.pydantic.</span></span><span class="sig-name descname"><span class="pre">PydanticPlugin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></p>
 <p>Validate handler inputs with Pydantic using type hints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>)</p></li>
-<li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.plugin_code">
+<span class="sig-name descname"><span class="pre">plugin_code</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'pydantic'</span></em><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.plugin_code" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.plugin_description">
+<span class="sig-name descname"><span class="pre">plugin_description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Validates</span> <span class="pre">handler</span> <span class="pre">inputs</span> <span class="pre">using</span> <span class="pre">Pydantic</span> <span class="pre">type</span> <span class="pre">hints'</span></em><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.plugin_description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'--base--'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.configure" title="Link to this definition"></a></dt>
+<dd><p>Override to define accepted configuration parameters.</p>
+<p>Define your plugin’s configuration options as method parameters.
+The wrapper added by __init_subclass__ handles:
+- Parsing <code class="docutils literal notranslate"><span class="pre">flags</span></code> (e.g. “enabled,before:off”) into booleans
+- Routing to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (”–base–”, handler name, or comma-separated)
+- Pydantic validation via &#64;validate_call
+- Writing to the router’s config store</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+    <span class="k">pass</span>  <span class="c1"># Storage is handled by the wrapper</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>)</p></li>
-<li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
+<li><p><strong>_target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Where to write config. “–base–” for router-level,
+“handler_name” for per-handler, or “h1,h2” for multiple.</p></li>
+<li><p><strong>flags</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – String like “enabled,before:off” parsed into booleans.</p></li>
+<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></span>)</p></li>
+<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -526,13 +638,18 @@ required/validation keys) and returns an empty dict after mutating
 <dl class="py method">
 <dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.on_decore">
 <span class="sig-name descname"><span class="pre">on_decore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">route</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.on_decore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.on_decore" title="Link to this definition"></a></dt>
-<dd><p>Hook run when the route is registered.</p>
+<dd><p>Override to run logic when a handler is registered.</p>
+<p>Called once per handler at decoration time. Use this to:
+- Inspect type hints and store metadata
+- Pre-compute validation models
+- Annotate <code class="docutils literal notranslate"><span class="pre">entry.metadata</span></code> for later use in wrap_handler</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>router</strong> – The Router instance registering the handler.</p></li>
+<li><p><strong>func</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></span>) – The original handler function.</p></li>
+<li><p><strong>entry</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">MethodEntry</span></code></span>) – MethodEntry with name, func, router, plugins, metadata.</p></li>
 <li><p><strong>route</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="reference.html#smartroute.core.router.Router" title="smartroute.core.router.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a></span>)</p></li>
-<li><p><strong>func</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></span>)</p></li>
-<li><p><strong>entry</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">MethodEntry</span></code></span>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -556,31 +673,34 @@ required/validation keys) and returns an empty dict after mutating
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.get_model" title="Link to this definition"></a></dt>
+<dd><p>Return the Pydantic model for this handler if not disabled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entry</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">MethodEntry</span></code></span>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.name">
 <span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.name" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.description">
-<span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.description" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.config">
-<span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.config" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
-<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.describe_entry">
-<span class="sig-name descname"><span class="pre">describe_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.describe_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.describe_entry" title="Link to this definition"></a></dt>
-<dd><p>Enrich describe() output with Pydantic field metadata.</p>
+<dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.entry_metadata">
+<span class="sig-name descname"><span class="pre">entry_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">router</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.entry_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.entry_metadata" title="Link to this definition"></a></dt>
+<dd><p>Return pydantic metadata for introspection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>router</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="reference.html#smartroute.core.router.Router" title="smartroute.core.router.Router"><code class="xref py py-class docutils literal notranslate"><span class="pre">Router</span></code></a></span>)</p></li>
+<li><p><strong>router</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
 <li><p><strong>entry</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">MethodEntry</span></code></span>)</p></li>
-<li><p><strong>base_description</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

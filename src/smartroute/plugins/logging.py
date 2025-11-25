@@ -5,14 +5,12 @@ Rebuild behaviour exactly as described; no hidden defaults beyond this text.
 Responsibilities
 ----------------
 - Wrap each handler call and emit configurable messages:
-  * ``before`` (default True): ``"{entry.name} start"``
-  * ``after`` (default True): ``"{entry.name} end (<ms> ms)"`` with elapsed time
-    in milliseconds and ``{elapsed:.2f}`` formatting.
-- Sinks:
-  * when ``print`` is true → always ``print(message)``;
-  * else when ``log`` is true → ``logger.info(message)`` if the logger reports
-    handlers via ``hasHandlers()``, otherwise ``print(message)`` to avoid drops;
-  * else → no output.
+  ``before`` (default True) logs ``"{entry.name} start"``;
+  ``after`` (default True) logs ``"{entry.name} end (<ms> ms)"`` with elapsed time.
+- Sinks: when ``print`` is true, always use ``print(message)``;
+  when ``log`` is true, use ``logger.info(message)`` if the logger reports
+  handlers via ``hasHandlers()``, otherwise fall back to ``print(message)``;
+  else no output.
 - ``enabled`` gates the plugin entirely (default True).
 - Use a provided ``logging.Logger`` (default ``logging.getLogger("smartroute")``).
 

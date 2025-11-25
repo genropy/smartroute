@@ -40,7 +40,7 @@ orders.api.get("create")({"name": "order-3"})  # Calls create()
 **Answer**: SmartRoute offers:
 
 - **Plugin system**: add logging, validation, audit without touching handlers
-- **Hierarchies**: organize routers in trees with `add_child()`
+- **Hierarchies**: organize routers in trees with `attach_instance()`
 - **Metadata**: each handler can have scopes, channels, configurations
 - **Introspection**: `router.members()` and `describe()` to explore structure
 - **Isolation**: each instance has its own router with independent plugins
@@ -131,9 +131,7 @@ def handle_create(self): ...  # Registered as "create" (strips prefix)
 
 **Question**: I have an application with modules (sales, finance, admin) that I want to organize hierarchically. How?
 
-<!-- test: test_switcher_basic.py::test_dashboard_hierarchy -->
-
-**Answer**: Use `add_child()` to connect child routers:
+**Answer**: Use `attach_instance()` to connect child instances:
 
 ```python
 class Dashboard(RoutedClass):
@@ -142,8 +140,9 @@ class Dashboard(RoutedClass):
         self.sales = SalesModule()
         self.finance = FinanceModule()
 
-        # Connect children by attribute name
-        self.api.add_child("sales, finance")
+        # Attach child instances
+        self.api.attach_instance(self.sales, name="sales")
+        self.api.attach_instance(self.finance, name="finance")
 
 dashboard = Dashboard()
 # Access with dotted path
@@ -187,7 +186,7 @@ class Parent(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api").plug("logging", level="debug")
         self.child_obj = Child()
-        self.api.add_child(self.child_obj.api, name="child")
+        self.api.attach_instance(self.child_obj, name="child")
 
 # Child automatically inherits logging plugin
 parent = Parent()
@@ -308,7 +307,7 @@ router = Router(self, name="api").plug("audit")
 - **Scope** = **logical tag** identifying visibility level (e.g., `internal`, `public_read`, `admin`)
 - **Channel** = **physical channel** where the handler can be exposed (e.g., `CLI`, `HTTP`, `WS`, `MCP`)
 
-SmartRoute core no longer attaches or enforces scope/channel rules. To add them, use the SmartPublisher ecosystem plugin (`PublishPlugin`).
+For scope/channel rules, use the SmartPublisher ecosystem plugin (`PublishPlugin`).
 
 **Example**:
 ```python
@@ -508,10 +507,10 @@ def handle_create_order(self): ...
 ```python
 # CORRECT
 router.plug("logging")
-router.add_child(child)  # Child inherits logging
+router.attach_instance(child, name="child")  # Child inherits logging
 
 # WRONG
-router.add_child(child)
+router.attach_instance(child, name="child")
 router.plug("logging")  # Child does NOT inherit
 ```
 

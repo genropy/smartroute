@@ -92,11 +92,9 @@ Children (instance hierarchies only)
 - ``attach_instance`` connects routers exposed on a ``RoutedClass`` child that
   is already stored as an attribute on the parent instance. It enforces that
   the child is not bound to another parent (via ``_routed_parent``).
-- Alias/mapping rules:
-  * parent with a single router: ``name`` optional; if the child has multiple
-    routers and no mapping is provided, aliases default to child router names.
-  * parent with multiple routers: explicit alias/mapping is required.
-  * unmapped child routers are skipped (not attached).
+- Alias/mapping rules: parent with a single router can omit ``name`` (aliases
+  default to child router names); parent with multiple routers requires explicit
+  alias/mapping; unmapped child routers are skipped (not attached).
 - Attached child routers inherit plugins via ``_on_attached_to_parent``; the
   child's ``_routed_parent`` is set to the parent instance.
 

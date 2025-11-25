@@ -138,7 +138,7 @@ class Root(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api").plug("logging")
         self.leaf = Leaf()
-        self.api.add_child(self.leaf, name="leaf")
+        self.api.attach_instance(self.leaf, name="leaf")
 
     @route("api")
     def root_ping(self):

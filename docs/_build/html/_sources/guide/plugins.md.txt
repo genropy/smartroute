@@ -67,60 +67,118 @@ This keeps SmartRoute lean while SmartPublisher owns the canonical scope/channel
 
 ## Creating Custom Plugins
 
-<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
+Extend `BasePlugin` and implement hooks. Every plugin **must** define two class attributes:
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L41-L69)
+- `plugin_code` - unique identifier used for registration (e.g. `"logging"`)
+- `plugin_description` - human-readable description
 
-Extend `BasePlugin` and implement hooks:
+### Basic Plugin Structure
 
 ```python
 from smartroute import BasePlugin, Router, RoutedClass, route
 
 class CapturePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="capture")
+    # Required class attributes
+    plugin_code = "capture"
+    plugin_description = "Captures handler calls for testing"
+
+    # Optional: custom instance state (use __slots__ for efficiency)
+    __slots__ = ("calls",)
+
+    def __init__(self, router, **config):
         self.calls = []
+        super().__init__(router, **config)
+
+    def configure(self, enabled: bool = True):
+        """Define accepted configuration parameters.
+
+        The method body can be empty - the wrapper handles storage.
+        Parameters become the configuration schema validated by Pydantic.
+        """
+        pass
 
     def on_decore(self, router, func, entry):
-        """Called when handler is registered."""
+        """Called once when handler is registered."""
         entry.metadata["capture"] = True
 
     def wrap_handler(self, router, entry, call_next):
-        """Called when handler is invoked."""
+        """Called to build middleware chain."""
         def wrapper(*args, **kwargs):
-            self.calls.append("wrap")
+            self.calls.append(entry.name)
             return call_next(*args, **kwargs)
         return wrapper
 
 # Register plugin globally
-Router.register_plugin("capture", CapturePlugin)
+Router.register_plugin(CapturePlugin)
 
 # Use in service
 class PluginService(RoutedClass):
     def __init__(self):
-        self.touched = False
         self.api = Router(self, name="api").plug("capture")
 
     @route("api")
     def do_work(self):
-        self.touched = True
         return "ok"
 
 svc = PluginService()
 result = svc.api.get("do_work")()
-assert result == "ok"
-assert svc.touched is True
-assert svc.api.capture.calls == ["wrap"]
+assert svc.api.capture.calls == ["do_work"]
 ```
 
-**Key points**:
+### Constructor Signature
 
-- `BasePlugin.__init__(name="...")` sets plugin name
-- `on_decore()` modifies handler metadata at registration time
-- `wrap_handler()` intercepts handler execution
-- Each router instance gets independent plugin state
+The constructor **must** accept `router` as first argument and `**config`:
+
+```python
+def __init__(self, router, **config):
+    # 1. Initialize your own state FIRST
+    self.my_state = []
+
+    # 2. Call super().__init__ which:
+    #    - Sets self.name = self.plugin_code
+    #    - Stores self._router = router
+    #    - Initializes the config store
+    #    - Calls self.configure(**config)
+    super().__init__(router, **config)
+```
+
+**Important**: Initialize your state *before* calling `super().__init__()` because the parent constructor calls `configure()` which might need your state.
 
 ## Plugin Hooks
+
+SmartRoute plugins can override these methods:
+
+| Hook | When Called | Purpose | Required |
+|------|-------------|---------|----------|
+| `configure()` | At plugin init and runtime | Define configuration schema | No |
+| `on_decore()` | Handler registration | Add metadata, validate signatures | No |
+| `wrap_handler()` | Handler invocation | Middleware (logging, auth, etc.) | No |
+| `allow_entry()` | `members()` introspection | Filter visible handlers | No |
+| `entry_metadata()` | `members()` introspection | Add plugin metadata to output | No |
+
+**All hooks are optional.** Override only what you need. A minimal plugin can have just `plugin_code` and `plugin_description` with no hooks.
+
+### configure(**kwargs)
+
+Define accepted configuration parameters. The method signature becomes the configuration schema, validated by Pydantic.
+
+```python
+def configure(
+    self,
+    enabled: bool = True,
+    threshold: int = 10,
+    level: str = "info"
+):
+    """Body can be empty - the wrapper handles storage."""
+    pass
+```
+
+The wrapper added by `__init_subclass__` automatically:
+
+- Parses `flags` string (e.g. `"enabled,before:off"`) into booleans
+- Routes to `_target` (`"--base--"` for router-level, `"handler_name"` for per-handler)
+- Validates parameters via Pydantic's `@validate_call`
+- Writes config to the router's store
 
 ### on_decore(router, func, entry)
 
@@ -130,14 +188,14 @@ Called once when a handler is registered.
 
 - `router` - The Router instance
 - `func` - The original method
-- `entry` - MethodEntry with `name`, `func`, `metadata`
+- `entry` - MethodEntry with `name`, `func`, `router`, `plugins`, `metadata`
 
 **Use for**:
 
 - Adding metadata to handlers
 - Validating handler signatures
 - Building handler indexes
-- Pre-computing handler information
+- Pre-computing handler information (e.g., Pydantic models)
 
 **Example**:
 
@@ -154,7 +212,7 @@ def on_decore(self, router, func, entry):
 
 ### wrap_handler(router, entry, call_next)
 
-Called every time a handler is invoked.
+Called to build the middleware chain. Return a callable that wraps `call_next`.
 
 **Parameters**:
 
@@ -162,7 +220,7 @@ Called every time a handler is invoked.
 - `entry` - MethodEntry for the handler
 - `call_next` - Callable to invoke next plugin or handler
 
-**Returns**: Wrapper function that will be called instead of handler
+**Returns**: Wrapper function with same signature as `call_next`
 
 **Use for**:
 
@@ -186,31 +244,93 @@ def wrap_handler(self, router, entry, call_next):
 
             # After handler
             duration = time.time() - start
-            self.log(f"{entry.name} took {duration:.3f}s")
+            print(f"{entry.name} took {duration:.3f}s")
 
             return result
         except Exception as e:
-            self.log(f"{entry.name} failed: {e}")
+            print(f"{entry.name} failed: {e}")
             raise
 
     return wrapper
 ```
 
+### allow_entry(router, entry, **filters)
+
+Control handler visibility during introspection (`members()`).
+
+**Parameters**:
+
+- `router` - The Router instance
+- `entry` - MethodEntry being checked
+- `**filters` - Filter criteria passed to `members()` (e.g., `scopes`, `channel`)
+
+**Returns**: `True` to include, `False` to exclude, `None` to defer to other plugins
+
+**Example**:
+
+```python
+def allow_entry(self, router, entry, scopes=None, **filters):
+    # Only show admin handlers to admin scope
+    if entry.metadata.get("admin_only"):
+        if scopes and "admin" in scopes:
+            return True
+        return False
+    return None  # defer to other plugins
+```
+
+### entry_metadata(router, entry)
+
+Provide plugin-specific metadata for `members()` output.
+
+**Parameters**:
+
+- `router` - The Router instance
+- `entry` - MethodEntry being described
+
+**Returns**: Dict stored in `plugins[plugin_name]["metadata"]`
+
+**Example**:
+
+```python
+def entry_metadata(self, router, entry):
+    cfg = self.configuration(entry.name)
+    return {
+        "enabled": cfg.get("enabled", True),
+        "threshold": cfg.get("threshold", 10),
+    }
+```
+
+The result appears in `members()` output:
+
+```python
+{
+    "entries": {
+        "handler_name": {
+            "plugins": {
+                "my_plugin": {
+                    "config": {"enabled": True, "threshold": 10},
+                    "metadata": {"enabled": True, "threshold": 10}
+                }
+            }
+        }
+    }
+}
+```
+
 ## Plugin Registration
-
-<!-- test: test_router_edge_cases.py::test_register_plugin_validates -->
-
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L205-L218)
 
 Register plugins globally with `Router.register_plugin()`:
 
 ```python
 class CustomPlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="custom")
+    plugin_code = "custom"
+    plugin_description = "My custom plugin"
 
-# Register once, use everywhere
-Router.register_plugin("custom", CustomPlugin)
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
+
+# Register once - uses plugin_code as the name
+Router.register_plugin(CustomPlugin)
 
 # Now available in all routers
 class Service(RoutedClass):
@@ -220,8 +340,8 @@ class Service(RoutedClass):
 
 **Registration rules**:
 
-- Name must be non-empty string
 - Plugin class must extend `BasePlugin`
+- Plugin class must define `plugin_code` (used as registration name)
 - Cannot re-register same name with different class
 - Registration is global across all routers
 
@@ -237,17 +357,18 @@ assert "custom" in plugins
 
 ## Per-Instance State
 
-<!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
-
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208)
-
 Each router instance gets independent plugin state:
 
 ```python
 class CapturePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="capture")
+    plugin_code = "capture"
+    plugin_description = "Captures handler calls"
+
+    __slots__ = ("calls",)
+
+    def __init__(self, router, **config):
         self.calls = []  # Per-instance state
+        super().__init__(router, **config)
 
     def wrap_handler(self, router, entry, call_next):
         def wrapper(*args, **kwargs):
@@ -255,7 +376,7 @@ class CapturePlugin(BasePlugin):
             return call_next(*args, **kwargs)
         return wrapper
 
-Router.register_plugin("capture", CapturePlugin)
+Router.register_plugin(CapturePlugin)
 
 # Each instance is isolated
 svc1 = PluginService()
@@ -273,82 +394,116 @@ assert svc2.api.capture.calls == []  # Independent state
 - Independent configuration per instance
 - Easy testing with isolated state
 
-## Runtime Data
-
-<!-- test: test_switcher_basic.py::test_plugin_enable_disable_runtime_data -->
-
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L348-L362)
-
-Store temporary data during handler execution:
-
-```python
-class TogglePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="toggle")
-
-    def wrap_handler(self, router, entry, call_next):
-        def wrapper(*args, **kwargs):
-            # Store runtime data
-            router.set_runtime_data(entry.name, self.name, "invoked", True)
-            return call_next(*args, **kwargs)
-        return wrapper
-
-Router.register_plugin("toggle", TogglePlugin)
-
-svc = ToggleService()
-svc.api.get("handler")()
-
-# Check runtime data
-data = svc.api.get_runtime_data("handler", "toggle")
-assert data["invoked"] is True
-```
-
-**Use cases**:
-
-- Track invocation counts
-- Store request context
-- Capture timing information
-- Debug plugin behavior
-
 ## Plugin Configuration
 
-Plugins support runtime configuration. See [Plugin Configuration](plugin-configuration.md) for complete guide.
+Plugins define their configuration schema via the `configure()` method. The configuration system provides:
 
-**Quick example**:
+- **Router-level defaults**: Apply to all handlers
+- **Per-handler overrides**: Target specific handlers
+- **Flags shorthand**: Boolean options as comma-separated string
+- **Pydantic validation**: Type checking on all parameters
+
+### Defining Configuration
 
 ```python
-class ConfigurablePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="configurable")
-        # Default configuration
-        self.set_config(enabled=True, level="info")
+class MyPlugin(BasePlugin):
+    plugin_code = "my_plugin"
+    plugin_description = "Example plugin with configuration"
 
-svc = MyService()
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
 
-# Configure globally
-svc.routedclass.configure("api:configurable/_all_", level="debug")
-
-# Configure per handler
-svc.routedclass.configure("api:configurable/critical_*", enabled=True, level="error")
+    def configure(
+        self,
+        enabled: bool = True,
+        level: str = "info",
+        threshold: int = 10
+    ):
+        """Define accepted parameters. Body can be empty."""
+        pass
 ```
+
+### Reading Configuration
+
+Use `configuration(method_name)` to read merged config (base + per-handler):
+
+```python
+def wrap_handler(self, router, entry, call_next):
+    def wrapper(*args, **kwargs):
+        # Get merged config for this handler
+        cfg = self.configuration(entry.name)
+
+        if not cfg.get("enabled", True):
+            return call_next(*args, **kwargs)
+
+        level = cfg.get("level", "info")
+        # ... use configuration
+        return call_next(*args, **kwargs)
+    return wrapper
+```
+
+### Configuring at Runtime
+
+```python
+# At plugin attachment (initial config)
+router.plug("my_plugin", enabled=True, level="debug")
+
+# Or via the plugin instance
+router.my_plugin.configure(threshold=20)
+
+# Per-handler config
+router.my_plugin.configure(_target="critical_handler", level="error")
+
+# Multiple handlers
+router.my_plugin.configure(_target="handler1,handler2", enabled=False)
+
+# Using flags shorthand
+router.my_plugin.configure(flags="enabled,log:off")
+```
+
+### The `_target` Parameter
+
+- `"--base--"` (default): Router-level config, applies to all handlers
+- `"handler_name"`: Config for specific handler only
+- `"h1,h2,h3"`: Apply same config to multiple handlers
+
+### The `flags` Parameter
+
+Shorthand for boolean options:
+
+```python
+# These are equivalent:
+router.my_plugin.configure(enabled=True, before=True, after=False)
+router.my_plugin.configure(flags="enabled,before,after:off")
+```
+
+Format: `"flag1,flag2:off,flag3:on"` - bare names are `True`, `:off` is `False`.
 
 ## Complete Example: Authorization Plugin
 
 Real-world plugin with configuration and state:
 
 ```python
+import inspect
+from smartroute import BasePlugin, Router, RoutedClass, route
+
 class AuthPlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="auth")
-        self.set_config(
-            enabled=True,
-            required=True,
-            roles=[]
-        )
+    plugin_code = "auth"
+    plugin_description = "Authentication and authorization plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
+
+    def configure(
+        self,
+        enabled: bool = True,
+        required: bool = True
+    ):
+        """Configure auth requirements."""
+        pass
 
     def on_decore(self, router, func, entry):
-        """Extract required roles from docstring or decorator."""
-        import inspect
+        """Extract required roles from docstring."""
         doc = inspect.getdoc(func) or ""
         if "@roles:" in doc:
             roles = doc.split("@roles:")[1].split()[0].split(",")
@@ -356,9 +511,9 @@ class AuthPlugin(BasePlugin):
 
     def wrap_handler(self, router, entry, call_next):
         def wrapper(*args, **kwargs):
-            config = self.get_config(entry.name)
+            cfg = self.configuration(entry.name)
 
-            if not config.get("enabled", True):
+            if not cfg.get("enabled", True):
                 return call_next(*args, **kwargs)
 
             # Extract user from first arg (assuming request object)
@@ -366,7 +521,7 @@ class AuthPlugin(BasePlugin):
             user = getattr(request, "user", None)
 
             # Check authentication
-            if config.get("required", True) and not user:
+            if cfg.get("required", True) and not user:
                 raise PermissionError("Authentication required")
 
             # Check authorization
@@ -380,9 +535,19 @@ class AuthPlugin(BasePlugin):
 
         return wrapper
 
-# Register and use
-Router.register_plugin("auth", AuthPlugin)
+    def entry_metadata(self, router, entry):
+        """Expose auth config in members() output."""
+        cfg = self.configuration(entry.name)
+        return {
+            "enabled": cfg.get("enabled", True),
+            "required": cfg.get("required", True),
+            "roles": entry.metadata.get("required_roles", []),
+        }
 
+# Register plugin
+Router.register_plugin(AuthPlugin)
+
+# Use in service
 class API(RoutedClass):
     def __init__(self):
         self.api = Router(self, name="api").plug("auth")
@@ -399,8 +564,8 @@ class API(RoutedClass):
 
 api = API()
 
-# Configure: disable auth for public endpoints
-api.routedclass.configure("api:auth/public_*", required=False)
+# Configure: disable auth requirement for public endpoints
+api.api.auth.configure(_target="public_endpoint", required=False)
 ```
 
 ## Best Practices
@@ -434,14 +599,14 @@ self.api = Router(self, name="api").plug("monolith")
 **Configuration defaults**:
 
 ```python
-# ✅ Good: Sensible defaults
-def __init__(self):
-    super().__init__(name="my_plugin")
-    self.set_config(
-        enabled=True,  # Enabled by default
-        level="info",  # Reasonable default
-        strict=False   # Permissive by default
-    )
+# ✅ Good: Sensible defaults in configure() signature
+def configure(
+    self,
+    enabled: bool = True,      # Enabled by default
+    level: str = "info",       # Reasonable default
+    strict: bool = False       # Permissive by default
+):
+    pass
 ```
 
 **Error handling**:
@@ -453,8 +618,8 @@ def wrap_handler(self, router, entry, call_next):
             return call_next(*args, **kwargs)
         except Exception as e:
             # Log error but don't suppress unless configured
-            self.log_error(entry.name, e)
-            if self.get_config(entry.name).get("suppress_errors", False):
+            cfg = self.configuration(entry.name)
+            if cfg.get("suppress_errors", False):
                 return None
             raise
     return wrapper
