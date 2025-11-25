@@ -26,7 +26,7 @@ SmartRoute provides explicit methods for managing RoutedClass hierarchies:
 
 <!-- test: test_router_edge_cases.py::test_attach_and_detach_instance_single_router_with_alias -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L97-L115)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L203-L221)
 
 Attach a child instance explicitly with an alias:
 
@@ -74,7 +74,7 @@ assert parent.child._routed_parent is None
 
 <!-- test: test_router_edge_cases.py::test_attach_instance_multiple_routers_requires_mapping -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L118-L134)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L224-L240)
 
 When a child has multiple routers, they can be auto-mapped:
 
@@ -118,7 +118,7 @@ assert parent.api.get("admin.manage")() == "manage"
 
 <!-- test: test_router_edge_cases.py::test_attach_instance_allows_partial_mapping_and_skips_unmapped -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L155-L174)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L261-L280)
 
 Use explicit mapping to control which routers attach and with what aliases:
 
@@ -148,7 +148,7 @@ assert parent.api.get("admin_panel.manage")() == "manage"
 
 <!-- test: test_router_edge_cases.py::test_attach_instance_single_child_requires_alias_when_parent_multi -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L137-L152)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L243-L258)
 
 When parent has multiple routers, explicit alias is required:
 
@@ -172,7 +172,7 @@ assert "child_alias" in parent.api._children
 
 <!-- test: test_router_edge_cases.py::test_branch_router_blocks_auto_discover_and_entries -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L299-L309)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L405-L415)
 
 Create pure organizational nodes with branch routers:
 
@@ -225,7 +225,7 @@ self.api = Router(self, name="api")  # Regular router
 
 <!-- test: test_router_edge_cases.py::test_auto_detach_on_attribute_replacement -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L238-L255)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L344-L361)
 
 Replacing a child attribute automatically detaches the old instance:
 
@@ -302,9 +302,9 @@ assert child._routed_parent is None  # Cleared on detach
 
 ## Plugin Inheritance
 
-<!-- test: test_switcher_basic.py::test_parent_plugins_inherit_to_children -->
+<!-- test: test_router_runtime_extras.py::test_inherit_plugins_branches -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L220-L234)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L154-L172)
 
 Plugins propagate automatically from parent to children:
 
@@ -348,7 +348,7 @@ result = app.service.api.get("process")()
 
 <!-- test: test_router_edge_cases.py::test_routed_proxy_get_router_handles_dotted_path -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L268-L281)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L555-L568)
 
 Navigate hierarchy with dotted paths via `routedclass.get_router()`:
 
@@ -380,9 +380,9 @@ assert child_router.instance is parent.child
 
 ## Introspection
 
-<!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
+<!-- test: test_switcher_basic.py::test_dotted_path_and_members_with_attached_child -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L370-L379)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L307-L325)
 
 Inspect the full hierarchy structure:
 

@@ -12,7 +12,7 @@ pip install smartroute
 
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L148)
 
 Create a service with instance-scoped routing:
 
@@ -42,7 +42,7 @@ assert second.api.get("describe")() == "service:beta"
 
 <!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L151-L156)
 
 Use prefixes and explicit names for cleaner method registration:
 
@@ -73,7 +73,7 @@ assert sub.routes.get("detail")(10) == "users:detail:10"
 
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167)
 
 Create nested router structures:
 
@@ -98,7 +98,7 @@ assert root.api.get("products.detail")(5) == "products:detail:5"
 
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167)
 
 Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`) are pre-registered; scope/channel policies live in the SmartPublisher ecosystem plugin.
 
