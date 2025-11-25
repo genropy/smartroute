@@ -100,7 +100,6 @@ assert root.api.get("products.detail")(5) == "products:detail:5"
 
 [From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208)
 
-Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`, `scope`) are pre-registered:
 Extend behavior with plugins. Built-in plugins (`logging`, `pydantic`) are pre-registered; scope/channel policies live in the SmartPublisher ecosystem plugin.
 
 ```python
