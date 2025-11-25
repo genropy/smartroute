@@ -282,22 +282,23 @@ class Router(BaseRouter):
         wrapped = call_next
         for plugin in reversed(self._plugins):
             plugin_call = plugin.wrap_handler(self, entry, wrapped)
-
-            @wraps(wrapped)
-            def layer(
-                *args,
-                _plugin=plugin,
-                _entry=entry,
-                _plugin_call=plugin_call,
-                _wrapped=wrapped,
-                **kwargs,
-            ):
-                if not self.is_plugin_enabled(_entry.name, _plugin.name):
-                    return _wrapped(*args, **kwargs)
-                return _plugin_call(*args, **kwargs)
-
-            wrapped = layer
+            wrapped = self._create_wrapper(plugin, entry, plugin_call, wrapped)
         return wrapped
+
+    def _create_wrapper(
+        self,
+        plugin: BasePlugin,
+        entry: MethodEntry,
+        plugin_call: Callable,
+        next_handler: Callable,
+    ) -> Callable:
+        @wraps(next_handler)
+        def wrapper(*args, **kwargs):
+            if not self.is_plugin_enabled(entry.name, plugin.name):
+                return next_handler(*args, **kwargs)
+            return plugin_call(*args, **kwargs)
+
+        return wrapper
 
     def _apply_plugin_to_entries(self, plugin: BasePlugin) -> None:
         for entry in self._entries.values():

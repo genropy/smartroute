@@ -155,7 +155,7 @@ pip install smartroute[pydantic]
 
 ## Testing
 
-SmartRoute achieves 100% test coverage with 82 comprehensive tests (943 statements):
+SmartRoute achieves 100% test coverage with 82 comprehensive tests (945 statements):
 
 ```bash
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
@@ -189,7 +189,7 @@ smartroute/
 
 SmartRoute is currently in **beta** (v0.7.0). The core API is stable with complete documentation.
 
-- **Test Coverage**: 100% (82 tests, 943 statements)
+- **Test Coverage**: 100% (82 tests, 945 statements)
 - **Python Support**: 3.10, 3.11, 3.12
 - **License**: MIT
 

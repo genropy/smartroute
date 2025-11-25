@@ -8,7 +8,7 @@
 - **Development Status**: Beta (`Development Status :: 4 - Beta`)
 - **Version**: 0.7.0
 - **Has Implementation**: Yes (core complete with 100% test coverage)
-- **Coverage**: 100% (82 comprehensive tests, 943 statements)
+- **Coverage**: 100% (82 comprehensive tests, 945 statements)
 - **Plugin System**: Built-in registry with LoggingPlugin and PydanticPlugin; scope/channel via SmartPublisher's PublishPlugin
 - **SmartAsync Integration**: Optional via `get(..., use_smartasync=True)`
 
@@ -136,7 +136,7 @@ smartroute/
 # Run tests with coverage
 PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
 
-# Expected: 82/82 tests passed, 100% coverage (943 statements)
+# Expected: 82/82 tests passed, 100% coverage (945 statements)
 ```
 
 ### Linting
