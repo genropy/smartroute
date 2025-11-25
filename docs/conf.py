@@ -130,3 +130,10 @@ todo_include_todos = True
 typehints_fully_qualified = False
 always_document_param_types = True
 typehints_document_rtype = True
+
+# Linkcheck configuration
+# GitHub anchor links are dynamically generated and may not be immediately available
+# after a push, causing false positives in linkcheck
+linkcheck_anchors_ignore_for_url = [
+    r"https://github\.com/genropy/smartroute/blob/.*#L\d+",
+]
