@@ -9,8 +9,11 @@ from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
 
 class _FilterPlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="filtertest")
+    plugin_code = "filtertest"
+    plugin_description = "Filter test plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
         self.calls: list[dict] = []
 
     def filter_entry(self, router, entry, **filters):
@@ -20,16 +23,22 @@ class _FilterPlugin(BasePlugin):
 
 
 class _BadDescribePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="baddescribe")
+    plugin_code = "baddescribe"
+    plugin_description = "Bad describe test plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
 
     def describe_entry(self, router, entry, base_description):
         return ["not-a-dict"]
 
 
 class _GoodDescribePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="gooddescribe")
+    plugin_code = "gooddescribe"
+    plugin_description = "Good describe test plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
 
     def describe_entry(self, router, entry, base_description):
         return {"extra": {"via": self.name}}
@@ -53,7 +62,7 @@ def test_prepare_filter_args_normalizes_scopes_and_channel():
 
 
 def test_should_include_entry_respects_filter_plugins():
-    Router.register_plugin("filtertest", _FilterPlugin)
+    Router.register_plugin(_FilterPlugin)
     router = _make_router().plug("filtertest")
     entry = MethodEntry("demo", lambda: None, router, plugins=[])
 
@@ -66,7 +75,7 @@ def test_should_include_entry_respects_filter_plugins():
 
 
 def test_members_entry_extra_rejects_non_dict_from_plugin():
-    Router.register_plugin("baddescribe", _BadDescribePlugin)
+    Router.register_plugin(_BadDescribePlugin)
     router = _make_router().plug("baddescribe")
     entry = MethodEntry("demo", lambda: None, router, plugins=[])
 
@@ -75,7 +84,7 @@ def test_members_entry_extra_rejects_non_dict_from_plugin():
 
 
 def test_members_merges_plugin_contrib():
-    Router.register_plugin("gooddescribe", _GoodDescribePlugin)
+    Router.register_plugin(_GoodDescribePlugin)
 
     class Service(RoutedClass):
         def __init__(self):
@@ -114,7 +123,7 @@ def test_normalize_channel_filter_validation_paths():
 
 
 def test_members_respects_plugin_filter_skip():
-    Router.register_plugin("filtertest", _FilterPlugin)
+    Router.register_plugin(_FilterPlugin)
     router = _make_router().plug("filtertest")
     router.add_entry(lambda: "ok", name="hidden")
 

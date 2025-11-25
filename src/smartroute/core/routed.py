@@ -39,11 +39,10 @@ Configuration entrypoint:
   strings must be non-empty; channel/scope semantics are left to plugins.
 - Handler matching: ``_match_handlers`` fnmatch-es selectors (comma-separated)
   against router ``_entries`` keys, returning a set.
-- Application: for ``"_all_"`` selector, applies options to ``plugin.configure``
+- Application: for ``"_all_"`` selector, calls ``plugin.configure(_target="--base--", **options)``
   (global config) and returns ``{"target": target, "updated": ["_all_"]}``.
-  Otherwise for each matched handler, uses ``plugin.configure[handler]`` proxy,
-  sets attributes via ``_apply_config``, and returns ``{"target": target,
-  "updated": sorted(matches)}``.
+  Otherwise for each matched handler, calls ``plugin.configure(_target=handler, **options)``
+  and returns ``{"target": target, "updated": sorted(matches)}``.
 - ``"?"`` shortcut returns ``_describe_all()``.
 
 Describe helpers:
@@ -202,9 +201,8 @@ class _RoutedProxy:
                     matched.add(handler_name)
         return matched
 
-    def _apply_config(self, proxy: Any, options: Dict[str, Any]) -> None:
-        for key, value in options.items():
-            setattr(proxy, key, value)
+    def _apply_config(self, plugin: Any, target: str, options: Dict[str, Any]) -> None:
+        plugin.configure(_target=target, **options)
 
     def _describe_all(self) -> Dict[str, Any]:
         owner = self._owner
@@ -221,9 +219,9 @@ class _RoutedProxy:
                 {
                     "name": plugin.name,
                     "description": getattr(plugin, "description", ""),
-                    "config": plugin.get_config(),
+                    "config": plugin.configuration(),
                     "overrides": {
-                        handler: plugin.get_config(handler) for handler in router._entries.keys()
+                        handler: plugin.configuration(handler) for handler in router._entries.keys()
                     },
                 }
                 for plugin in router.iter_plugins()
@@ -263,14 +261,13 @@ class _RoutedProxy:
             raise ValueError("No configuration options provided")
         selector = selector or "_all_"
         if selector.lower() == "_all_":
-            self._apply_config(plugin.configure, options)
+            self._apply_config(plugin, "--base--", options)
             return {"target": target, "updated": ["_all_"]}
         matches = self._match_handlers(bound_router, selector)
         if not matches:
             raise KeyError(f"No handlers matching '{selector}' on router '{router_spec}'")
         for handler in matches:
-            proxy = plugin.configure[handler]
-            self._apply_config(proxy, options)
+            self._apply_config(plugin, handler, options)
         return {"target": target, "updated": sorted(matches)}
 
 

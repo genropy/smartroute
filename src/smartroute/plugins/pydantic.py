@@ -51,7 +51,7 @@ Behaviour and data
 Registration
 ------------
 Registers itself globally as ``"pydantic"`` during module import via
-``Router.register_plugin("pydantic", PydanticPlugin)``.
+``Router.register_plugin(PydanticPlugin)``.
 """
 
 from __future__ import annotations
@@ -77,8 +77,18 @@ if TYPE_CHECKING:
 class PydanticPlugin(BasePlugin):
     """Validate handler inputs with Pydantic using type hints."""
 
-    def __init__(self, name: Optional[str] = None, **config: Any):
-        super().__init__(name=name or "pydantic", **config)
+    plugin_code = "pydantic"
+    plugin_description = "Validates handler inputs using Pydantic type hints"
+
+    def __init__(self, router, **config: Any):
+        super().__init__(router, **config)
+
+    def configure(self, enabled: bool = True):
+        """Configure pydantic plugin options.
+
+        The wrapper added by __init_subclass__ handles writing to store.
+        """
+        pass  # Storage is handled by the wrapper
 
     def on_decore(self, route: "Router", func: Callable, entry: MethodEntry) -> None:
         try:
@@ -153,4 +163,4 @@ class PydanticPlugin(BasePlugin):
         return {}
 
 
-Router.register_plugin("pydantic", PydanticPlugin)
+Router.register_plugin(PydanticPlugin)

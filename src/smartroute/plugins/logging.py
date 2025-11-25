@@ -39,7 +39,7 @@ Behaviour and API
 Registration
 ------------
 At module import, the plugin registers itself globally as ``"logging"`` via
-``Router.register_plugin("logging", LoggingPlugin)``.
+``Router.register_plugin(LoggingPlugin)``.
 """
 
 from __future__ import annotations
@@ -55,15 +55,28 @@ from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 class LoggingPlugin(BasePlugin):
     """Simplified logging plugin for SmartRoute."""
 
-    def __init__(self, name: Optional[str] = None, logger: Optional[logging.Logger] = None, **cfg):
-        super().__init__(name=name or "logger", **cfg)
-        # Defaults for runtime configuration
-        self._initial_config.setdefault("enabled", True)
-        self._initial_config.setdefault("before", True)
-        self._initial_config.setdefault("after", True)
-        self._initial_config.setdefault("log", True)
-        self._initial_config.setdefault("print", False)
+    plugin_code = "logging"
+    plugin_description = "Logs handler calls with timing"
+
+    __slots__ = ("_logger",)
+
+    def __init__(self, router, *, logger: Optional[logging.Logger] = None, **cfg):
         self._logger = logger or logging.getLogger("smartroute")
+        super().__init__(router, **cfg)
+
+    def configure(
+        self,
+        enabled: bool = True,
+        before: bool = True,
+        after: bool = True,
+        log: bool = True,
+        print: bool = False,  # noqa: A002 - shadowing builtin intentionally
+    ):
+        """Configure logging plugin options.
+
+        The wrapper added by __init_subclass__ handles writing to store.
+        """
+        pass  # Storage is handled by the wrapper
 
     def _emit(self, message: str, *, cfg: Optional[dict] = None):
         # If no config is provided, treat as disabled.
@@ -103,7 +116,7 @@ class LoggingPlugin(BasePlugin):
 
     def _effective_config(self, entry_name: str) -> dict:
         defaults = {"enabled": True, "before": True, "after": True, "log": True, "print": False}
-        cfg = defaults | self.get_config(entry_name)
+        cfg = defaults | self.configuration(entry_name)
         flags = cfg.pop("flags", None)
         if isinstance(flags, str):
             cfg.update(self._parse_flags(flags))
@@ -115,4 +128,4 @@ class LoggingPlugin(BasePlugin):
         return {key: to_bool(key) for key in defaults}
 
 
-Router.register_plugin("logging", LoggingPlugin)
+Router.register_plugin(LoggingPlugin)

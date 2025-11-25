@@ -125,16 +125,12 @@ _PLUGIN_REGISTRY: Dict[str, Type[BasePlugin]] = {}
 class _PluginSpec:
     factory: Type[BasePlugin]
     kwargs: Dict[str, Any]
-    alias: Optional[str] = None
 
-    def instantiate(self) -> BasePlugin:
-        plugin = self.factory(**self.kwargs)
-        if self.alias:
-            plugin.name = self.alias
-        return plugin
+    def instantiate(self, router: "Router") -> BasePlugin:
+        return self.factory(router=router, **self.kwargs)
 
     def clone(self) -> "_PluginSpec":
-        return _PluginSpec(self.factory, dict(self.kwargs), self.alias)
+        return _PluginSpec(self.factory, dict(self.kwargs))
 
 
 class Router(BaseRouter):
@@ -162,15 +158,33 @@ class Router(BaseRouter):
     # Plugin registration
     # ------------------------------------------------------------------
     @classmethod
-    def register_plugin(cls, name: str, plugin_class: Type[BasePlugin]) -> None:
+    def register_plugin(
+        cls, plugin_class: Type[BasePlugin], name: Optional[str] = None
+    ) -> None:
+        """Register a plugin class globally.
+
+        Args:
+            plugin_class: A BasePlugin subclass with plugin_code defined
+            name: Optional override name. If provided, overwrites any existing
+                  registration. If not provided, uses plugin_code and raises
+                  if already registered.
+        """
         if not isinstance(plugin_class, type) or not issubclass(plugin_class, BasePlugin):
             raise TypeError("plugin_class must be a BasePlugin subclass")
-        if not name:
+        if not getattr(plugin_class, "plugin_code", None):
+            raise ValueError(
+                f"Plugin {plugin_class.__name__} not following standards: missing plugin_code"
+            )
+        code = name or plugin_class.plugin_code
+        if not code:
             raise ValueError("plugin name cannot be empty")
-        existing = _PLUGIN_REGISTRY.get(name)
-        if existing is not None and existing is not plugin_class:
-            raise ValueError(f"Plugin name '{name}' already registered")
-        _PLUGIN_REGISTRY[name] = plugin_class
+        # If name is explicitly provided, allow overwrite (intentional replacement)
+        # Otherwise, reject collision
+        if name is None:
+            existing = _PLUGIN_REGISTRY.get(code)
+            if existing is not None and existing is not plugin_class:
+                raise ValueError(f"Plugin '{code}' already registered")
+        _PLUGIN_REGISTRY[code] = plugin_class
 
     @classmethod
     def available_plugins(cls) -> Dict[str, Type[BasePlugin]]:
@@ -189,11 +203,9 @@ class Router(BaseRouter):
                 f"Unknown plugin '{plugin}'. Register it first. Available plugins: {available}"
             )
         spec_kwargs = dict(config)
-        spec = _PluginSpec(plugin_class, spec_kwargs, alias=plugin)
+        spec = _PluginSpec(plugin_class, spec_kwargs)
         self._plugin_specs.append(spec)
-        instance = spec.instantiate()
-        instance._bind_router(self)
-        instance._seed_store()
+        instance = spec.instantiate(self)
         self._plugins.append(instance)
         self._plugins_by_name[instance.name] = instance
         self._refresh_filter_plugins()
@@ -212,7 +224,7 @@ class Router(BaseRouter):
             raise AttributeError(
                 f"No plugin named '{plugin_name}' attached to router '{self.name}'"
             )
-        return plugin.get_config(method_name)
+        return plugin.configuration(method_name)
 
     def __getattr__(self, name: str) -> Any:
         plugin = self._plugins_by_name.get(name)
@@ -311,26 +323,45 @@ class Router(BaseRouter):
         if parent_id in self._inherited_from:
             return
         self._inherited_from.add(parent_id)
-        parent_specs = [spec.clone() for spec in parent._plugin_specs]
-        if not parent_specs:
-            return
-        new_plugins = [spec.instantiate() for spec in parent_specs]
-        self._plugin_specs = parent_specs + self._plugin_specs
-        self._plugins = new_plugins + self._plugins
-        self._refresh_filter_plugins()
-        for plugin in new_plugins:
-            plugin._bind_router(self)
-            parent_bucket = parent._plugin_info.get(plugin.name, {})
-            if parent_bucket:
-                cloned: Dict[str, Any] = {}
-                for key, pdata in parent_bucket.items():
-                    cloned[key] = {"config": dict(pdata.get("config", {})), "locals": {}}
-                self._plugin_info[plugin.name] = cloned
-            else:
-                plugin._seed_store()
-            self._plugins_by_name.setdefault(plugin.name, plugin)
-            self._apply_plugin_to_entries(plugin)
-        self._rebuild_handlers()
+        # For plugins in parent that child doesn't have:
+        # - Create a bucket with callable config pointing to parent
+        # - Add reference to parent's plugin for attribute access
+        # - Apply on_decore to child's entries
+        inherited_plugins = []
+        for parent_plugin in parent._plugins:
+            if parent_plugin.name not in self._plugins_by_name:
+                # Child doesn't have this plugin - inherit from parent
+                self._plugins_by_name[parent_plugin.name] = parent_plugin
+                inherited_plugins.append(parent_plugin)
+                # Create bucket with callable that looks up parent config
+                plugin_name = parent_plugin.name
+
+                def make_config_lookup(pname: str, prouter: "Router"):
+                    def lookup():
+                        parent_bucket = prouter._plugin_info.get(pname, {})
+                        base = parent_bucket.get("--base--", {})
+                        cfg = base.get("config", {})
+                        # Recursively resolve if parent also has callable
+                        if callable(cfg):
+                            return cfg()
+                        return cfg if cfg else {}
+                    return lookup
+
+                self._plugin_info[plugin_name] = {
+                    "--base--": {
+                        "config": make_config_lookup(plugin_name, parent),
+                        "locals": {}
+                    }
+                }
+        # Apply on_decore for inherited plugins to child's entries
+        for plugin in inherited_plugins:
+            for entry in self._entries.values():
+                if plugin.name not in entry.plugins:
+                    entry.plugins.append(plugin.name)
+                plugin.on_decore(self, entry.func, entry)
+        if inherited_plugins:
+            self._refresh_filter_plugins()
+            self._rebuild_handlers()
 
     def _after_entry_registered(self, entry: MethodEntry) -> None:  # type: ignore[override]
         plugin_options = entry.metadata.get("plugin_config", {})

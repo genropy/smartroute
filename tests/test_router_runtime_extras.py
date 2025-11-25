@@ -61,12 +61,15 @@ class DuplicateMarkers(RoutedClass):
 
 
 class StampPlugin(BasePlugin):
+    plugin_code = "stamp_extra"
+    plugin_description = "Stamps entries for testing"
+
     def on_decore(self, router, func, entry: MethodEntry):
         entry.metadata["stamped"] = True
 
 
 if "stamp_extra" not in Router.available_plugins():
-    Router.register_plugin("stamp_extra", StampPlugin)
+    Router.register_plugin(StampPlugin)
 
 
 class LoggingService(RoutedClass):
@@ -83,12 +86,12 @@ def test_router_requires_owner():
         Router(None)  # type: ignore[arg-type]
 
 
-def test_register_plugin_requires_non_empty_name():
+def test_register_plugin_requires_plugin_code():
     class DummyPlugin(BasePlugin):
-        pass
+        pass  # Missing plugin_code
 
-    with pytest.raises(ValueError):
-        Router.register_plugin("", DummyPlugin)
+    with pytest.raises(ValueError, match="missing plugin_code"):
+        Router.register_plugin(DummyPlugin)
 
 
 def test_plug_validates_type_and_known_plugin():
@@ -152,21 +155,21 @@ def test_inherit_plugins_branches():
     parent = ManualService()
     child = ManualService()
     parent.api.plug("stamp_extra")
-    before = len(child.api._plugins)
+    before = len(child.api._plugins_by_name)
     child.api._on_attached_to_parent(parent.api)
-    after = len(child.api._plugins)
+    after = len(child.api._plugins_by_name)
     assert after > before
     child.api._on_attached_to_parent(parent.api)
-    assert len(child.api._plugins) == after
+    assert len(child.api._plugins_by_name) == after
     # Force missing plugin bucket to exercise seed path
     parent.api._plugin_info.pop("stamp_extra", None)
     child.api._on_attached_to_parent(parent.api)
 
     orphan = ManualService()
     plain = ManualService()
-    plain_before = len(orphan.api._plugins)
+    plain_before = len(orphan.api._plugins_by_name)
     orphan.api._on_attached_to_parent(plain.api)
-    assert len(orphan.api._plugins) == plain_before
+    assert len(orphan.api._plugins_by_name) == plain_before
 
 
 def test_inherit_plugins_seed_from_empty_parent_bucket():
@@ -175,7 +178,8 @@ def test_inherit_plugins_seed_from_empty_parent_bucket():
     parent.api._plugin_info.pop("stamp_extra", None)
     child = ManualService()
     child.api._on_attached_to_parent(parent.api)
-    assert child.api._plugin_info["stamp_extra"]["--base--"]["config"]["enabled"] is True
+    # Config is now a callable lookup, verify plugin is accessible
+    assert "stamp_extra" in child.api._plugins_by_name
 
 
 def test_iter_child_routers_override_deduplicates():
@@ -250,8 +254,8 @@ def test_configure_validates_inputs_and_targets():
     with pytest.raises(ValueError):
         svc.routedclass.configure("api:logging/_all_")
     with pytest.raises(KeyError):
-        svc.routedclass.configure("api:logging/missing*", flags="trace")
-    result = svc.routedclass.configure("api:logging", flags="trace")
+        svc.routedclass.configure("api:logging/missing*", flags="before")
+    result = svc.routedclass.configure("api:logging", flags="before")
     assert result["updated"] == ["_all_"]
 
 

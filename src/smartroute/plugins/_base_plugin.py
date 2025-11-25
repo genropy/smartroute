@@ -24,33 +24,35 @@ Objects
     - provide optional hooks ``on_decore(router, func, entry)`` and
       ``wrap_handler(router, entry, call_next)`` used by the Router pipeline
 
+    Required class attributes:
+
+    - ``plugin_code`` – unique identifier used for registration (e.g. "logging")
+    - ``plugin_description`` – human-readable description of the plugin
+
     Constructor signature:
 
-    ``BasePlugin(name=None, *, description=None, flags=None, method_config=None, **config)``
+    ``BasePlugin(router, **config)``
 
-    - ``name`` overrides the plugin name (defaults to class name lowercased)
-    - ``description`` stored but never interpreted by the core
-    - ``flags`` is a comma-separated string ``\"foo,bar:off\"`` parsed into a
-      dict of booleans and merged into the initial config snapshot
-    - ``method_config`` is a mapping of handler name → config dict applied as
-      initial per-handler overrides
-    - any extra ``**config`` entries land in the initial router-level config
+    - ``router`` is required – the Router instance owning this plugin
+    - ``**config`` is passed to ``configure()`` which is validated by Pydantic
 
-    Required public methods:
+    Required methods:
 
-    ``get_config(method_name=None)``
+    ``configure(**config)``
+        Define accepted configuration parameters via method signature.
+        The method is automatically wrapped by ``__init_subclass__`` to:
+        - Extract and parse ``flags`` (e.g. "enabled,before:off") into booleans
+        - Extract ``_target`` to determine where to write config:
+          - ``"--base--"`` (default): router-level config
+          - ``"handler_name"``: per-handler config
+          - ``"h1,h2,h3"``: multiple handlers (calls recursively)
+        - Apply Pydantic's ``validate_call`` for parameter validation
+        - Write validated config to the store
+
+    ``configuration(method_name=None)``
         returns merged configuration dict from the router's store
-        (router-level + optional per-handler override).
-
-    ``set_config(flags=None, **config)`` and
-    ``set_method_config(method_name, flags=None, **config)``
-        mutate the router's ``plugin_info`` store (global/handler scopes).
-
-    ``configure`` property
-        returns a proxy that supports dotted assignment and item access:
-        ``plugin.configure.enabled = False`` sets the router-level flag,
-        ``plugin.configure[\"foo\"].threshold = 5`` sets handler-specific values,
-        ``plugin.configure.flags = \"enabled:off\"`` toggles booleans.
+        (router-level + optional per-handler override). This is the read
+        counterpart to ``configure()``.
 
     ``on_decore`` (default no-op)
         called once when the Router registers a handler. Plugins use this to
@@ -82,6 +84,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
+from pydantic import validate_call
+
 __all__ = ["BasePlugin", "MethodEntry"]
 
 
@@ -96,69 +100,110 @@ class MethodEntry:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+def _wrap_configure(original_configure: Callable) -> Callable:
+    """Wrap a plugin's configure() method to handle flags, _target, validation, and storage."""
+    validated = validate_call(original_configure)
+
+    def wrapper(self: "BasePlugin", *, _target: str = "--base--", flags: Optional[str] = None, **kwargs: Any) -> None:
+        # Parse flags into boolean kwargs
+        if flags:
+            kwargs.update(self._parse_flags(flags))
+
+        # Handle multiple targets (comma-separated)
+        if "," in _target:
+            targets = [t.strip() for t in _target.split(",") if t.strip()]
+            for t in targets:
+                wrapper(self, _target=t, **kwargs)
+            return
+
+        # Validate kwargs against original configure signature
+        validated(self, **kwargs)
+
+        # Write to store
+        self._write_config(_target, kwargs)
+
+    return wrapper
+
+
 class BasePlugin:
     """Hook interface + configuration helpers for router plugins."""
 
-    __slots__ = ("name", "description", "_router", "_initial_config", "_initial_method_config")
+    __slots__ = ("name", "_router")
+
+    # Subclasses MUST define these class attributes
+    plugin_code: str = ""
+    plugin_description: str = ""
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # Wrap configure() if the subclass defines its own
+        if "configure" in cls.__dict__:
+            cls.configure = _wrap_configure(cls.__dict__["configure"])
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        *,
-        description: Optional[str] = None,
-        flags: Optional[str] = None,
-        method_config: Optional[Dict[str, Any]] = None,
+        router: Any,
         **config: Any,
     ):
-        self.name = name or self.__class__.__name__.lower()
-        self.description = description
-        self._router: Any = None
-        self._initial_config: Dict[str, Any] = {"enabled": True}
+        self.name = self.plugin_code
+        self._router = router
+        self._init_store()
+        # Call configure with initial config
+        self.configure(**config)
+
+    def _init_store(self) -> None:
+        """Initialize plugin bucket in router's store."""
+        store = self._get_store()
+        store.setdefault(self.name, {}).setdefault(
+            "--base--", {"config": {"enabled": True}, "locals": {}}
+        )
+
+    def configure(self, *, _target: str = "--base--", flags: Optional[str] = None) -> None:
+        """Override in subclasses to define accepted configuration parameters.
+
+        Base implementation accepts no additional parameters beyond _target and flags.
+
+        Args:
+            _target: Where to write config. "--base--" for router-level,
+                     "handler_name" for per-handler, or "h1,h2" for multiple.
+            flags: String like "enabled,before:off" parsed into booleans.
+        """
+        # Base configure just handles flags if provided
         if flags:
-            self._initial_config.update(self._parse_flags(flags))
-        self._initial_config.update(config)
-        self._initial_method_config: Dict[str, Dict[str, Any]] = {}
-        if method_config:
-            for method_name, settings in method_config.items():
-                self._initial_method_config[method_name] = dict(settings)
+            kwargs = self._parse_flags(flags)
+            self._write_config(_target, kwargs)
 
-    @property
-    def configure(self) -> "_PluginConfigProxy":
-        return _PluginConfigProxy(self)
+    def _write_config(self, target: str, config: Dict[str, Any]) -> None:
+        """Write config to the appropriate bucket in the store."""
+        if not config:
+            return
+        store = self._get_store()
+        plugin_bucket = store.setdefault(self.name, {})
+        bucket = plugin_bucket.setdefault(target, {"config": {}, "locals": {}})
+        bucket["config"].update(config)
 
-    def get_config(self, method_name: Optional[str] = None) -> Dict[str, Any]:
+    def configuration(self, method_name: Optional[str] = None) -> Dict[str, Any]:
+        """Read merged configuration (base + optional per-handler override)."""
         store = self._get_store()
         plugin_bucket = store.get(self.name)
         if not plugin_bucket:
             return {}
         base_bucket = plugin_bucket.get("--base--", {})
-        merged = dict(base_bucket.get("config", {}))
+        base_config = self._resolve_config(base_bucket.get("config", {}))
+        merged = dict(base_config)
         if method_name:
             entry_bucket = plugin_bucket.get(method_name, {})
-            merged.update(entry_bucket.get("config", {}))
+            entry_config = self._resolve_config(entry_bucket.get("config", {}))
+            merged.update(entry_config)
         return merged
 
-    def set_config(self, flags: Optional[str] = None, **config: Any) -> None:
-        if self._router is None:
-            raise RuntimeError("Plugin is not bound to a Router")
-        if flags:
-            config.update(self._parse_flags(flags))
-        store = self._get_store()
-        bucket = store.setdefault(self.name, {})
-        base_bucket = bucket.setdefault("--base--", {"config": {}, "locals": {}})
-        base_bucket["config"].update(config)
-
-    def set_method_config(
-        self, method_name: str, *, flags: Optional[str] = None, **config: Any
-    ) -> None:
-        if self._router is None:
-            raise RuntimeError("Plugin is not bound to a Router")
-        if flags:
-            config.update(self._parse_flags(flags))
-        store = self._get_store()
-        plugin_bucket = store.setdefault(self.name, {})
-        entry_bucket = plugin_bucket.setdefault(method_name, {"config": {}, "locals": {}})
-        entry_bucket["config"].update(config)
+    def _resolve_config(self, config: Any) -> Dict[str, Any]:
+        """Resolve config value - if callable, call it to get the dict."""
+        if callable(config):
+            return config()
+        if config is None:
+            return {}
+        return config
 
     def _parse_flags(self, flags: str) -> Dict[str, bool]:
         mapping: Dict[str, bool] = {}
@@ -187,52 +232,5 @@ class BasePlugin:
         """Wrap handler invocation; default passthrough."""
         return call_next
 
-    # Binding ------------------------------------------------
-    def _bind_router(self, router: Any) -> None:
-        self._router = router
-
-    def _seed_store(self) -> None:
-        if self._router is None:
-            return
-        store = self._get_store()
-        bucket = store.setdefault(self.name, {})
-        base_bucket = bucket.setdefault("--base--", {"config": {}, "locals": {}})
-        base_bucket["config"].update(self._initial_config)
-        for handler, cfg in self._initial_method_config.items():
-            entry_bucket = bucket.setdefault(handler, {"config": {}, "locals": {}})
-            entry_bucket["config"].update(cfg)
-
     def _get_store(self) -> Dict[str, Any]:
-        if self._router is None:
-            raise RuntimeError("Plugin is not bound to a Router")
         return getattr(self._router, "_plugin_info")
-
-
-class _PluginConfigProxy:
-    def __init__(self, plugin: BasePlugin, method: Optional[str] = None):
-        self._plugin = plugin
-        self._method = method
-
-    def __getitem__(self, method_name: str) -> "_PluginConfigProxy":
-        return _PluginConfigProxy(self._plugin, method_name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name in {"_plugin", "_method"}:
-            object.__setattr__(self, name, value)
-            return
-        if name == "flags":
-            if self._method:
-                self._plugin.set_method_config(self._method, flags=value)
-            else:
-                self._plugin.set_config(flags=value)
-            return
-        if self._method:
-            self._plugin.set_method_config(self._method, **{name: value})
-        else:
-            self._plugin.set_config(**{name: value})
-
-    def __getattr__(self, name: str) -> Any:
-        cfg = self._plugin.get_config(self._method)
-        if name in cfg:
-            return cfg[name]
-        raise AttributeError(name)

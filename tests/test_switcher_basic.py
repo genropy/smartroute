@@ -64,8 +64,11 @@ class RootAPI(RoutedClass):
 
 
 class CapturePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="capture")
+    plugin_code = "capture"
+    plugin_description = "Captures calls for testing"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
         self.calls = []
 
     def on_decore(self, route, func, entry):
@@ -80,7 +83,7 @@ class CapturePlugin(BasePlugin):
 
 
 # Register custom plugin
-Router.register_plugin("capture", CapturePlugin)
+Router.register_plugin(CapturePlugin)
 
 
 class PluginService(RoutedClass):
@@ -95,8 +98,11 @@ class PluginService(RoutedClass):
 
 
 class TogglePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="toggle")
+    plugin_code = "toggle"
+    plugin_description = "Toggle test plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
 
     def wrap_handler(self, route, entry, call_next):
         def wrapper(*args, **kwargs):
@@ -107,7 +113,7 @@ class TogglePlugin(BasePlugin):
 
 
 # Register custom plugin
-Router.register_plugin("toggle", TogglePlugin)
+Router.register_plugin(TogglePlugin)
 
 
 class ToggleService(RoutedClass):
