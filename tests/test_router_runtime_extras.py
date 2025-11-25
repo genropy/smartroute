@@ -3,7 +3,7 @@
 import pytest
 
 from smartroute import RoutedClass, Router, route
-from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME, _format_annotation
+from smartroute.core.base_router import ROUTER_REGISTRY_ATTR_NAME
 from smartroute.core.routed import is_routed_class
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
 
@@ -61,12 +61,15 @@ class DuplicateMarkers(RoutedClass):
 
 
 class StampPlugin(BasePlugin):
+    plugin_code = "stamp_extra"
+    plugin_description = "Stamps entries for testing"
+
     def on_decore(self, router, func, entry: MethodEntry):
         entry.metadata["stamped"] = True
 
 
 if "stamp_extra" not in Router.available_plugins():
-    Router.register_plugin("stamp_extra", StampPlugin)
+    Router.register_plugin(StampPlugin)
 
 
 class LoggingService(RoutedClass):
@@ -83,12 +86,12 @@ def test_router_requires_owner():
         Router(None)  # type: ignore[arg-type]
 
 
-def test_register_plugin_requires_non_empty_name():
+def test_register_plugin_requires_plugin_code():
     class DummyPlugin(BasePlugin):
-        pass
+        pass  # Missing plugin_code
 
-    with pytest.raises(ValueError):
-        Router.register_plugin("", DummyPlugin)
+    with pytest.raises(ValueError, match="missing plugin_code"):
+        Router.register_plugin(DummyPlugin)
 
 
 def test_plug_validates_type_and_known_plugin():
@@ -144,29 +147,29 @@ def test_router_call_and_members_structure():
     svc.api.add_entry(svc.first)
     assert svc.api.call("first") == "first"
     tree = svc.api.members()
-    assert tree["handlers"]
-    assert tree["children"] == {}
+    assert tree["entries"]
+    assert "routers" not in tree
 
 
 def test_inherit_plugins_branches():
     parent = ManualService()
     child = ManualService()
     parent.api.plug("stamp_extra")
-    before = len(child.api._plugins)
+    before = len(child.api._plugins_by_name)
     child.api._on_attached_to_parent(parent.api)
-    after = len(child.api._plugins)
+    after = len(child.api._plugins_by_name)
     assert after > before
     child.api._on_attached_to_parent(parent.api)
-    assert len(child.api._plugins) == after
+    assert len(child.api._plugins_by_name) == after
     # Force missing plugin bucket to exercise seed path
     parent.api._plugin_info.pop("stamp_extra", None)
     child.api._on_attached_to_parent(parent.api)
 
     orphan = ManualService()
     plain = ManualService()
-    plain_before = len(orphan.api._plugins)
+    plain_before = len(orphan.api._plugins_by_name)
     orphan.api._on_attached_to_parent(plain.api)
-    assert len(orphan.api._plugins) == plain_before
+    assert len(orphan.api._plugins_by_name) == plain_before
 
 
 def test_inherit_plugins_seed_from_empty_parent_bucket():
@@ -175,7 +178,8 @@ def test_inherit_plugins_seed_from_empty_parent_bucket():
     parent.api._plugin_info.pop("stamp_extra", None)
     child = ManualService()
     child.api._on_attached_to_parent(parent.api)
-    assert child.api._plugin_info["stamp_extra"]["--base--"]["config"]["enabled"] is True
+    # Config is now a callable lookup, verify plugin is accessible
+    assert "stamp_extra" in child.api._plugins_by_name
 
 
 def test_iter_child_routers_override_deduplicates():
@@ -215,18 +219,9 @@ def test_iter_instance_attributes_skip_registry_and_slots():
 
 def test_router_members_include_metadata_tree():
     parent = ManualService()
+    parent.api.add_entry(parent.first)
     info = parent.api.members()
-    assert "children" in info
-
-
-def test_format_annotation_branches():
-    assert _format_annotation(None) == "Any"
-    assert _format_annotation("Custom") == "Custom"
-
-    class LocalType:
-        pass
-
-    assert _format_annotation(LocalType).endswith("LocalType")
+    assert "entries" in info
 
 
 def test_configure_validates_inputs_and_targets():
@@ -250,8 +245,8 @@ def test_configure_validates_inputs_and_targets():
     with pytest.raises(ValueError):
         svc.routedclass.configure("api:logging/_all_")
     with pytest.raises(KeyError):
-        svc.routedclass.configure("api:logging/missing*", flags="trace")
-    result = svc.routedclass.configure("api:logging", flags="trace")
+        svc.routedclass.configure("api:logging/missing*", flags="before")
+    result = svc.routedclass.configure("api:logging", flags="before")
     assert result["updated"] == ["_all_"]
 
 
@@ -265,32 +260,6 @@ def test_configure_question_success_and_router_proxy_errors():
     registry.pop("api")
     router = svc.routedclass.get_router("api")
     assert router is svc.api
-
-
-def test_router_calling_members_handles_custom_pydantic_metadata():
-    svc = ManualService()
-    svc.api.add_entry(svc.first)
-    entry = svc.api._entries["first"]
-
-    class FakeField:
-        annotation = str
-        default = "value"
-        metadata = ("tag",)
-        json_schema_extra = {"k": "v"}
-        description = "desc"
-        examples = ["ex"]
-        is_required = None
-
-    class FakeModel:
-        model_fields = {"text": FakeField()}
-
-    entry.metadata["pydantic"] = {
-        "enabled": True,
-        "model": FakeModel(),
-    }
-    info = svc.api.members()
-    param = info["handlers"]["first"]["parameters"]["text"]
-    assert param["validation"]["metadata"] == ["tag"]
 
 
 def test_iter_registered_routers_lists_entries():

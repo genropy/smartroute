@@ -113,24 +113,10 @@ attributes/slots on ``source`` for ``BaseRouter`` instances, returning
 
 Introspection
 -------------
-- ``members(scopes=None, channel=None)`` builds a nested dict of routers and
-  handlers respecting filters. Each handler entry contains:
-
-    * ``callable`` (entry.func)
-    * ``metadata`` (MethodEntry.metadata)
-    * ``doc`` (``inspect.getdoc`` or ``__doc__`` fallback)
-    * ``signature`` string of ``inspect.signature``
-    * ``return_type`` via ``_format_annotation``
-    * ``plugins`` (MethodEntry.plugins)
-    * ``metadata_keys`` list
-    * ``parameters``: name → ``{"type", "default", "required"}`` from signature
-      annotations/defaults only.
-    * plus any subclass-provided extras via ``_describe_entry_extra``.
-
-  Filtering: ``_prepare_filter_args`` (base: drop ``None``/False values) and
-  ``_should_include_entry`` (base: always True) allow subclasses to hide
-  entries. Filters are applied both to methods and recursively to children.
-  Empty children are pruned only when filters are active.
+- ``members(**kwargs)`` builds a nested dict of routers and entries respecting
+  filters. Returns dict with ``entries`` and ``routers`` keys only if non-empty.
+  Empty routers (no entries, no child routers) return ``{}``.
+  Uses helper methods ``_entry_member_info`` and ``_get_plugin_info``.
 
 Hooks for subclasses
 --------------------
@@ -649,79 +635,65 @@ class BaseRouter:
     # ------------------------------------------------------------------
     # Introspection helpers
     # ------------------------------------------------------------------
-    def members(
-        self, scopes: Optional[Any] = None, channel: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """Return a live tree of routers/handlers/metadata respecting filters."""
-        filter_args = self._prepare_filter_args(scopes=scopes, channel=channel)
-        filter_active = bool(filter_args)
+    def members(self, **kwargs: Any) -> Dict[str, Any]:
+        """Return a tree of routers/entries/metadata respecting filters."""
+        filter_args = self._prepare_filter_args(**kwargs)
 
-        def build_method_description(node: "BaseRouter", entry: MethodEntry) -> Dict[str, Any]:
-            func = entry.func
-            signature = inspect.signature(func)
-            method_info: Dict[str, Any] = {
-                "name": entry.name,
-                "callable": func,
-                "metadata": entry.metadata,
-                "doc": inspect.getdoc(func) or func.__doc__ or "",
-                "signature": str(signature),
-                "return_type": _format_annotation(signature.return_annotation),
-                "plugins": list(entry.plugins),
-                "metadata_keys": list(entry.metadata.keys()),
-                "parameters": {},
-            }
-            params = method_info["parameters"]
-            for param_name, param in signature.parameters.items():
-                params[param_name] = {
-                    "type": _format_annotation(param.annotation),
-                    "default": None if param.default is inspect._empty else param.default,
-                    "required": param.default is inspect._empty,
+        entries = {
+            entry.name: self._entry_member_info(entry)
+            for entry in self._entries.values()
+            if self._allow_entry(entry, **filter_args)
+        }
+
+        routers = {
+            child_name: child.members(**kwargs) for child_name, child in self._children.items()
+        }
+        # Remove empty routers
+        routers = {k: v for k, v in routers.items() if v}
+
+        # If nothing, return empty dict
+        if not entries and not routers:
+            return {}
+
+        result: Dict[str, Any] = {
+            "name": self.name,
+            "router": self,
+            "instance": self.instance,
+            "plugin_info": self._get_plugin_info(),
+        }
+        if entries:
+            result["entries"] = entries
+        if routers:
+            result["routers"] = routers
+
+        return result
+
+    def _entry_member_info(self, entry: MethodEntry) -> Dict[str, Any]:
+        """Build info dict for a single entry."""
+        info: Dict[str, Any] = {
+            "name": entry.name,
+            "callable": entry.func,
+            "metadata": entry.metadata,
+            "doc": inspect.getdoc(entry.func) or entry.func.__doc__ or "",
+        }
+        extra = self._describe_entry_extra(entry, info)
+        if extra:
+            info.update(extra)
+        return info
+
+    def _get_plugin_info(self) -> Dict[str, Any]:
+        """Build plugin_info dict from _plugin_info store."""
+        info_source = getattr(self, "_plugin_info", {}) or {}
+        return {
+            pname: {
+                key: {
+                    "config": dict(slot.get("config", {})),
+                    "locals": dict(slot.get("locals", {})),
                 }
-
-            pydantic_meta = entry.metadata.get("pydantic")
-            if pydantic_meta and pydantic_meta.get("enabled"):
-                _apply_pydantic_metadata(pydantic_meta, params)
-
-            extra = node._describe_entry_extra(entry, method_info)
-            if extra:
-                method_info.update(extra)
-
-            return method_info
-
-        def capture(node: "BaseRouter") -> Dict[str, Any]:
-            handlers = {}
-            for name, entry in node._entries.items():
-                if not node._should_include_entry(entry, **filter_args):
-                    continue
-                handlers[name] = build_method_description(node, entry)
-
-            children = {}
-            for child_name, child in node._children.items():
-                child_payload = capture(child)
-                if not filter_active or child_payload["handlers"] or child_payload["children"]:
-                    children[child_name] = child_payload
-
-            plugin_info: Dict[str, Any] = {}
-            info_source = getattr(node, "_plugin_info", {}) or {}
-            for pname, pdata in info_source.items():
-                plugin_info[pname] = {
-                    key: {
-                        "config": dict(slot.get("config", {})),
-                        "locals": dict(slot.get("locals", {})),
-                    }
-                    for key, slot in pdata.items()
-                }
-
-            return {
-                "name": node.name,
-                "router": node,
-                "instance": node.instance,
-                "plugin_info": plugin_info,
-                "handlers": handlers,
-                "children": children,
+                for key, slot in pdata.items()
             }
-
-        return capture(self)
+            for pname, pdata in info_source.items()
+        }
 
     # ------------------------------------------------------------------
     # Plugin hooks (no-op for BaseRouter)
@@ -751,61 +723,6 @@ class BaseRouter:
         """Return normalized filters understood by subclasses (default: passthrough)."""
         return {key: value for key, value in raw_filters.items() if value not in (None, False)}
 
-    def _should_include_entry(self, entry: MethodEntry, **filters: Any) -> bool:
+    def _allow_entry(self, entry: MethodEntry, **filters: Any) -> bool:
         """Hook used by subclasses to decide if an entry is exposed."""
         return True
-
-
-def _format_annotation(annotation: Any) -> str:
-    if annotation in (inspect._empty, None):
-        return "Any"
-    if isinstance(annotation, str):
-        return annotation
-    if getattr(annotation, "__module__", None) == "builtins":
-        return getattr(annotation, "__name__", str(annotation))
-    return getattr(annotation, "__qualname__", str(annotation))
-
-
-def _apply_pydantic_metadata(meta: Dict[str, Any], params: Dict[str, Any]) -> None:
-    """Enrich parameter descriptions using stored Pydantic metadata."""
-    model = meta.get("model")
-    fields = getattr(model, "model_fields", {}) if model is not None else {}
-    for field_name, field in fields.items():
-        field_info = params.setdefault(
-            field_name,
-            {
-                "type": _format_annotation(getattr(field, "annotation", inspect._empty)),
-                "default": None,
-                "required": True,
-            },
-        )
-        annotation = getattr(field, "annotation", inspect._empty)
-        field_info["type"] = _format_annotation(annotation)
-        default = getattr(field, "default", None)
-        if not _is_pydantic_undefined(default):
-            field_info["default"] = default
-        required = getattr(field, "is_required", None)
-        if callable(required):
-            field_info["required"] = bool(required())
-        else:
-            field_info["required"] = field_info["default"] is None
-        validation: Dict[str, Any] = {"source": "pydantic"}
-        metadata = getattr(field, "metadata", None)
-        if metadata:
-            validation["metadata"] = list(metadata)
-        json_extra = getattr(field, "json_schema_extra", None)
-        if json_extra:
-            validation["json_schema_extra"] = json_extra
-        description = getattr(field, "description", None)
-        if description:
-            validation["description"] = description
-        examples = getattr(field, "examples", None)
-        if examples:
-            validation["examples"] = examples
-        if validation:
-            field_info["validation"] = validation
-
-
-def _is_pydantic_undefined(value: Any) -> bool:
-    cls = getattr(value, "__class__", None)
-    return cls is not None and cls.__name__ == "PydanticUndefinedType"

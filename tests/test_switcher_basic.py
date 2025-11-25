@@ -30,7 +30,7 @@ def test_orders_quick_example():
     assert orders.api.get("list")() == ["order-1", "order-2"]
     assert orders.api.get("retrieve")("42") == "acme:42"
     overview = orders.api.members()
-    assert set(overview["handlers"].keys()) == {"list", "retrieve", "create"}
+    assert set(overview["entries"].keys()) == {"list", "retrieve", "create"}
 
 
 class Service(RoutedClass):
@@ -64,8 +64,11 @@ class RootAPI(RoutedClass):
 
 
 class CapturePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="capture")
+    plugin_code = "capture"
+    plugin_description = "Captures calls for testing"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
         self.calls = []
 
     def on_decore(self, route, func, entry):
@@ -80,7 +83,7 @@ class CapturePlugin(BasePlugin):
 
 
 # Register custom plugin
-Router.register_plugin("capture", CapturePlugin)
+Router.register_plugin(CapturePlugin)
 
 
 class PluginService(RoutedClass):
@@ -95,8 +98,11 @@ class PluginService(RoutedClass):
 
 
 class TogglePlugin(BasePlugin):
-    def __init__(self):
-        super().__init__(name="toggle")
+    plugin_code = "toggle"
+    plugin_description = "Toggle test plugin"
+
+    def __init__(self, router, **config):
+        super().__init__(router, **config)
 
     def wrap_handler(self, route, entry, call_next):
         def wrapper(*args, **kwargs):
@@ -107,7 +113,7 @@ class TogglePlugin(BasePlugin):
 
 
 # Register custom plugin
-Router.register_plugin("toggle", TogglePlugin)
+Router.register_plugin(TogglePlugin)
 
 
 class ToggleService(RoutedClass):
@@ -316,4 +322,4 @@ def test_dotted_path_and_members_with_attached_child():
     parent = Parent()
     assert parent.api.get("child.ping")() == "pong"
     tree = parent.api.members()
-    assert "child" in tree["children"]
+    assert "child" in tree["routers"]

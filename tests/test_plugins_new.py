@@ -89,7 +89,7 @@ def test_logging_plugin_respects_runtime_config_toggle():
 
     svc = Service()
     # Disable "before" and keep "after" via flags.
-    svc.api.logging.configure.flags = "before:off,after:on"
+    svc.api.logging.configure(flags="before:off,after:on")
     svc.api.get("ping")()
     assert records and records == ["ping end (0.00 ms)"]
 

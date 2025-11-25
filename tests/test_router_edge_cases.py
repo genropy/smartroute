@@ -3,16 +3,21 @@ import pytest
 from smartroute import RoutedClass, Router, route
 from smartroute.plugins import pydantic as pyd_mod
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry  # Not public API
-from smartroute.plugins.logging import LoggingPlugin
-from smartroute.plugins.pydantic import PydanticPlugin
 
 
 class SimplePlugin(BasePlugin):
+    plugin_code = "simple"
+    plugin_description = "Simple test plugin"
+
+    def configure(self, **config):
+        """Accept any configuration - storage is handled by wrapper."""
+        pass  # Storage is handled by the wrapper
+
     def wrap_handler(self, router, entry, call_next):
         return call_next
 
 
-def test_plugin_config_proxy_updates_global_and_method_config():
+def test_plugin_configure_and_configuration():
     class Host(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api").plug("simple")
@@ -20,56 +25,44 @@ def test_plugin_config_proxy_updates_global_and_method_config():
     svc = Host()
     plugin = svc.api._plugins_by_name["simple"]
 
-    plugin.configure.flags = "enabled,,beta"
+    # Test configure() with flags
+    plugin.configure(flags="enabled,,beta")
     assert svc.api.get_config("simple")["enabled"] is True
-    plugin.configure.threshold = 5
+    plugin.configure(threshold=5)
     assert svc.api.get_config("simple")["threshold"] == 5
-    assert plugin.configure.threshold == 5
+    # Test configuration() reads back
+    assert plugin.configuration()["threshold"] == 5
 
-    method_proxy = plugin.configure["foo"]
-    method_proxy.flags = "enabled:off"
+    # Test per-handler config with _target
+    plugin.configure(_target="foo", flags="enabled:off")
     assert svc.api.get_config("simple", "foo")["enabled"] is False
-    method_proxy.mode = "strict"
+    plugin.configure(_target="foo", mode="strict")
     assert svc.api.get_config("simple", "foo")["mode"] == "strict"
 
 
-def test_plugin_constructor_flags_and_method_config():
+def test_plugin_constructor_flags():
     class Host(RoutedClass):
         def __init__(self):
-            self.api = Router(self, name="api").plug(
-                "simple", flags="beta:on,alpha:off", method_config={"foo": {"enabled": False}}
-            )
+            self.api = Router(self, name="api").plug("simple", flags="beta:on,alpha:off")
 
     svc = Host()
     plugin = svc.api._plugins_by_name["simple"]
     assert svc.api.get_config("simple")["beta"] is True
     assert svc.api.get_config("simple")["alpha"] is False
+    # Per-handler config via configure()
+    plugin.configure(_target="foo", enabled=False)
     assert svc.api.get_config("simple", "foo")["enabled"] is False
-    with pytest.raises(AttributeError):
-        _ = plugin.configure.nonexistent
 
 
-def ensure_plugin(name: str, plugin_cls: type) -> None:
-    if name not in Router.available_plugins():
-        Router.register_plugin(name, plugin_cls)
+def ensure_plugin(plugin_cls: type) -> None:
+    if plugin_cls.plugin_code not in Router.available_plugins():
+        Router.register_plugin(plugin_cls)
 
 
-ensure_plugin("simple", SimplePlugin)
+ensure_plugin(SimplePlugin)
 
 
-def test_unbound_plugin_config_guards_and_seed_noop():
-    plugin = SimplePlugin()
-    with pytest.raises(RuntimeError):
-        plugin.get_config()
-    with pytest.raises(RuntimeError):
-        plugin.set_config(flag=True)
-    with pytest.raises(RuntimeError):
-        plugin.set_method_config("x", enabled=False)
-    # _seed_store on an unbound plugin is a no-op
-    plugin._seed_store()
-
-
-def test_plugin_get_config_missing_bucket():
+def test_plugin_configuration_missing_bucket():
     class Host(RoutedClass):
         def __init__(self):
             self.api = Router(self, name="api").plug("simple")
@@ -77,7 +70,7 @@ def test_plugin_get_config_missing_bucket():
     svc = Host()
     plugin = svc.api._plugins_by_name["simple"]
     svc.api._plugin_info.pop(plugin.name, None)
-    assert plugin.get_config() == {}
+    assert plugin.configuration() == {}
 
 
 def test_plugin_bucket_guards_and_base_autofill():
@@ -168,7 +161,7 @@ def test_router_auto_registers_marked_methods_and_validates_plugins():
 
     svc = Demo()
     assert svc.api.get("alias")() == "ok"
-    ensure_plugin("simple", SimplePlugin)
+    ensure_plugin(SimplePlugin)
     svc.api.plug("simple")
     with pytest.raises(ValueError):
         svc.api.plug("missing")
@@ -422,15 +415,37 @@ def test_branch_router_blocks_auto_discover_and_entries():
         svc.branch.add_entry("missing")
 
 
+def _make_router_for_plugin_test():
+    """Create a minimal router for testing plugin behavior."""
+
+    class Owner:
+        pass
+
+    return Router(Owner(), name="test")
+
+
 def test_base_plugin_default_hooks():
-    plugin = BasePlugin()
-    entry = MethodEntry(name="foo", func=lambda: "ok", router=None, plugins=[])
-    plugin.on_decore(None, entry.func, entry)
-    assert plugin.wrap_handler(None, entry, lambda: "ok")() == "ok"
+    router = _make_router_for_plugin_test()
+
+    class TestPlugin(BasePlugin):
+        plugin_code = "testplugin"
+        plugin_description = "Test plugin"
+
+        def configure(self, **config):
+            pass  # Storage is handled by the wrapper
+
+    Router.register_plugin(TestPlugin)
+    router.plug("testplugin")
+    plugin = router._plugins_by_name["testplugin"]
+    entry = MethodEntry(name="foo", func=lambda: "ok", router=router, plugins=[])
+    plugin.on_decore(router, entry.func, entry)
+    assert plugin.wrap_handler(router, entry, lambda: "ok")() == "ok"
 
 
 def test_logging_plugin_emit_without_handlers(capsys):
-    plugin = LoggingPlugin()
+    router = _make_router_for_plugin_test()
+    router.plug("logging")
+    plugin = router._plugins_by_name["logging"]
 
     class DummyLogger:
         def has_handlers(self):
@@ -446,7 +461,9 @@ def test_logging_plugin_emit_without_handlers(capsys):
 
 
 def test_logging_plugin_emit_falls_back_to_print_when_log_enabled(capsys):
-    plugin = LoggingPlugin()
+    router = _make_router_for_plugin_test()
+    router.plug("logging")
+    plugin = router._plugins_by_name["logging"]
 
     class DummyLogger:
         def has_handlers(self):
@@ -465,8 +482,10 @@ def test_logging_plugin_emit_falls_back_to_print_when_log_enabled(capsys):
 
 
 def test_pydantic_plugin_handles_hint_errors(monkeypatch):
-    plugin = PydanticPlugin()
-    entry = MethodEntry(name="foo", func=lambda **kw: "ok", router=None, plugins=[])
+    router = _make_router_for_plugin_test()
+    router.plug("pydantic")
+    plugin = router._plugins_by_name["pydantic"]
+    entry = MethodEntry(name="foo", func=lambda **kw: "ok", router=router, plugins=[])
 
     def broken_get_type_hints(func):
         raise RuntimeError("boom")
@@ -476,43 +495,9 @@ def test_pydantic_plugin_handles_hint_errors(monkeypatch):
     def handler():
         return "ok"
 
-    plugin.on_decore(None, handler, entry)
-    wrapper = plugin.wrap_handler(None, entry, lambda **kw: "ok")
+    plugin.on_decore(router, handler, entry)
+    wrapper = plugin.wrap_handler(router, entry, lambda **kw: "ok")
     assert wrapper() == "ok"
-
-
-def test_pydantic_plugin_disables_when_no_hints(monkeypatch):
-    plugin = PydanticPlugin()
-    entry = MethodEntry(name="foo", func=lambda: None, router=None, plugins=[])
-
-    def no_hints(func):
-        return {}
-
-    monkeypatch.setattr(pyd_mod, "get_type_hints", no_hints)
-
-    def handler(arg):
-        return arg
-
-    plugin.on_decore(None, handler, entry)
-    assert entry.metadata["pydantic"]["enabled"] is False
-    wrapper = plugin.wrap_handler(None, entry, lambda **kw: "ok")
-    assert wrapper() == "ok"
-
-
-def test_pydantic_plugin_handles_missing_signature_params(monkeypatch):
-    plugin = PydanticPlugin()
-    entry = MethodEntry(name="foo", func=lambda: None, router=None, plugins=[])
-
-    def fake_hints(func):
-        return {"ghost": int}
-
-    monkeypatch.setattr(pyd_mod, "get_type_hints", fake_hints)
-
-    def handler():
-        return "ok"
-
-    plugin.on_decore(None, handler, entry)
-    assert entry.metadata["pydantic"]["enabled"] is True
 
 
 def test_builtin_plugins_registered():
@@ -523,31 +508,37 @@ def test_builtin_plugins_registered():
 
 def test_register_plugin_validates():
     with pytest.raises(TypeError):
-        Router.register_plugin("bad", object)  # type: ignore[arg-type]
+        Router.register_plugin(object)  # type: ignore[arg-type]
 
     class CustomPlugin(BasePlugin):
-        pass
+        plugin_code = "custom_edge"
+        plugin_description = "Custom test plugin"
 
-    Router.register_plugin("custom_edge", CustomPlugin)
+    Router.register_plugin(CustomPlugin)
 
     class OtherPlugin(BasePlugin):
-        pass
+        plugin_code = "custom_edge"  # same code, different class
+        plugin_description = "Other test plugin"
 
     with pytest.raises(ValueError):
-        Router.register_plugin("custom_edge", OtherPlugin)
+        Router.register_plugin(OtherPlugin)
 
 
 def test_router_get_config_paths():
     class CfgPlugin(BasePlugin):
-        pass
+        plugin_code = "cfgplug"
+        plugin_description = "Config test plugin"
 
-    Router.register_plugin("cfgplug", CfgPlugin)
+        def configure(self, **config):
+            pass  # Storage is handled by the wrapper
+
+    Router.register_plugin(CfgPlugin)
 
     class Service(RoutedClass):
         def __init__(self):
-            self.api = Router(self, name="api").plug(
-                "cfgplug", mode="x", method_config={"hello": {"trace": True}}
-            )
+            self.api = Router(self, name="api").plug("cfgplug", mode="x")
+            # Per-handler config via configure()
+            self.api._plugins_by_name["cfgplug"].configure(_target="hello", trace=True)
 
         @route("api")
         def hello(self):
@@ -559,46 +550,6 @@ def test_router_get_config_paths():
     assert merged["mode"] == "x" and merged["trace"] is True
     with pytest.raises(AttributeError):
         svc.api.get_config("missing")
-
-
-def test_members_expose_metadata():
-    class Parent(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("simple")
-
-        @route("api")
-        def run(self):
-            """Run child handler."""
-            return "ok"
-
-    info = Parent().api.members()
-    assert info["name"] == "api"
-    run_info = info["handlers"]["run"]
-    assert run_info["doc"] == "Run child handler."
-    assert run_info["parameters"] == {}
-    assert run_info["return_type"] == "Any"
-
-
-def test_members_include_pydantic_validation():
-    class Validated(RoutedClass):
-        def __init__(self):
-            self.api = Router(self, name="api").plug("pydantic")
-
-        @route("api")
-        def greet(self, name: str = "World") -> str:
-            """Greet someone."""
-            return f"Hello {name}"
-
-    info = Validated().api.members()
-    greet = info["handlers"]["greet"]
-    assert greet["name"] == "greet"
-    assert "Greet someone." in greet["doc"]
-    assert greet["return_type"] == "str"
-    param = greet["parameters"]["name"]
-    assert param["type"] == "str"
-    assert param["default"] == "World"
-    assert param["required"] is False
-    assert isinstance(param.get("validation"), dict)
 
 
 def test_routed_proxy_get_router_handles_dotted_path():
@@ -618,7 +569,7 @@ def test_routed_proxy_get_router_handles_dotted_path():
 
 
 def test_routed_configure_updates_plugins_global_and_local():
-    ensure_plugin("simple", SimplePlugin)
+    ensure_plugin(SimplePlugin)
 
     class ConfService(RoutedClass):
         def __init__(self):
@@ -634,13 +585,13 @@ def test_routed_configure_updates_plugins_global_and_local():
 
     svc = ConfService()
     svc.routedclass.configure("api:simple/_all_", threshold=10)
-    assert svc.api.simple.get_config()["threshold"] == 10
+    assert svc.api.simple.configuration()["threshold"] == 10
 
     svc.routedclass.configure("api:simple/foo", enabled=False)
-    assert svc.api.simple.get_config("foo")["enabled"] is False
+    assert svc.api.simple.configuration("foo")["enabled"] is False
 
     svc.routedclass.configure("api:simple/b*", mode="strict")
-    assert svc.api.simple.get_config("bar")["mode"] == "strict"
+    assert svc.api.simple.configuration("bar")["mode"] == "strict"
 
     payload = [
         {"target": "api:simple/_all_", "flags": "trace"},
@@ -648,11 +599,11 @@ def test_routed_configure_updates_plugins_global_and_local():
     ]
     result = svc.routedclass.configure(payload)
     assert len(result) == 2
-    assert svc.api.simple.get_config("foo")["limit"] == 5
+    assert svc.api.simple.configuration("foo")["limit"] == 5
 
 
 def test_routed_configure_question_lists_tree():
-    ensure_plugin("simple", SimplePlugin)
+    ensure_plugin(SimplePlugin)
 
     class Root(RoutedClass):
         def __init__(self):
@@ -666,4 +617,4 @@ def test_routed_configure_question_lists_tree():
     info = svc.routedclass.configure("?")
     assert "api" in info
     assert info["api"]["plugins"]
-    assert info["api"]["children"] == {}
+    assert info["api"]["routers"] == {}

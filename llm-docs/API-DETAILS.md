@@ -925,7 +925,7 @@ app.routedclass.configure("api:logging/users.*", level="debug")
 
 ## Testing
 
-SmartRoute achieves 100% test coverage with 59 comprehensive tests.
+SmartRoute achieves 100% test coverage with 94 comprehensive tests.
 
 All examples in this document are extracted from the test suite and verified by CI.
 
@@ -942,3 +942,4 @@ PYTHONPATH=src pytest --cov=src/smartroute --cov-report=term-missing
 - Plugin system (test_plugins_new.py)
 - Pydantic validation (test_pydantic_plugin.py)
 - Runtime extras (test_router_runtime_extras.py)
+- Coverage gaps (test_coverage_gaps.py)

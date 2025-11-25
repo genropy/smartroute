@@ -58,19 +58,23 @@ plugin_info
 ```
 
 ### Plugin lifecycle
-- `plug("name", **config, method_config=...)`:
-  - instantiates plugin;
-  - binds it to the router;
-  - seeds `plugin_info[name].config` and `.handlers` from the provided config.
+- `plug("name", **config)`:
+  - instantiates plugin via registered class;
+  - calls `configure(**config)` which is validated by Pydantic;
+  - binds plugin to the router;
+  - seeds `plugin_info[name].config` from the provided config.
 - Inheritance (`_on_attached_to_parent`):
-  - clones plugin specs;
-  - binds cloned plugins to child router;
-  - copies parent `_plugin_info` bucket per plugin (config/handlers); locals start empty.
+  - child references parent's plugin instances;
+  - creates callable config lookup that resolves from parent;
+  - applies `on_decore` for inherited plugins to child's entries.
 - Detach of instances leaves plugin store on surviving routers untouched.
 
-### Plugin API (after refactor)
-- `BasePlugin` no longer keeps `_global_config/_handler_configs`.
-- `get_config`, `set_config`, `set_method_config`, and `configure` proxies read/write the router store.
+### Plugin API
+- `BasePlugin` requires `plugin_code` and `plugin_description` class attributes.
+- `configure(**config)` method defines accepted parameters (validated by Pydantic).
+- `get_config`, `set_config`, `set_method_config` read/write the router store.
+- `configuration` property returns a proxy for fluent access.
+- Per-handler config via `plugin.configuration["handler"].key = value`.
 - Plugins should read config at call time (no baked-in closures) so live updates apply without rebuild.
 
 ## Introspection data (`members`)
