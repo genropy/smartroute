@@ -87,6 +87,7 @@ Design constraints
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import wraps
 from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import validate_call
@@ -109,6 +110,7 @@ def _wrap_configure(original_configure: Callable) -> Callable:
     """Wrap a plugin's configure() method to handle flags, _target, validation, and storage."""
     validated = validate_call(original_configure)
 
+    @wraps(original_configure)
     def wrapper(
         self: "BasePlugin", *, _target: str = "--base--", flags: Optional[str] = None, **kwargs: Any
     ) -> None:
