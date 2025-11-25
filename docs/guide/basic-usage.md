@@ -17,7 +17,7 @@ SmartRoute provides instance-scoped routing with hierarchical organization and p
 
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L148)
 
 Create a service with instance-scoped routing:
 
@@ -52,7 +52,7 @@ assert second.api.get("describe")() == "service:beta"
 
 <!-- test: test_router_edge_cases.py::test_router_auto_registers_marked_methods_and_validates_plugins -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L63-L77)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L153-L167)
 
 Methods are automatically registered when decorated with `@route`:
 
@@ -84,7 +84,7 @@ assert api.routes.get("alt_name")() == "executed"
 
 <!-- test: test_router_runtime_extras.py::test_router_call_and_members_structure -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L100-L109)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L145-L151)
 
 Use `get()` to retrieve handlers and `call()` for direct invocation:
 
@@ -117,7 +117,7 @@ assert result == 30
 
 <!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L151-L156)
 
 Clean up method names with prefixes and provide alternative names with the `name` option:
 
@@ -154,7 +154,7 @@ assert sub.routes.get("detail")(10) == "users:detail:10"
 
 <!-- test: test_switcher_basic.py::test_get_with_default_returns_callable -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L229-L237)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L179-L186)
 
 Provide fallback handlers when routes don't exist:
 
@@ -193,7 +193,7 @@ except KeyError:
 
 <!-- test: test_switcher_basic.py::test_dynamic_router_add_entry_runtime -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L211-L217)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L170-L176)
 
 Add handlers programmatically at runtime:
 
@@ -221,7 +221,7 @@ assert dyn.api.get("greet")("World") == "Hello, World"
 
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167)
 
 Create nested router structures with dotted path access:
 
@@ -265,7 +265,7 @@ assert root.api.get("products.detail")(5) == "products:detail:5"
 
 <!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L240-L247)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L307-L325)
 
 Inspect router structure and registered handlers:
 
