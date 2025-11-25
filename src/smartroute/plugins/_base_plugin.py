@@ -109,7 +109,9 @@ def _wrap_configure(original_configure: Callable) -> Callable:
     """Wrap a plugin's configure() method to handle flags, _target, validation, and storage."""
     validated = validate_call(original_configure)
 
-    def wrapper(self: "BasePlugin", *, _target: str = "--base--", flags: Optional[str] = None, **kwargs: Any) -> None:
+    def wrapper(
+        self: "BasePlugin", *, _target: str = "--base--", flags: Optional[str] = None, **kwargs: Any
+    ) -> None:
         # Parse flags into boolean kwargs
         if flags:
             kwargs.update(self._parse_flags(flags))

@@ -104,7 +104,10 @@ class PydanticPlugin(BasePlugin):
         for param_name, hint in hints.items():
             param = sig.parameters.get(param_name)
             if param is None:
-                fields[param_name] = (hint, ...)
+                raise ValueError(
+                    f"Handler '{func.__name__}' has type hint for '{param_name}' "
+                    f"which is not in the function signature"
+                )
             elif param.default is inspect.Parameter.empty:
                 fields[param_name] = (hint, ...)
             else:
@@ -120,16 +123,21 @@ class PydanticPlugin(BasePlugin):
 
     def wrap_handler(self, route: "Router", entry: MethodEntry, call_next: Callable):
         """Validate annotated parameters with the cached Pydantic model before calling."""
-        result = self.get_model(entry)
-        if result is None:
+        meta = entry.metadata.get("pydantic", {})
+        model = meta.get("model")
+        if not model:
+            # No model created (no type hints), passthrough
             return call_next
 
-        _, model = result
-        meta = entry.metadata.get("pydantic", {})
         sig = meta["signature"]
         hints = meta["hints"]
 
         def wrapper(*args, **kwargs):
+            # Check disabled config at runtime (not at wrap time)
+            cfg = self.configuration(entry.name)
+            if cfg.get("disabled"):
+                return call_next(*args, **kwargs)
+
             bound = sig.bind(*args, **kwargs)
             bound.apply_defaults()
             args_to_validate = {k: v for k, v in bound.arguments.items() if k in hints}

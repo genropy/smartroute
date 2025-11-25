@@ -646,8 +646,7 @@ class BaseRouter:
         }
 
         routers = {
-            child_name: child.members(**kwargs)
-            for child_name, child in self._children.items()
+            child_name: child.members(**kwargs) for child_name, child in self._children.items()
         }
         # Remove empty routers
         routers = {k: v for k, v in routers.items() if v}
@@ -676,7 +675,7 @@ class BaseRouter:
             "callable": entry.func,
             "metadata": entry.metadata,
             "doc": inspect.getdoc(entry.func) or entry.func.__doc__ or "",
-            }
+        }
         extra = self._describe_entry_extra(entry, info)
         if extra:
             info.update(extra)
@@ -727,5 +726,3 @@ class BaseRouter:
     def _allow_entry(self, entry: MethodEntry, **filters: Any) -> bool:
         """Hook used by subclasses to decide if an entry is exposed."""
         return True
-
-

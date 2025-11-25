@@ -153,9 +153,7 @@ class Router(BaseRouter):
     # Plugin registration
     # ------------------------------------------------------------------
     @classmethod
-    def register_plugin(
-        cls, plugin_class: Type[BasePlugin], name: Optional[str] = None
-    ) -> None:
+    def register_plugin(cls, plugin_class: Type[BasePlugin], name: Optional[str] = None) -> None:
         """Register a plugin class globally.
 
         Args:
@@ -171,8 +169,6 @@ class Router(BaseRouter):
                 f"Plugin {plugin_class.__name__} not following standards: missing plugin_code"
             )
         code = name or plugin_class.plugin_code
-        if not code:
-            raise ValueError("plugin name cannot be empty")
         # If name is explicitly provided, allow overwrite (intentional replacement)
         # Otherwise, reject collision
         if name is None:
@@ -318,7 +314,6 @@ class Router(BaseRouter):
             return
         self._inherited_from.add(parent_id)
         # For plugins in parent that child doesn't have:
-        # - Create a bucket with callable config pointing to parent
         # - Add reference to parent's plugin for attribute access
         # - Apply on_decore to child's entries
         inherited_plugins = []
@@ -327,26 +322,6 @@ class Router(BaseRouter):
                 # Child doesn't have this plugin - inherit from parent
                 self._plugins_by_name[parent_plugin.name] = parent_plugin
                 inherited_plugins.append(parent_plugin)
-                # Create bucket with callable that looks up parent config
-                plugin_name = parent_plugin.name
-
-                def make_config_lookup(pname: str, prouter: "Router"):
-                    def lookup():
-                        parent_bucket = prouter._plugin_info.get(pname, {})
-                        base = parent_bucket.get("--base--", {})
-                        cfg = base.get("config", {})
-                        # Recursively resolve if parent also has callable
-                        if callable(cfg):
-                            return cfg()
-                        return cfg if cfg else {}
-                    return lookup
-
-                self._plugin_info[plugin_name] = {
-                    "--base--": {
-                        "config": make_config_lookup(plugin_name, parent),
-                        "locals": {}
-                    }
-                }
         # Apply on_decore for inherited plugins to child's entries
         for plugin in inherited_plugins:
             for entry in self._entries.values():

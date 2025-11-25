@@ -148,13 +148,15 @@ def __init__(self, router, **config):
 
 SmartRoute plugins can override these methods:
 
-| Hook | When Called | Purpose |
-|------|-------------|---------|
-| `configure()` | At plugin init and runtime | Define configuration schema |
-| `on_decore()` | Handler registration | Add metadata, validate signatures |
-| `wrap_handler()` | Handler invocation | Middleware (logging, auth, etc.) |
-| `allow_entry()` | `members()` introspection | Filter visible handlers |
-| `entry_metadata()` | `members()` introspection | Add plugin metadata to output |
+| Hook | When Called | Purpose | Required |
+|------|-------------|---------|----------|
+| `configure()` | At plugin init and runtime | Define configuration schema | No |
+| `on_decore()` | Handler registration | Add metadata, validate signatures | No |
+| `wrap_handler()` | Handler invocation | Middleware (logging, auth, etc.) | No |
+| `allow_entry()` | `members()` introspection | Filter visible handlers | No |
+| `entry_metadata()` | `members()` introspection | Add plugin metadata to output | No |
+
+**All hooks are optional.** Override only what you need. A minimal plugin can have just `plugin_code` and `plugin_description` with no hooks.
 
 ### configure(**kwargs)
 
