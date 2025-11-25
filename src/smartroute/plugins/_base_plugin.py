@@ -158,21 +158,6 @@ class BasePlugin:
             "--base--", {"config": {"enabled": True}, "locals": {}}
         )
 
-    def configure(self, *, _target: str = "--base--", flags: Optional[str] = None) -> None:
-        """Override in subclasses to define accepted configuration parameters.
-
-        Base implementation accepts no additional parameters beyond _target and flags.
-
-        Args:
-            _target: Where to write config. "--base--" for router-level,
-                     "handler_name" for per-handler, or "h1,h2" for multiple.
-            flags: String like "enabled,before:off" parsed into booleans.
-        """
-        # Base configure just handles flags if provided
-        if flags:
-            kwargs = self._parse_flags(flags)
-            self._write_config(_target, kwargs)
-
     def _write_config(self, target: str, config: Dict[str, Any]) -> None:
         """Write config to the appropriate bucket in the store."""
         if not config:
@@ -218,10 +203,53 @@ class BasePlugin:
                 mapping[chunk] = True
         return mapping
 
+    def _get_store(self) -> Dict[str, Any]:
+        return getattr(self._router, "_plugin_info")
+
+    # =========================================================================
+    # METHODS TO OVERRIDE IN CUSTOM PLUGINS
+    # =========================================================================
+
+    def configure(self, *, _target: str = "--base--", flags: Optional[str] = None) -> None:
+        """Override to define accepted configuration parameters.
+
+        Define your plugin's configuration options as method parameters.
+        The wrapper added by __init_subclass__ handles:
+        - Parsing ``flags`` (e.g. "enabled,before:off") into booleans
+        - Routing to ``_target`` ("--base--", handler name, or comma-separated)
+        - Pydantic validation via @validate_call
+        - Writing to the router's config store
+
+        Example::
+
+            def configure(self, enabled: bool = True, threshold: int = 10):
+                pass  # Storage is handled by the wrapper
+
+        Args:
+            _target: Where to write config. "--base--" for router-level,
+                     "handler_name" for per-handler, or "h1,h2" for multiple.
+            flags: String like "enabled,before:off" parsed into booleans.
+        """
+        # Base configure just handles flags if provided
+        if flags:
+            kwargs = self._parse_flags(flags)
+            self._write_config(_target, kwargs)
+
     def on_decore(
         self, router: Any, func: Callable, entry: MethodEntry
     ) -> None:  # pragma: no cover - default no-op
-        """Hook run when the route is registered."""
+        """Override to run logic when a handler is registered.
+
+        Called once per handler at decoration time. Use this to:
+        - Inspect type hints and store metadata
+        - Pre-compute validation models
+        - Annotate ``entry.metadata`` for later use in wrap_handler
+
+        Args:
+            router: The Router instance registering the handler.
+            func: The original handler function.
+            entry: MethodEntry with name, func, router, plugins, metadata.
+        """
 
     def wrap_handler(
         self,
@@ -229,8 +257,30 @@ class BasePlugin:
         entry: MethodEntry,
         call_next: Callable,
     ) -> Callable:
-        """Wrap handler invocation; default passthrough."""
-        return call_next
+        """Override to wrap handler invocation with custom logic.
 
-    def _get_store(self) -> Dict[str, Any]:
-        return getattr(self._router, "_plugin_info")
+        Called to build the middleware chain. Return a callable that:
+        - Optionally does pre-processing
+        - Calls ``call_next(*args, **kwargs)``
+        - Optionally does post-processing
+        - Returns the result
+
+        Example::
+
+            def wrap_handler(self, router, entry, call_next):
+                def wrapper(*args, **kwargs):
+                    print(f"Before {entry.name}")
+                    result = call_next(*args, **kwargs)
+                    print(f"After {entry.name}")
+                    return result
+                return wrapper
+
+        Args:
+            router: The Router instance.
+            entry: MethodEntry for the handler being wrapped.
+            call_next: The next callable in the chain.
+
+        Returns:
+            A callable with the same signature as call_next.
+        """
+        return call_next
