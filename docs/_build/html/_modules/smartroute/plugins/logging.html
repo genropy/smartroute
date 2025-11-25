@@ -329,7 +329,7 @@ window.addEventListener("load", () => mermaid.run());
 <span class="sd">- Wrap each handler call and emit two messages: ``&quot;{entry.name} start&quot;`` before</span>
 <span class="sd">  execution, ``&quot;{entry.name} end (&lt;ms&gt; ms)&quot;`` after. Elapsed time is in</span>
 <span class="sd">  milliseconds with ``{elapsed:.2f}`` formatting.</span>
-<span class="sd">- Use a provided ``logging.Logger`` (default ``logging.getLogger(&quot;smartswitch&quot;)``).</span>
+<span class="sd">- Use a provided ``logging.Logger`` (default ``logging.getLogger(&quot;smartroute&quot;)``).</span>
 <span class="sd">  If the logger reports no handlers via ``hasHandlers()``, fall back to ``print``</span>
 <span class="sd">  to avoid dropping output.</span>
 
@@ -376,7 +376,7 @@ window.addEventListener("load", () => mermaid.run());
 <a class="viewcode-back" href="../../../api/plugins.html#smartroute.plugins.logging.LoggingPlugin.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">cfg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;logger&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;smartswitch&quot;</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;smartroute&quot;</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>

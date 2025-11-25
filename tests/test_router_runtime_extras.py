@@ -292,6 +292,7 @@ def test_router_calling_members_handles_custom_pydantic_metadata():
     param = info["handlers"]["first"]["parameters"]["text"]
     assert param["validation"]["metadata"] == ["tag"]
 
+
 def test_iter_registered_routers_lists_entries():
     svc = ManualService()
     pairs = list(svc._iter_registered_routers())

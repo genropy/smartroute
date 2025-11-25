@@ -112,7 +112,7 @@ pip install -e ".[all]"
 
 ## Project Status
 
-SmartRoute is currently in **beta** (v0.7.1). The core API is stable with complete documentation.
+SmartRoute is currently in **beta** (v0.8.0). The core API is stable with complete documentation.
 
 - **Test Coverage**: 100% (85 tests, 969 statements)
 - **Python Support**: 3.10, 3.11, 3.12
