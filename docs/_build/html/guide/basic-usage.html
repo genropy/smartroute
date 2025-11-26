@@ -386,7 +386,7 @@
 <section id="creating-your-first-router">
 <h2>Creating Your First Router<a class="headerlink" href="#creating-your-first-router" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L148">From test</a></p>
 <p>Create a service with instance-scoped routing:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
@@ -418,7 +418,7 @@
 <section id="registering-handlers">
 <h2>Registering Handlers<a class="headerlink" href="#registering-handlers" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_router_auto_registers_marked_methods_and_validates_plugins -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L63-L77">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L153-L167">From test</a></p>
 <p>Methods are automatically registered when decorated with <code class="docutils literal notranslate"><span class="pre">&#64;route</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">API</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -446,7 +446,7 @@
 <section id="calling-handlers">
 <h2>Calling Handlers<a class="headerlink" href="#calling-handlers" title="Link to this heading"></a></h2>
 <!-- test: test_router_runtime_extras.py::test_router_call_and_members_structure -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L100-L109">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L145-L151">From test</a></p>
 <p>Use <code class="docutils literal notranslate"><span class="pre">get()</span></code> to retrieve handlers and <code class="docutils literal notranslate"><span class="pre">call()</span></code> for direct invocation:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Calculator</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -476,7 +476,7 @@
 <section id="using-prefixes-and-custom-names">
 <h2>Using Prefixes and Custom Names<a class="headerlink" href="#using-prefixes-and-custom-names" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L151-L156">From test</a></p>
 <p>Clean up method names with prefixes and provide alternative names with the <code class="docutils literal notranslate"><span class="pre">name</span></code> option:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SubService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -510,7 +510,7 @@
 <section id="default-handlers">
 <h2>Default Handlers<a class="headerlink" href="#default-handlers" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_get_with_default_returns_callable -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L229-L237">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L179-L186">From test</a></p>
 <p>Provide fallback handlers when routes don’t exist:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Fallback</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -546,7 +546,7 @@
 <section id="dynamic-handler-registration">
 <h2>Dynamic Handler Registration<a class="headerlink" href="#dynamic-handler-registration" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_dynamic_router_add_entry_runtime -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L211-L217">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L170-L176">From test</a></p>
 <p>Add handlers programmatically at runtime:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Dynamic</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -571,7 +571,7 @@
 <section id="building-hierarchies">
 <h2>Building Hierarchies<a class="headerlink" href="#building-hierarchies" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167">From test</a></p>
 <p>Create nested router structures with dotted path access:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SubService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -612,7 +612,7 @@
 <section id="introspection">
 <h2>Introspection<a class="headerlink" href="#introspection" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L240-L247">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L307-L325">From test</a></p>
 <p>Inspect router structure and registered handlers:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Inspectable</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

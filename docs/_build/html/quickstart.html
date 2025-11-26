@@ -381,7 +381,7 @@
 <section id="your-first-router">
 <h2>Your First Router<a class="headerlink" href="#your-first-router" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L148">From test</a></p>
 <p>Create a service with instance-scoped routing:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
@@ -407,7 +407,7 @@
 <section id="custom-entry-names">
 <h2>Custom Entry Names<a class="headerlink" href="#custom-entry-names" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_prefix_and_name_override -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L146">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L151-L156">From test</a></p>
 <p>Use prefixes and explicit names for cleaner method registration:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SubService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -435,7 +435,7 @@
 <section id="building-hierarchies">
 <h2>Building Hierarchies<a class="headerlink" href="#building-hierarchies" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_hierarchical_binding_with_instances -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L149-L158">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167">From test</a></p>
 <p>Create nested router structures:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">RootAPI</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -457,7 +457,7 @@
 <section id="adding-plugins">
 <h2>Adding Plugins<a class="headerlink" href="#adding-plugins" title="Link to this heading"></a></h2>
 <!-- test: test_switcher_basic.py::test_plugins_are_per_instance_and_accessible -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L200-L208">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L159-L167">From test</a></p>
 <p>Extend behavior with plugins. Built-in plugins (<code class="docutils literal notranslate"><span class="pre">logging</span></code>, <code class="docutils literal notranslate"><span class="pre">pydantic</span></code>) are pre-registered; scope/channel policies live in the SmartPublisher ecosystem plugin.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PluginService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -513,8 +513,8 @@
 <section id="need-help">
 <h2>Need Help?<a class="headerlink" href="#need-help" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><strong>LLM Reference</strong>: See <a class="reference internal" href="#../llm-docs/"><span class="xref myst">llm-docs/</span></a> for AI-optimized documentation</p></li>
-<li><p><strong>Examples</strong>: Check the <a class="reference external" href="https://github.com/genropy/smartroute/tree/main/examples">examples/</a> directory</p></li>
+<li><p><strong>LLM Reference</strong>: See <a class="reference external" href="https://github.com/genropy/smartroute/tree/main/llm-docs">llm-docs</a> for AI-optimized documentation</p></li>
+<li><p><strong>Examples</strong>: Check the <a class="reference external" href="https://github.com/genropy/smartroute/tree/main/examples">examples</a> directory</p></li>
 <li><p><strong>Issues</strong>: Report bugs on <a class="reference external" href="https://github.com/genropy/smartroute/issues">GitHub Issues</a></p></li>
 </ul>
 </section>

@@ -397,7 +397,7 @@
 <section id="basic-instance-attachment">
 <h2>Basic Instance Attachment<a class="headerlink" href="#basic-instance-attachment" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_attach_and_detach_instance_single_router_with_alias -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L97-L115">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L203-L221">From test</a></p>
 <p>Attach a child instance explicitly with an alias:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
@@ -442,7 +442,7 @@
 <section id="multiple-routers-auto-mapping">
 <h2>Multiple Routers: Auto-Mapping<a class="headerlink" href="#multiple-routers-auto-mapping" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_attach_instance_multiple_routers_requires_mapping -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L118-L134">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L224-L240">From test</a></p>
 <p>When a child has multiple routers, they can be auto-mapped:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MultiRouterChild</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -483,7 +483,7 @@
 <section id="multiple-routers-explicit-mapping">
 <h2>Multiple Routers: Explicit Mapping<a class="headerlink" href="#multiple-routers-explicit-mapping" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_attach_instance_allows_partial_mapping_and_skips_unmapped -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L155-L174">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L261-L280">From test</a></p>
 <p>Use explicit mapping to control which routers attach and with what aliases:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parent</span> <span class="o">=</span> <span class="n">Parent</span><span class="p">()</span>
 <span class="n">parent</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">MultiRouterChild</span><span class="p">()</span>
@@ -510,7 +510,7 @@
 <section id="parent-with-multiple-routers">
 <h2>Parent with Multiple Routers<a class="headerlink" href="#parent-with-multiple-routers" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_attach_instance_single_child_requires_alias_when_parent_multi -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L137-L152">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L243-L258">From test</a></p>
 <p>When parent has multiple routers, explicit alias is required:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MultiRouterParent</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -530,7 +530,7 @@
 <section id="branch-routers">
 <h2>Branch Routers<a class="headerlink" href="#branch-routers" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_branch_router_blocks_auto_discover_and_entries -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L299-L309">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L405-L415">From test</a></p>
 <p>Create pure organizational nodes with branch routers:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrganizedService</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -578,7 +578,7 @@
 <section id="auto-detachment">
 <h2>Auto-Detachment<a class="headerlink" href="#auto-detachment" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_auto_detach_on_attribute_replacement -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L238-L255">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L344-L361">From test</a></p>
 <p>Replacing a child attribute automatically detaches the old instance:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Parent</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -650,8 +650,8 @@
 </section>
 <section id="plugin-inheritance">
 <h2>Plugin Inheritance<a class="headerlink" href="#plugin-inheritance" title="Link to this heading"></a></h2>
-<!-- test: test_switcher_basic.py::test_parent_plugins_inherit_to_children -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L220-L234">From test</a></p>
+<!-- test: test_router_runtime_extras.py::test_inherit_plugins_branches -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_runtime_extras.py#L154-L172">From test</a></p>
 <p>Plugins propagate automatically from parent to children:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Service</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -692,7 +692,7 @@
 <section id="dotted-path-navigation">
 <h2>Dotted Path Navigation<a class="headerlink" href="#dotted-path-navigation" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_proxy_get_router_handles_dotted_path -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L268-L281">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L555-L568">From test</a></p>
 <p>Navigate hierarchy with dotted paths via <code class="docutils literal notranslate"><span class="pre">routedclass.get_router()</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Child</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -722,8 +722,8 @@
 </section>
 <section id="introspection">
 <h2>Introspection<a class="headerlink" href="#introspection" title="Link to this heading"></a></h2>
-<!-- test: test_switcher_basic.py::test_describe_returns_hierarchy -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L370-L379">From test</a></p>
+<!-- test: test_switcher_basic.py::test_dotted_path_and_members_with_attached_child -->
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L307-L325">From test</a></p>
 <p>Inspect the full hierarchy structure:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Inspectable</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

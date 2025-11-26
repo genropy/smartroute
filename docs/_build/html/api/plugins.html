@@ -371,12 +371,11 @@
   <section id="plugin-api-reference">
 <h1>Plugin API Reference<a class="headerlink" href="#plugin-api-reference" title="Link to this heading"></a></h1>
 <!-- test: test_router_edge_cases.py::test_builtin_plugins_registered -->
-<p><strong>Coming soon</strong> - This section is under development.</p>
-<p>For complete plugin documentation, see:</p>
+<p>This section documents the built-in plugins provided by SmartRoute.</p>
+<p>For additional reference, see:</p>
 <ul class="simple">
-<li><p><span class="xref myst">LLM API Details - Plugin API</span> - BasePlugin API</p></li>
-<li><p><span class="xref myst">LLM API Details - Built-in Plugins</span> - LoggingPlugin, PydanticPlugin</p></li>
-<li><p>Scope/channel policies now live in SmartPublisher (<code class="docutils literal notranslate"><span class="pre">smartpublisher.smartroute_plugins.publish.PublishPlugin</span></code>).</p></li>
+<li><p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/llm-docs/API-DETAILS.md#plugin-api">LLM API Details</a> - Complete plugin API reference</p></li>
+<li><p>Scope/channel policies are available via SmartPublisher (<code class="docutils literal notranslate"><span class="pre">smartpublisher.smartroute_plugins.publish.PublishPlugin</span></code>).</p></li>
 </ul>
 <section id="module-smartroute.plugins.logging">
 <span id="auto-generated-plugin-api"></span><h2>Auto-Generated Plugin API<a class="headerlink" href="#module-smartroute.plugins.logging" title="Link to this heading"></a></h2>
@@ -457,31 +456,18 @@ raised.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="smartroute.plugins.logging.LoggingPlugin.configure">
-<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'--base--'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.configure" title="Link to this definition"></a></dt>
-<dd><p>Override to define accepted configuration parameters.</p>
-<p>Define your plugin’s configuration options as method parameters.
-The wrapper added by __init_subclass__ handles:
-- Parsing <code class="docutils literal notranslate"><span class="pre">flags</span></code> (e.g. “enabled,before:off”) into booleans
-- Routing to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (”–base–”, handler name, or comma-separated)
-- Pydantic validation via &#64;validate_call
-- Writing to the router’s config store</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-    <span class="k">pass</span>  <span class="c1"># Storage is handled by the wrapper</span>
-</pre></div>
-</div>
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">before</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/logging.html#LoggingPlugin.configure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.logging.LoggingPlugin.configure" title="Link to this definition"></a></dt>
+<dd><p>Configure logging plugin options.</p>
+<p>The wrapper added by __init_subclass__ handles writing to store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>_target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Where to write config. “–base–” for router-level,
-“handler_name” for per-handler, or “h1,h2” for multiple.</p></li>
-<li><p><strong>flags</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – String like “enabled,before:off” parsed into booleans.</p></li>
-<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></span>)</p></li>
-<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
+<li><p><strong>enabled</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
+<li><p><strong>before</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
+<li><p><strong>after</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
+<li><p><strong>log</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
+<li><p><strong>print</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -606,31 +592,12 @@ is truthy or no model exists.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="smartroute.plugins.pydantic.PydanticPlugin.configure">
-<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'--base--'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.configure" title="Link to this definition"></a></dt>
-<dd><p>Override to define accepted configuration parameters.</p>
-<p>Define your plugin’s configuration options as method parameters.
-The wrapper added by __init_subclass__ handles:
-- Parsing <code class="docutils literal notranslate"><span class="pre">flags</span></code> (e.g. “enabled,before:off”) into booleans
-- Routing to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (”–base–”, handler name, or comma-separated)
-- Pydantic validation via &#64;validate_call
-- Writing to the router’s config store</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-    <span class="k">pass</span>  <span class="c1"># Storage is handled by the wrapper</span>
-</pre></div>
-</div>
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">disabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/smartroute/plugins/pydantic.html#PydanticPlugin.configure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#smartroute.plugins.pydantic.PydanticPlugin.configure" title="Link to this definition"></a></dt>
+<dd><p>Configure pydantic plugin options.</p>
+<p>The wrapper added by __init_subclass__ handles writing to store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>_target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Where to write config. “–base–” for router-level,
-“handler_name” for per-handler, or “h1,h2” for multiple.</p></li>
-<li><p><strong>flags</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – String like “enabled,before:off” parsed into booleans.</p></li>
-<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePlugin</span></code></span>)</p></li>
-<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+<dd class="field-odd"><p><strong>disabled</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p>
 </dd>
 </dl>
 </dd></dl>

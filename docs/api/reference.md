@@ -4,8 +4,8 @@
 
 Below is the Sphinx API reference. For more context or quick-start guides, see:
 
-- [LLM API Details](../../llm-docs/API-DETAILS.md) – Complete API reference generated from tests
-- [LLM Quick Reference](../../llm-docs/README.md) – 30-second quick start
+- [LLM API Details](https://github.com/genropy/smartroute/blob/main/llm-docs/API-DETAILS.md) – Complete API reference
+- [LLM Quick Reference](https://github.com/genropy/smartroute/blob/main/llm-docs/README.md) – 30-second quick start
 
 ```{eval-rst}
 .. automodule:: smartroute.core.base_router

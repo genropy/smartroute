@@ -416,7 +416,7 @@ window.addEventListener("load", () => mermaid.run());
 <span class="sd">  strings must be non-empty; channel/scope semantics are left to plugins.</span>
 <span class="sd">- Handler matching: ``_match_handlers`` fnmatch-es selectors (comma-separated)</span>
 <span class="sd">  against router ``_entries`` keys, returning a set.</span>
-<span class="sd">- Application: for ``&quot;_all_&quot;`` selector, calls ``plugin.configure(_target=&quot;--base--&quot;, **options)``</span>
+<span class="sd">- Application: for ``&quot;_all_&quot;`` selector, calls ``plugin.configure(_target=&quot;_all_&quot;, **options)``</span>
 <span class="sd">  (global config) and returns ``{&quot;target&quot;: target, &quot;updated&quot;: [&quot;_all_&quot;]}``.</span>
 <span class="sd">  Otherwise for each matched handler, calls ``plugin.configure(_target=handler, **options)``</span>
 <span class="sd">  and returns ``{&quot;target&quot;: target, &quot;updated&quot;: sorted(matches)}``.</span>
@@ -641,7 +641,7 @@ window.addEventListener("load", () => mermaid.run());
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No configuration options provided&quot;</span><span class="p">)</span>
         <span class="n">selector</span> <span class="o">=</span> <span class="n">selector</span> <span class="ow">or</span> <span class="s2">&quot;_all_&quot;</span>
         <span class="k">if</span> <span class="n">selector</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;_all_&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">&quot;--base--&quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_config</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">&quot;_all_&quot;</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span> <span class="s2">&quot;updated&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;_all_&quot;</span><span class="p">]}</span>
         <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match_handlers</span><span class="p">(</span><span class="n">bound_router</span><span class="p">,</span> <span class="n">selector</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>

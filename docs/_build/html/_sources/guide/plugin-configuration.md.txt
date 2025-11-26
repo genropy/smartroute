@@ -17,7 +17,7 @@ SmartRoute provides `routedclass.configure()` for runtime plugin configuration w
 
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602)
 
 A configuration target has three parts:
 
@@ -43,7 +43,7 @@ Glob patterns use `fnmatch` for matching.
 
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602)
 
 Configure plugins using keyword arguments:
 
@@ -87,7 +87,7 @@ assert svc.api.logging.get_config("bar")["mode"] == "strict"
 
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L309-L315)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L596-L602)
 
 Configure multiple targets with a list of dictionaries:
 
@@ -121,7 +121,7 @@ assert svc.api.logging.get_config("foo")["limit"] == 5
 
 <!-- test: test_router_edge_cases.py::test_routed_configure_question_lists_tree -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L318-L343)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L605-L620)
 
 Query the router and plugin structure with `"?"`:
 
@@ -164,7 +164,7 @@ assert "leaf" in info["api"]["children"]
 
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602)
 
 Create a dedicated configuration endpoint:
 

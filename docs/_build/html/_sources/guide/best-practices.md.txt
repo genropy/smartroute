@@ -1,7 +1,8 @@
 # Best Practices
 
-**Coming soon** - This guide is under development.
+This guide covers production-tested patterns and anti-patterns for SmartRoute.
 
-For now, see:
-- [LLM Patterns](../../llm-docs/PATTERNS.md) for production-tested patterns
-- [LLM Patterns - Anti-Patterns](../../llm-docs/PATTERNS.md#anti-patterns) for things to avoid
+For additional patterns, see:
+
+- [LLM Patterns](https://github.com/genropy/smartroute/blob/main/llm-docs/PATTERNS.md) - Complete patterns reference
+- [Anti-Patterns](https://github.com/genropy/smartroute/blob/main/llm-docs/PATTERNS.md#anti-patterns) - Common mistakes to avoid

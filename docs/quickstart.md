@@ -158,6 +158,6 @@ Now that you've learned the basics:
 
 ## Need Help?
 
-- **LLM Reference**: See [llm-docs/](../llm-docs/) for AI-optimized documentation
-- **Examples**: Check the [examples/](https://github.com/genropy/smartroute/tree/main/examples) directory
+- **LLM Reference**: See [llm-docs](https://github.com/genropy/smartroute/tree/main/llm-docs) for AI-optimized documentation
+- **Examples**: Check the [examples](https://github.com/genropy/smartroute/tree/main/examples) directory
 - **Issues**: Report bugs on [GitHub Issues](https://github.com/genropy/smartroute/issues)

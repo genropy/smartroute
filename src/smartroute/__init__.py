@@ -16,7 +16,7 @@ Constraints
 
 from importlib import import_module
 
-__version__ = "0.8.2"
+__version__ = "0.8.4"
 
 from .core import RoutedClass, Router, route
 

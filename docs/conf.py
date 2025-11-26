@@ -56,14 +56,11 @@ exclude_patterns = [
     ".DS_Store",
     "dev-notes",
     "temp",
+    "ARCHITECTURE.md",  # Internal architecture notes, not for public docs
 ]
 
-# Suppress specific warnings
-suppress_warnings = [
-    "toc.not_included",  # Docs not in toctree
-    "myst.xref_missing",  # Missing cross-references
-    "misc.highlighting_failure",  # Pygments highlighting issues
-]
+# Strict mode: no warnings suppressed
+# All documents must be included in toctree and all references must be valid
 
 # HTML output configuration
 html_theme = "sphinx_rtd_theme"
@@ -132,8 +129,10 @@ always_document_param_types = True
 typehints_document_rtype = True
 
 # Linkcheck configuration
-# GitHub anchor links are dynamically generated and may not be immediately available
-# after a push, causing false positives in linkcheck
+# GitHub anchor links are dynamically generated client-side and cannot be verified
+# by linkcheck. This includes:
+# - Line numbers: #L42, #L42-L50
+# - Heading anchors: #section-name (generated from markdown headings)
 linkcheck_anchors_ignore_for_url = [
-    r"https://github\.com/genropy/smartroute/blob/.*#L\d+",
+    r"https://github\.com/genropy/smartroute/.*",  # All GitHub anchors
 ]

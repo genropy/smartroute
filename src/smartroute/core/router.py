@@ -67,17 +67,13 @@ and handlers rebuilt.
 
 Filtering
 ---------
-``_prepare_filter_args`` extends ``BaseRouter`` by normalizing:
-
-- ``scopes``: optional string or iterable → set of non-empty strings; falsy
-  values removed.
-
-- ``channel``: must be uppercase string; stripped; falsy removes filter;
-  mismatched case raises ``ValueError``; non-string raises ``TypeError``.
-
-``_should_include_entry`` first calls ``BaseRouter`` then asks each plugin in
+``_allow_entry`` first calls ``BaseRouter`` then asks each plugin in
 ``_plugins`` (ordered as attached) via ``allow_entry``. Any explicit ``False``
 hides the entry; any other truthy/None keeps it.
+
+Filter arguments passed to ``members()`` are forwarded as-is to plugins via
+``allow_entry(**filters)``. Plugins are responsible for interpreting and
+validating their own filter parameters.
 
 Description hooks
 -----------------
@@ -109,7 +105,7 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from smartroute.core.base_router import BaseRouter
 from smartroute.plugins._base_plugin import BasePlugin, MethodEntry
@@ -358,22 +354,6 @@ class Router(BaseRouter):
                 entry.plugins.append(plugin.name)
             plugin.on_decore(self, entry.func, entry)
 
-    def _prepare_filter_args(self, **raw_filters: Any) -> Dict[str, Any]:
-        filters = super()._prepare_filter_args(**raw_filters)
-        scopes_value = raw_filters.get("scopes")
-        channel_value = raw_filters.get("channel")
-        scope_filter = self._normalize_scope_filter(scopes_value)
-        if scope_filter:
-            filters["scopes"] = scope_filter
-        else:
-            filters.pop("scopes", None)
-        channel_filter = self._normalize_channel_filter(channel_value)
-        if channel_filter:
-            filters["channel"] = channel_filter
-        else:
-            filters.pop("channel", None)
-        return filters
-
     def _allow_entry(self, entry: MethodEntry, **filters: Any) -> bool:
         if not super()._allow_entry(entry, **filters):
             return False  # pragma: no cover - base hook currently always True
@@ -409,27 +389,3 @@ class Router(BaseRouter):
         if plugins_info:
             return {"plugins": plugins_info}
         return {}
-
-    def _normalize_scope_filter(self, scopes: Optional[Any]) -> Optional[set[str]]:
-        if scopes is None or scopes is False:
-            return None
-        if isinstance(scopes, str):
-            items = scopes.split(",")
-        elif isinstance(scopes, Iterable):
-            items = scopes
-        else:
-            raise TypeError("scopes must be a string or iterable of strings")
-        cleaned = {str(item).strip() for item in items if str(item).strip()}
-        return cleaned or None
-
-    def _normalize_channel_filter(self, channel: Optional[str]) -> Optional[str]:
-        if channel is None or channel is False:
-            return None
-        if isinstance(channel, str):
-            normalized = channel.strip()
-            if not normalized:
-                raise ValueError("channel cannot be empty")  # pragma: no cover
-            if normalized != normalized.upper():
-                raise ValueError(f"channel must be uppercase (got '{normalized}')")
-            return normalized
-        raise TypeError("channel must be a string")

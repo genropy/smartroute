@@ -387,7 +387,7 @@
 <section id="target-syntax">
 <h2>Target Syntax<a class="headerlink" href="#target-syntax" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602">From test</a></p>
 <p>A configuration target has three parts:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;router_name&gt;:&lt;plugin_name&gt;/&lt;selector&gt;
 </pre></div>
@@ -409,7 +409,7 @@
 <section id="basic-configuration">
 <h2>Basic Configuration<a class="headerlink" href="#basic-configuration" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602">From test</a></p>
 <p>Configure plugins using keyword arguments:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">smartroute</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutedClass</span><span class="p">,</span> <span class="n">Router</span><span class="p">,</span> <span class="n">route</span>
 
@@ -450,7 +450,7 @@
 <section id="batch-updates">
 <h2>Batch Updates<a class="headerlink" href="#batch-updates" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L309-L315">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L596-L602">From test</a></p>
 <p>Configure multiple targets with a list of dictionaries:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># JSON-friendly batch configuration</span>
 <span class="n">payload</span> <span class="o">=</span> <span class="p">[</span>
@@ -480,7 +480,7 @@
 <section id="introspection">
 <h2>Introspection<a class="headerlink" href="#introspection" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_configure_question_lists_tree -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L318-L343">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L605-L620">From test</a></p>
 <p>Query the router and plugin structure with <code class="docutils literal notranslate"><span class="pre">&quot;?&quot;</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Leaf</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -520,7 +520,7 @@
 <section id="exposing-configuration-api">
 <h2>Exposing Configuration API<a class="headerlink" href="#exposing-configuration-api" title="Link to this heading"></a></h2>
 <!-- test: test_router_edge_cases.py::test_routed_configure_updates_plugins_global_and_local -->
-<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L284-L315">From test</a></p>
+<p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L571-L602">From test</a></p>
 <p>Create a dedicated configuration endpoint:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ConfigAPI</span><span class="p">(</span><span class="n">RoutedClass</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

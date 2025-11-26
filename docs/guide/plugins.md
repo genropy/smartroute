@@ -258,24 +258,29 @@ def wrap_handler(self, router, entry, call_next):
 
 Control handler visibility during introspection (`members()`).
 
+The plugin receives all filter arguments passed to `members(**filters)` and is responsible for:
+
+- Interpreting the filters according to its own logic
+- Validating filter values if needed
+- Comparing filters against handler metadata or configuration
+
 **Parameters**:
 
 - `router` - The Router instance
 - `entry` - MethodEntry being checked
-- `**filters` - Filter criteria passed to `members()` (e.g., `scopes`, `channel`)
+- `**filters` - All filter criteria passed to `members()`. The plugin decides which filters to handle and how to interpret them.
 
 **Returns**: `True` to include, `False` to exclude, `None` to defer to other plugins
 
 **Example**:
 
 ```python
-def allow_entry(self, router, entry, scopes=None, **filters):
-    # Only show admin handlers to admin scope
-    if entry.metadata.get("admin_only"):
-        if scopes and "admin" in scopes:
-            return True
-        return False
-    return None  # defer to other plugins
+def allow_entry(self, router, entry, visibility=None, **filters):
+    # Plugin interprets 'visibility' filter against entry metadata
+    if visibility:
+        entry_visibility = entry.metadata.get("visibility", "public")
+        return entry_visibility == visibility
+    return None  # no filter applied, defer to other plugins
 ```
 
 ### entry_metadata(router, entry)

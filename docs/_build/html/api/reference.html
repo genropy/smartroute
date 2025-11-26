@@ -374,8 +374,8 @@
 <!-- test: test_router_runtime_extras.py::test_router_call_and_members_structure -->
 <p>Below is the Sphinx API reference. For more context or quick-start guides, see:</p>
 <ul class="simple">
-<li><p><span class="xref myst">LLM API Details</span> – Complete API reference generated from tests</p></li>
-<li><p><span class="xref myst">LLM Quick Reference</span> – 30-second quick start</p></li>
+<li><p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/llm-docs/API-DETAILS.md">LLM API Details</a> – Complete API reference</p></li>
+<li><p><a class="reference external" href="https://github.com/genropy/smartroute/blob/main/llm-docs/README.md">LLM Quick Reference</a> – 30-second quick start</p></li>
 </ul>
 <p id="module-smartroute.core.base_router">Plugin-free router runtime (source of truth).</p>
 <p>If this file vanished, rebuild it verbatim from this description. The module
@@ -757,7 +757,7 @@ exposes attached plugins by name or raises <code class="docutils literal notrans
 <section id="runtime-flags-and-data">
 <h2>Runtime flags and data<a class="headerlink" href="#runtime-flags-and-data" title="Link to this heading"></a></h2>
 <p>Stored on the router under <code class="docutils literal notranslate"><span class="pre">_plugin_info[plugin_code]</span></code> using a reserved
-<code class="docutils literal notranslate"><span class="pre">&quot;--base--&quot;</span></code> bucket for router-level defaults and one bucket per handler
+<code class="docutils literal notranslate"><span class="pre">&quot;_all_&quot;</span></code> bucket for router-level defaults and one bucket per handler
 name, each with <code class="docutils literal notranslate"><span class="pre">config</span></code> and <code class="docutils literal notranslate"><span class="pre">locals</span></code>. <code class="docutils literal notranslate"><span class="pre">set_plugin_enabled</span></code> /
 <code class="docutils literal notranslate"><span class="pre">is_plugin_enabled</span></code> and <code class="docutils literal notranslate"><span class="pre">set_runtime_data</span></code> / <code class="docutils literal notranslate"><span class="pre">get_runtime_data</span></code> read/write
 these buckets (no contextvars).</p>
@@ -793,16 +793,12 @@ and handlers rebuilt.</p>
 </section>
 <section id="filtering">
 <h2>Filtering<a class="headerlink" href="#filtering" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">_prepare_filter_args</span></code> extends <code class="docutils literal notranslate"><span class="pre">BaseRouter</span></code> by normalizing:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">scopes</span></code>: optional string or iterable → set of non-empty strings; falsy
-values removed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">channel</span></code>: must be uppercase string; stripped; falsy removes filter;
-mismatched case raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>; non-string raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p></li>
-</ul>
-<p><code class="docutils literal notranslate"><span class="pre">_should_include_entry</span></code> first calls <code class="docutils literal notranslate"><span class="pre">BaseRouter</span></code> then asks each plugin in
+<p><code class="docutils literal notranslate"><span class="pre">_allow_entry</span></code> first calls <code class="docutils literal notranslate"><span class="pre">BaseRouter</span></code> then asks each plugin in
 <code class="docutils literal notranslate"><span class="pre">_plugins</span></code> (ordered as attached) via <code class="docutils literal notranslate"><span class="pre">allow_entry</span></code>. Any explicit <code class="docutils literal notranslate"><span class="pre">False</span></code>
 hides the entry; any other truthy/None keeps it.</p>
+<p>Filter arguments passed to <code class="docutils literal notranslate"><span class="pre">members()</span></code> are forwarded as-is to plugins via
+<code class="docutils literal notranslate"><span class="pre">allow_entry(**filters)</span></code>. Plugins are responsible for interpreting and
+validating their own filter parameters.</p>
 </section>
 <section id="description-hooks">
 <h2>Description hooks<a class="headerlink" href="#description-hooks" title="Link to this heading"></a></h2>

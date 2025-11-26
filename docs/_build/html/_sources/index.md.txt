@@ -37,7 +37,7 @@ SmartRoute provides:
 
 <!-- test: test_switcher_basic.py::test_instance_bound_methods_are_isolated -->
 
-[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L131-L138)
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_switcher_basic.py#L141-L148)
 
 ```python
 from smartroute import RoutedClass, Router, route
@@ -120,7 +120,7 @@ SmartRoute is currently in **beta** (v0.8.0). The core API is stable with comple
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](https://github.com/genropy/smartroute/blob/main/CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/genropy/smartroute).
 
 ## Indices and Tables
 

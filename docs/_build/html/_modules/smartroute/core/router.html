@@ -410,7 +410,7 @@ window.addEventListener("load", () => mermaid.run());
 <span class="sd">Runtime flags and data</span>
 <span class="sd">----------------------</span>
 <span class="sd">Stored on the router under ``_plugin_info[plugin_code]`` using a reserved</span>
-<span class="sd">``&quot;--base--&quot;`` bucket for router-level defaults and one bucket per handler</span>
+<span class="sd">``&quot;_all_&quot;`` bucket for router-level defaults and one bucket per handler</span>
 <span class="sd">name, each with ``config`` and ``locals``. ``set_plugin_enabled`` /</span>
 <span class="sd">``is_plugin_enabled`` and ``set_runtime_data`` / ``get_runtime_data`` read/write</span>
 <span class="sd">these buckets (no contextvars).</span>
@@ -444,17 +444,13 @@ window.addEventListener("load", () => mermaid.run());
 
 <span class="sd">Filtering</span>
 <span class="sd">---------</span>
-<span class="sd">``_prepare_filter_args`` extends ``BaseRouter`` by normalizing:</span>
-
-<span class="sd">- ``scopes``: optional string or iterable → set of non-empty strings; falsy</span>
-<span class="sd">  values removed.</span>
-
-<span class="sd">- ``channel``: must be uppercase string; stripped; falsy removes filter;</span>
-<span class="sd">  mismatched case raises ``ValueError``; non-string raises ``TypeError``.</span>
-
-<span class="sd">``_should_include_entry`` first calls ``BaseRouter`` then asks each plugin in</span>
+<span class="sd">``_allow_entry`` first calls ``BaseRouter`` then asks each plugin in</span>
 <span class="sd">``_plugins`` (ordered as attached) via ``allow_entry``. Any explicit ``False``</span>
 <span class="sd">hides the entry; any other truthy/None keeps it.</span>
+
+<span class="sd">Filter arguments passed to ``members()`` are forwarded as-is to plugins via</span>
+<span class="sd">``allow_entry(**filters)``. Plugins are responsible for interpreting and</span>
+<span class="sd">validating their own filter parameters.</span>
 
 <span class="sd">Description hooks</span>
 <span class="sd">-----------------</span>
@@ -486,7 +482,7 @@ window.addEventListener("load", () => mermaid.run());
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">smartroute.core.base_router</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseRouter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">smartroute.plugins._base_plugin</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePlugin</span><span class="p">,</span> <span class="n">MethodEntry</span>
@@ -627,10 +623,10 @@ window.addEventListener("load", () => mermaid.run());
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
         <span class="n">bucket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">plugin_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">bucket</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">create</span><span class="p">:</span>
-            <span class="n">bucket</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;--base--&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}}</span>
+            <span class="n">bucket</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_all_&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_info</span><span class="p">[</span><span class="n">plugin_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bucket</span>
-        <span class="k">if</span> <span class="n">bucket</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;--base--&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bucket</span><span class="p">:</span>
-            <span class="n">bucket</span><span class="p">[</span><span class="s2">&quot;--base--&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="k">if</span> <span class="n">bucket</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;_all_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bucket</span><span class="p">:</span>
+            <span class="n">bucket</span><span class="p">[</span><span class="s2">&quot;_all_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}</span>
         <span class="k">return</span> <span class="n">bucket</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -659,7 +655,7 @@ window.addEventListener("load", () => mermaid.run());
         <span class="n">entry_locals</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locals&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="s2">&quot;enabled&quot;</span> <span class="ow">in</span> <span class="n">entry_locals</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">entry_locals</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">])</span>
-        <span class="n">base_locals</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;--base--&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locals&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">base_locals</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_all_&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locals&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">base_locals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span></div>
 
 
@@ -758,7 +754,7 @@ window.addEventListener("load", () => mermaid.run());
         <span class="k">if</span> <span class="n">plugin_options</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">pname</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">plugin_options</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">bucket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plugin_info</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-                    <span class="n">pname</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;--base--&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}}</span>
+                    <span class="n">pname</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;_all_&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}}}</span>
                 <span class="p">)</span>
                 <span class="n">entry_bucket</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;locals&quot;</span><span class="p">:</span> <span class="p">{}})</span>
                 <span class="n">entry_bucket</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
@@ -766,22 +762,6 @@ window.addEventListener("load", () => mermaid.run());
             <span class="k">if</span> <span class="n">plugin</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
                 <span class="n">entry</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">plugin</span><span class="o">.</span><span class="n">on_decore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_filter_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">raw_filters</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="n">filters</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_prepare_filter_args</span><span class="p">(</span><span class="o">**</span><span class="n">raw_filters</span><span class="p">)</span>
-        <span class="n">scopes_value</span> <span class="o">=</span> <span class="n">raw_filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scopes&quot;</span><span class="p">)</span>
-        <span class="n">channel_value</span> <span class="o">=</span> <span class="n">raw_filters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;channel&quot;</span><span class="p">)</span>
-        <span class="n">scope_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_scope_filter</span><span class="p">(</span><span class="n">scopes_value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">scope_filter</span><span class="p">:</span>
-            <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;scopes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scope_filter</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;scopes&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">channel_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_channel_filter</span><span class="p">(</span><span class="n">channel_value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">channel_filter</span><span class="p">:</span>
-            <span class="n">filters</span><span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel_filter</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">filters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;channel&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">filters</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_allow_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">MethodEntry</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_allow_entry</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
@@ -817,31 +797,7 @@ window.addEventListener("load", () => mermaid.run());
                 <span class="n">plugins_info</span><span class="p">[</span><span class="n">plugin</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">plugin_data</span>
         <span class="k">if</span> <span class="n">plugins_info</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;plugins&quot;</span><span class="p">:</span> <span class="n">plugins_info</span><span class="p">}</span>
-        <span class="k">return</span> <span class="p">{}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_scope_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scopes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="k">if</span> <span class="n">scopes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">scopes</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scopes</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">items</span> <span class="o">=</span> <span class="n">scopes</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scopes</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-            <span class="n">items</span> <span class="o">=</span> <span class="n">scopes</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;scopes must be a string or iterable of strings&quot;</span><span class="p">)</span>
-        <span class="n">cleaned</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()}</span>
-        <span class="k">return</span> <span class="n">cleaned</span> <span class="ow">or</span> <span class="kc">None</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_channel_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="n">channel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">channel</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">normalized</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;channel cannot be empty&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
-            <span class="k">if</span> <span class="n">normalized</span> <span class="o">!=</span> <span class="n">normalized</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;channel must be uppercase (got &#39;</span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s2">&#39;)&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">normalized</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;channel must be a string&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">{}</span></div>
 
 </pre></div>
 

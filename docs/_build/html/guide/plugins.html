@@ -563,7 +563,7 @@
 <p>The wrapper added by <code class="docutils literal notranslate"><span class="pre">__init_subclass__</span></code> automatically:</p>
 <ul class="simple">
 <li><p>Parses <code class="docutils literal notranslate"><span class="pre">flags</span></code> string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;enabled,before:off&quot;</span></code>) into booleans</p></li>
-<li><p>Routes to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;--base--&quot;</span></code> for router-level, <code class="docutils literal notranslate"><span class="pre">&quot;handler_name&quot;</span></code> for per-handler)</p></li>
+<li><p>Routes to <code class="docutils literal notranslate"><span class="pre">_target</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;_all_&quot;</span></code> for router-level, <code class="docutils literal notranslate"><span class="pre">&quot;handler_name&quot;</span></code> for per-handler)</p></li>
 <li><p>Validates parameters via Pydantic’s <code class="docutils literal notranslate"><span class="pre">&#64;validate_call</span></code></p></li>
 <li><p>Writes config to the router’s store</p></li>
 </ul>
@@ -640,21 +640,26 @@
 <section id="allow-entry-router-entry-filters">
 <h3>allow_entry(router, entry, **filters)<a class="headerlink" href="#allow-entry-router-entry-filters" title="Link to this heading"></a></h3>
 <p>Control handler visibility during introspection (<code class="docutils literal notranslate"><span class="pre">members()</span></code>).</p>
+<p>The plugin receives all filter arguments passed to <code class="docutils literal notranslate"><span class="pre">members(**filters)</span></code> and is responsible for:</p>
+<ul class="simple">
+<li><p>Interpreting the filters according to its own logic</p></li>
+<li><p>Validating filter values if needed</p></li>
+<li><p>Comparing filters against handler metadata or configuration</p></li>
+</ul>
 <p><strong>Parameters</strong>:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">router</span></code> - The Router instance</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">entry</span></code> - MethodEntry being checked</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">**filters</span></code> - Filter criteria passed to <code class="docutils literal notranslate"><span class="pre">members()</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">scopes</span></code>, <code class="docutils literal notranslate"><span class="pre">channel</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">**filters</span></code> - All filter criteria passed to <code class="docutils literal notranslate"><span class="pre">members()</span></code>. The plugin decides which filters to handle and how to interpret them.</p></li>
 </ul>
 <p><strong>Returns</strong>: <code class="docutils literal notranslate"><span class="pre">True</span></code> to include, <code class="docutils literal notranslate"><span class="pre">False</span></code> to exclude, <code class="docutils literal notranslate"><span class="pre">None</span></code> to defer to other plugins</p>
 <p><strong>Example</strong>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">allow_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">scopes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
-    <span class="c1"># Only show admin handlers to admin scope</span>
-    <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;admin_only&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">scopes</span> <span class="ow">and</span> <span class="s2">&quot;admin&quot;</span> <span class="ow">in</span> <span class="n">scopes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># defer to other plugins</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">allow_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">router</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">visibility</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+    <span class="c1"># Plugin interprets &#39;visibility&#39; filter against entry metadata</span>
+    <span class="k">if</span> <span class="n">visibility</span><span class="p">:</span>
+        <span class="n">entry_visibility</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;visibility&quot;</span><span class="p">,</span> <span class="s2">&quot;public&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">entry_visibility</span> <span class="o">==</span> <span class="n">visibility</span>
+    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># no filter applied, defer to other plugins</span>
 </pre></div>
 </div>
 </section>
@@ -835,7 +840,7 @@
 <section id="the-target-parameter">
 <h3>The <code class="docutils literal notranslate"><span class="pre">_target</span></code> Parameter<a class="headerlink" href="#the-target-parameter" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;--base--&quot;</span></code> (default): Router-level config, applies to all handlers</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;_all_&quot;</span></code> (default): Router-level config, applies to all handlers</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;handler_name&quot;</span></code>: Config for specific handler only</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;h1,h2,h3&quot;</span></code>: Apply same config to multiple handlers</p></li>
 </ul>

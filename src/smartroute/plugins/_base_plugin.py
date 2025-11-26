@@ -66,9 +66,10 @@ Objects
     ``allow_entry`` (optional, default returns None)
         when implemented, allows the plugin to decide if a handler should be
         exposed during introspection. It receives the router, the MethodEntry,
-        and keyword filters (``scopes``, ``channel``, ...); returning ``False``
-        hides the handler from ``members()``, ``True`` includes it, ``None``
-        defers to other plugins.
+        and all keyword filters passed to ``members(**filters)``. The plugin
+        is responsible for interpreting these filters according to its own
+        logic and configuration. Returning ``False`` hides the handler from
+        ``members()``, ``True`` includes it, ``None`` defers to other plugins.
 
     ``entry_metadata`` (optional, default returns {})
         when implemented, returns plugin-specific metadata for a handler.
@@ -311,20 +312,30 @@ class BasePlugin:
         """Override to control handler visibility during introspection.
 
         Called by ``router.members()`` to decide if a handler should be
-        included in results. Return True to include, False to exclude,
-        or None to defer to other plugins.
+        included in results. The plugin receives all filter arguments passed
+        to ``members(**filters)`` and is responsible for:
+
+        - Interpreting the filters according to its own logic
+        - Validating filter values if needed
+        - Comparing filters against handler metadata or configuration
+
+        Return True to include the handler, False to exclude it, or None
+        to defer the decision to other plugins in the chain.
 
         Example::
 
-            def allow_entry(self, router, entry, scopes=None, **filters):
-                if scopes and "admin" in scopes:
-                    return entry.metadata.get("requires_admin", False)
-                return None  # defer to other plugins
+            def allow_entry(self, router, entry, visibility=None, **filters):
+                # Plugin interprets 'visibility' filter against entry metadata
+                if visibility:
+                    entry_visibility = entry.metadata.get("visibility", "public")
+                    return entry_visibility == visibility
+                return None  # no filter applied, defer to other plugins
 
         Args:
             router: The Router instance.
             entry: MethodEntry being checked.
-            **filters: Filter criteria (scopes, channel, etc.)
+            **filters: All filter criteria passed to ``members()``. The plugin
+                decides which filters to handle and how to interpret them.
 
         Returns:
             True to include, False to exclude, None to defer.
