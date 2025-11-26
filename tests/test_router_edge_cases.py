@@ -81,7 +81,7 @@ def test_plugin_bucket_guards_and_base_autofill():
     svc = Host()
     # Private helper with create=True should provision base bucket
     bucket = svc.api._get_plugin_bucket("missing", create=True)
-    assert bucket["--base--"]["config"] == {}
+    assert bucket["_all_"]["config"] == {}
     # Missing plugin still triggers AttributeError on public setters/getters
     with pytest.raises(AttributeError):
         svc.api.set_plugin_enabled("foo", "ghost", True)
@@ -92,7 +92,7 @@ def test_plugin_bucket_guards_and_base_autofill():
     with pytest.raises(AttributeError):
         svc.api.is_plugin_enabled("foo", "ghost")
     # If base key is removed, accessing will recreate it
-    svc.api._plugin_info["simple"].pop("--base--", None)
+    svc.api._plugin_info["simple"].pop("_all_", None)
     assert svc.api.is_plugin_enabled("demo", "simple") is True
 
 

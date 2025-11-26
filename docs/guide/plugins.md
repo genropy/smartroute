@@ -176,7 +176,7 @@ def configure(
 The wrapper added by `__init_subclass__` automatically:
 
 - Parses `flags` string (e.g. `"enabled,before:off"`) into booleans
-- Routes to `_target` (`"--base--"` for router-level, `"handler_name"` for per-handler)
+- Routes to `_target` (`"_all_"` for router-level, `"handler_name"` for per-handler)
 - Validates parameters via Pydantic's `@validate_call`
 - Writes config to the router's store
 
@@ -463,7 +463,7 @@ router.my_plugin.configure(flags="enabled,log:off")
 
 ### The `_target` Parameter
 
-- `"--base--"` (default): Router-level config, applies to all handlers
+- `"_all_"` (default): Router-level config, applies to all handlers
 - `"handler_name"`: Config for specific handler only
 - `"h1,h2,h3"`: Apply same config to multiple handlers
 

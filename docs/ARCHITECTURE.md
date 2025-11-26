@@ -41,12 +41,12 @@ classDiagram
   Router --> "1" PluginInfo : plugin code key
 ```
 
-Shape (chiave riservata `--base--` per il livello router; ogni blocco ha `config` + `locals`):
+Shape (chiave riservata `_all_` per il livello router; ogni blocco ha `config` + `locals`):
 
 ```
 plugin_info
 └── "<plugin_code>"
-    ├── --base--
+    ├── _all_
     │   ├── config   # router-level defaults
     │   └── locals   # runtime plugin-level
     ├── entry_name_1

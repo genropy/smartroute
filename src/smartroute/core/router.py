@@ -33,7 +33,7 @@ exposes attached plugins by name or raises ``AttributeError``.
 Runtime flags and data
 ----------------------
 Stored on the router under ``_plugin_info[plugin_code]`` using a reserved
-``"--base--"`` bucket for router-level defaults and one bucket per handler
+``"_all_"`` bucket for router-level defaults and one bucket per handler
 name, each with ``config`` and ``locals``. ``set_plugin_enabled`` /
 ``is_plugin_enabled`` and ``set_runtime_data`` / ``get_runtime_data`` read/write
 these buckets (no contextvars).
@@ -230,10 +230,10 @@ class Router(BaseRouter):
     ) -> Optional[Dict[str, Any]]:
         bucket = self._plugin_info.get(plugin_name)
         if bucket is None and create:
-            bucket = {"--base--": {"config": {}, "locals": {}}}
+            bucket = {"_all_": {"config": {}, "locals": {}}}
             self._plugin_info[plugin_name] = bucket
-        if bucket is not None and "--base--" not in bucket:
-            bucket["--base--"] = {"config": {}, "locals": {}}
+        if bucket is not None and "_all_" not in bucket:
+            bucket["_all_"] = {"config": {}, "locals": {}}
         return bucket
 
     # ------------------------------------------------------------------
@@ -257,7 +257,7 @@ class Router(BaseRouter):
         entry_locals = bucket.get(method_name, {}).get("locals", {})
         if "enabled" in entry_locals:
             return bool(entry_locals["enabled"])
-        base_locals = bucket.get("--base--", {}).get("locals", {})
+        base_locals = bucket.get("_all_", {}).get("locals", {})
         return bool(base_locals.get("enabled", True))
 
     def set_runtime_data(self, method_name: str, plugin_name: str, key: str, value: Any) -> None:
@@ -349,7 +349,7 @@ class Router(BaseRouter):
         if plugin_options:
             for pname, cfg in plugin_options.items():
                 bucket = self._plugin_info.setdefault(
-                    pname, {"--base--": {"config": {}, "locals": {}}}
+                    pname, {"_all_": {"config": {}, "locals": {}}}
                 )
                 entry_bucket = bucket.setdefault(entry.name, {"config": {}, "locals": {}})
                 entry_bucket["config"].update(cfg)

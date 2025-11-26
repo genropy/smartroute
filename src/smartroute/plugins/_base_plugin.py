@@ -43,7 +43,7 @@ Objects
         The method is automatically wrapped by ``__init_subclass__`` to:
         - Extract and parse ``flags`` (e.g. "enabled,before:off") into booleans
         - Extract ``_target`` to determine where to write config:
-          - ``"--base--"`` (default): router-level config
+          - ``"_all_"`` (default): router-level config
           - ``"handler_name"``: per-handler config
           - ``"h1,h2,h3"``: multiple handlers (calls recursively)
         - Apply Pydantic's ``validate_call`` for parameter validation
@@ -112,7 +112,7 @@ def _wrap_configure(original_configure: Callable) -> Callable:
 
     @wraps(original_configure)
     def wrapper(
-        self: "BasePlugin", *, _target: str = "--base--", flags: Optional[str] = None, **kwargs: Any
+        self: "BasePlugin", *, _target: str = "_all_", flags: Optional[str] = None, **kwargs: Any
     ) -> None:
         # Parse flags into boolean kwargs
         if flags:
@@ -164,7 +164,7 @@ class BasePlugin:
         """Initialize plugin bucket in router's store."""
         store = self._get_store()
         store.setdefault(self.name, {}).setdefault(
-            "--base--", {"config": {"enabled": True}, "locals": {}}
+            "_all_", {"config": {"enabled": True}, "locals": {}}
         )
 
     def _write_config(self, target: str, config: Dict[str, Any]) -> None:
@@ -184,7 +184,7 @@ class BasePlugin:
         plugin_bucket = store.get(self.name)
         if not plugin_bucket:
             return {}
-        base_bucket = plugin_bucket.get("--base--", {})
+        base_bucket = plugin_bucket.get("_all_", {})
         base_config = self._resolve_config(base_bucket.get("config", {}))
         merged = dict(base_config)
         if method_name:
@@ -230,13 +230,13 @@ class BasePlugin:
     # METHODS TO OVERRIDE IN CUSTOM PLUGINS
     # =========================================================================
 
-    def configure(self, *, _target: str = "--base--", flags: Optional[str] = None) -> None:
+    def configure(self, *, _target: str = "_all_", flags: Optional[str] = None) -> None:
         """Override to define accepted configuration parameters.
 
         Define your plugin's configuration options as method parameters.
         The wrapper added by __init_subclass__ handles:
         - Parsing ``flags`` (e.g. "enabled,before:off") into booleans
-        - Routing to ``_target`` ("--base--", handler name, or comma-separated)
+        - Routing to ``_target`` (``"_all_"``, handler name, or comma-separated)
         - Pydantic validation via @validate_call
         - Writing to the router's config store
 
@@ -246,8 +246,8 @@ class BasePlugin:
                 pass  # Storage is handled by the wrapper
 
         Args:
-            _target: Where to write config. "--base--" for router-level,
-                     "handler_name" for per-handler, or "h1,h2" for multiple.
+            _target: Where to write config. ``"_all_"`` for router-level,
+                     ``"handler_name"`` for per-handler, or ``"h1,h2"`` for multiple.
             flags: String like "enabled,before:off" parsed into booleans.
         """
         # Base configure just handles flags if provided

@@ -39,7 +39,7 @@ Configuration entrypoint:
   strings must be non-empty; channel/scope semantics are left to plugins.
 - Handler matching: ``_match_handlers`` fnmatch-es selectors (comma-separated)
   against router ``_entries`` keys, returning a set.
-- Application: for ``"_all_"`` selector, calls ``plugin.configure(_target="--base--", **options)``
+- Application: for ``"_all_"`` selector, calls ``plugin.configure(_target="_all_", **options)``
   (global config) and returns ``{"target": target, "updated": ["_all_"]}``.
   Otherwise for each matched handler, calls ``plugin.configure(_target=handler, **options)``
   and returns ``{"target": target, "updated": sorted(matches)}``.
@@ -261,7 +261,7 @@ class _RoutedProxy:
             raise ValueError("No configuration options provided")
         selector = selector or "_all_"
         if selector.lower() == "_all_":
-            self._apply_config(plugin, "--base--", options)
+            self._apply_config(plugin, "_all_", options)
             return {"target": target, "updated": ["_all_"]}
         matches = self._match_handlers(bound_router, selector)
         if not matches:
