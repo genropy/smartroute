@@ -221,6 +221,88 @@ self.api.attach_instance(self.users, name="users")
 self.api = Router(self, name="api")  # Regular router
 ```
 
+## Direct Router Hierarchies with parent_router
+
+<!-- test: test_router_edge_cases.py::test_parent_router_creates_hierarchy -->
+
+[From test](https://github.com/genropy/smartroute/blob/main/tests/test_router_edge_cases.py#L418-L445)
+
+Create router hierarchies directly without separate `RoutedClass` instances using `parent_router`:
+
+```python
+class Service(RoutedClass):
+    def __init__(self):
+        # Parent branch router
+        self.api = Router(self, name="api", branch=True, auto_discover=False)
+
+        # Child routers attached via parent_router parameter
+        self.users = Router(self, name="users", parent_router=self.api)
+        self.orders = Router(self, name="orders", parent_router=self.api)
+
+    @route("users")
+    def list_users(self):
+        return ["alice", "bob"]
+
+    @route("orders")
+    def list_orders(self):
+        return ["order1", "order2"]
+
+svc = Service()
+
+# Access through hierarchy
+assert svc.api.call("users.list_users") == ["alice", "bob"]
+assert svc.api.call("orders.list_orders") == ["order1", "order2"]
+```
+
+**Key characteristics**:
+
+- **Same instance**: All routers share the same owner instance
+- **Automatic attachment**: Child registers itself in parent's `_children` dict
+- **Plugin inheritance**: `_on_attached_to_parent()` is called for plugin propagation
+- **Name required**: Child router must have a `name` (used as the hierarchy key)
+- **Collision detection**: Raises `ValueError` if name already exists in parent
+
+**When to use `parent_router` vs `attach_instance`**:
+
+| Use Case | Method |
+|----------|--------|
+| Same instance, multiple routers | `parent_router` |
+| Different `RoutedClass` instances | `attach_instance` |
+| Dynamic attachment/detachment | `attach_instance` |
+| Static hierarchy at init time | `parent_router` |
+
+**Example: Mixed hierarchy**:
+
+```python
+class Application(RoutedClass):
+    def __init__(self):
+        # Root branch
+        self.api = Router(self, name="api", branch=True, auto_discover=False)
+
+        # Direct children via parent_router
+        self.users = Router(self, name="users", parent_router=self.api)
+        self.products = Router(self, name="products", parent_router=self.api)
+
+        # External service via attach_instance
+        self.auth_service = AuthService()
+        self.api.attach_instance(self.auth_service, name="auth")
+
+    @route("users")
+    def list_users(self):
+        return ["alice", "bob"]
+
+    @route("products")
+    def list_products(self):
+        return ["widget", "gadget"]
+
+app = Application()
+
+# All accessible through hierarchy
+app.api.call("users.list_users")      # Direct child
+app.api.call("products.list_products") # Direct child
+app.api.call("auth.login")            # Attached instance
+```
+
 ## Auto-Detachment
 
 <!-- test: test_router_edge_cases.py::test_auto_detach_on_attribute_replacement -->

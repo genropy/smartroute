@@ -415,6 +415,63 @@ def test_branch_router_blocks_auto_discover_and_entries():
         svc.branch.add_entry("missing")
 
 
+def test_parent_router_creates_hierarchy():
+    """Test that parent_router parameter creates router hierarchies."""
+
+    class Service(RoutedClass):
+        def __init__(self):
+            self.api = Router(self, name="api", branch=True, auto_discover=False)
+            self.users = Router(self, name="users", parent_router=self.api)
+            self.orders = Router(self, name="orders", parent_router=self.api)
+
+        @route("users")
+        def list_users(self):
+            return ["alice", "bob"]
+
+        @route("orders")
+        def list_orders(self):
+            return ["order1", "order2"]
+
+    svc = Service()
+
+    # Verify hierarchy structure
+    assert "users" in svc.api._children
+    assert "orders" in svc.api._children
+    assert svc.api._children["users"] is svc.users
+    assert svc.api._children["orders"] is svc.orders
+
+    # Verify dotted path resolution works
+    assert svc.api.call("users.list_users") == ["alice", "bob"]
+    assert svc.api.call("orders.list_orders") == ["order1", "order2"]
+
+
+def test_parent_router_requires_name():
+    """Test that parent_router raises ValueError if child has no name."""
+
+    class Owner:
+        pass
+
+    owner = Owner()
+    parent = Router(owner, name="parent", branch=True, auto_discover=False)
+
+    with pytest.raises(ValueError, match="must have a name"):
+        Router(owner, parent_router=parent, auto_discover=False)
+
+
+def test_parent_router_detects_collision():
+    """Test that parent_router raises ValueError on name collision."""
+
+    class Owner:
+        pass
+
+    owner = Owner()
+    parent = Router(owner, name="parent", branch=True, auto_discover=False)
+    Router(owner, name="child", auto_discover=False, parent_router=parent)
+
+    with pytest.raises(ValueError, match="collision"):
+        Router(owner, name="child", auto_discover=False, parent_router=parent)
+
+
 def _make_router_for_plugin_test():
     """Create a minimal router for testing plugin behavior."""
 

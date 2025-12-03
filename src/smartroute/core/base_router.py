@@ -11,10 +11,14 @@ Constructor signature::
 
     BaseRouter(owner, name=None, prefix=None, *,
                get_default_handler=None, get_use_smartasync=None,
-               get_kwargs=None, auto_discover=True, auto_selector="*")
+               get_kwargs=None, branch=False, auto_discover=True,
+               auto_selector="*", parent_router=None)
 
 - ``owner`` is required; ``None`` raises ``ValueError``. Routers are bound to
   this instance and never re-bound.
+- ``parent_router``: optional parent router. When provided, this router is
+  automatically attached as a child using ``name`` as the alias. Requires
+  ``name`` to be set; raises ``ValueError`` on name collision.
 - Slots: ``instance``, ``name``, ``prefix`` (string trimmed from function names),
   ``_entries`` (logical name → MethodEntry), ``_handlers`` (name → callable),
   ``_children`` (name → child router), ``_get_defaults`` (SmartOptions defaults).
@@ -120,7 +124,7 @@ Hooks for subclasses
 --------------------
 - ``_wrap_handler``: override to wrap callables (middleware stack).
 - ``_after_entry_registered``: invoked after registering a handler.
-- ``_on_attached_to_parent``: invoked when attached via ``add_child``.
+- ``_on_attached_to_parent``: invoked when attached via ``attach_instance``.
 - ``_describe_entry_extra``: allow subclasses to extend per-entry description.
 
 Default implementations are no-ops/passthrough.
@@ -183,6 +187,7 @@ class BaseRouter:
         branch: bool = False,
         auto_discover: bool = True,
         auto_selector: str = "*",
+        parent_router: Optional["BaseRouter"] = None,
     ) -> None:
         if owner is None:
             raise ValueError("Router requires a parent instance")
@@ -204,6 +209,16 @@ class BaseRouter:
             raise ValueError("Branch routers cannot auto-discover handlers")
         if auto_discover:
             self.add_entry(auto_selector)
+
+        # Attach to parent router if specified
+        if parent_router is not None:
+            alias = name
+            if not alias:
+                raise ValueError("Child router must have a name when using parent_router")
+            if alias in parent_router._children and parent_router._children[alias] is not self:
+                raise ValueError(f"Child name collision: {alias!r}")
+            parent_router._children[alias] = self
+            self._on_attached_to_parent(parent_router)
 
     def _is_known_plugin(self, prefix: str) -> bool:
         try:
